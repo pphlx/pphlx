@@ -1,0 +1,30 @@
+<template name="Alert">
+    <div class="alert alert-{{type ?? 'info'}} piplex-alert" role="alert">
+        <span class="alert-message">{{slot}}</span>
+        <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+</template>
+
+<style>
+    .alert {
+        padding: 12px 20px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        position: relative;
+    }
+    .alert-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border-color: #bee5eb;
+    }
+    .alert-close {
+        position: absolute;
+        right: 15px;
+        top: 10px;
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+    }
+</style>

@@ -1,0 +1,34 @@
+# Compiled binaries
+piplex
+piplex.exe
+piplex-dbg
+piplex-dbg.exe
+
+# Test project build folder
+*/dist/*
+# Operating System Files
+Thumbs.db
+db.db
+.DS_Store
+
+# IDE configurations
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+PWA_Plus
+
+# Node/npm Dependency & Log files
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Piplex Compiler Temporary Files
+src/.piplex_entry.js
+piplex.vite.config.mjs

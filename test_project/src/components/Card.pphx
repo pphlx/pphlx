@@ -1,0 +1,32 @@
+<template name="Card">
+    <div class="card card-{{type ?? 'default'}} piplex-card" data-title="{{title}}">
+        <div class="card-header">{{title}}</div>
+        <div class="card-body">
+            {{slot}}
+        </div>
+    </div>
+</template>
+
+<style>
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        margin-bottom: 15px;
+    }
+    .card-header {
+        background-color: #f5f5f5;
+        padding: 10px;
+        font-weight: bold;
+    }
+    .card-body {
+        padding: 15px;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".piplex-card").forEach(card => {
+            console.log("Card found in DOM:", card.getAttribute("data-title"));
+        });
+    });
+</script>

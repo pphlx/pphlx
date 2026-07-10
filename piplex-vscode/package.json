@@ -1,0 +1,55 @@
+{
+  "name": "piplex",
+  "displayName": "Piplex",
+  "description": "Syntax highlighting, template syntax, and language support for the Piplex PHP framework.",
+  "version": "1.0.0",
+  "publisher": "piplex-framework",
+  "author": "Piplex",
+  "license": "MIT",
+  "homepage": "https://piplex.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loohive/piplex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/loohive/piplex/issues"
+  },
+  "icon": "logo/logo.png",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "extensionDependencies": [
+    "vscode.php"
+  ],
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "php",
+    "piplex",
+    "pphx",
+    "syntax",
+    "template"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "pphx",
+        "aliases": ["Piplex", "pphx"],
+        "extensions": [".pphx"],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./logo/file-icon.svg",
+          "dark": "./logo/file-icon.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "pphx",
+        "scopeName": "text.html.pphx",
+        "path": "./syntaxes/piplex.tmLanguage.json"
+      }
+    ]
+  }
+}

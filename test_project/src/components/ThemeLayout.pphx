@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Piplex App</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/preact@10/dist/preact.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="https://unpkg.com/alpinejs@3/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {{PIPLEX_CSS}}
+</head>
+<body>
+    <div class="theme-wrapper">
+        <header>
+            <h2>Piplex Core Portal</h2>
+        </header>
+        <div class="content-body">
+            {{slot}}
+        </div>
+    </div>
+    {{PIPLEX_JS}}
+</body>
+</html>
