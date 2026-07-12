@@ -1,0 +1,10 @@
+# Please do not delete this file, for the Gitpod users!
+
+tasks:
+  - init: pnpm install --prod
+    before: cp .env.example .env
+    command: pnpm run dev
+
+ports:
+  - port: 4321
+    onOpen: open-browser

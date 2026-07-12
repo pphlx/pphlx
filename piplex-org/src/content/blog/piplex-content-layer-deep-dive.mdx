@@ -1,0 +1,72 @@
+---
+title: "Piplex Content Layer: A Deep Dive"
+description: "Take a deep dive into the Piplex Content Layer API and learn how it caches remote data schemas into static compiled collections."
+publishDate: "2026-05-18"
+authors:
+  - matt
+lang: "en"
+coverImage: "/src/content/blog/_images/content-layer-deep-dive/blog-post-content-layer.png"
+socialImage: "/src/content/blog/_images/content-layer-deep-dive/og-content-layer.png"
+---
+
+import BlogContentImage from '/src/components/BlogContentImage.astro';
+import contentLayerArchitectureImage from '/src/content/blog/_images/content-layer-deep-dive/content-layer-architecture.png';
+
+Piplex was built to help developers build content-rich applications. To support this at scale, we developed the **Content Layer API**—a unified system to fetch and cache remote data sources at compile-time, making them available as type-safe collections.
+
+This post takes a deep dive into the Content Layer API, showing how it caches data and how you can use it in your projects.
+
+## What is the Content Layer?
+
+The Content Layer allows you to query data from any source (a CMS API, local Markdown files, or external databases) during compilation, and read them inside your `.pphx` layouts with type-safety.
+
+Rather than hitting APIs dynamically on every PHP page request (which slows down user page loading), Piplex uses **loaders** to fetch remote data at build-time. The data is cached locally inside the compiler store.
+
+<BlogContentImage src={contentLayerArchitectureImage} alt="Diagram showing the Piplex Content Layer architecture" />
+
+## Defining a Custom Loader
+
+You configure your collections inside `src/content/config.ts`. The `loader` tells the compiler how to fetch the records:
+
+```ts
+import { defineCollection, z } from 'piplex:content';
+
+const remoteProducts = defineCollection({
+  loader: async () => {
+    const response = await fetch('https://api.mycms.com/products');
+    const data = await response.json();
+    return data.map((item) => ({
+      id: item.sku,
+      ...item,
+    }));
+  },
+  schema: z.object({
+    id: z.string(),
+    name: z.string(),
+    price: z.number(),
+  }),
+});
+```
+
+This loaded data is then available inside your templates:
+
+```pphx
+@import { getCollection } from 'piplex:content'
+
+{|
+$products = getCollection('remoteProducts');
+|}
+
+<div class="product-grid">
+  {| foreach ($products as $product): |}
+    <div class="card">
+      <h3>{|= htmlspecialchars($product['name']) |}</h3>
+      <p>Price: ${|= $product['price'] |}</p>
+    </div>
+  {| endforeach; |}
+</div>
+```
+
+## Build-time Caching for Max Speed
+
+By caching CMS data into the local data store during compilation, Piplex removes the overhead of runtime database/API calls. Your compiled PHP files read records straight from memory or optimized local cache tables, serving pages in under 20ms.

@@ -1,0 +1,40 @@
+---
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+interface Props {
+	videos: { id: string; title?: string }[];
+	maxCols?: 2 | 3;
+}
+
+const { maxCols = 3, videos } = Astro.props;
+---
+
+<ul
+	class:list={[
+		'grid gap-5 !p-0 md:grid-flow-row-dense md:grid-cols-2 lg:-mx-16 lg:!mb-16 lg:!mt-8 xl:-mx-32',
+		{ 'lg:grid-cols-3': maxCols === 3 },
+	]}
+>
+	{
+		videos.map(({ id, title }) => (
+			<li class="before:!hidden">
+				<YouTube {id} {title} />
+			</li>
+		))
+	}
+</ul>
+
+<style>
+	/* Expand scrim and increase text shadow on title display to improve contrast. */
+	li :global(lite-youtube[data-title]:not([data-title=''])::before) {
+		height: 10rem;
+		padding-top: 1em;
+		line-height: 1;
+		text-shadow:
+			0 0 2px rgba(0, 0, 0, 0.25),
+			2px -2px 8px rgba(0, 0, 0, 0.5),
+			2px 2px 8px rgba(0, 0, 0, 0.5),
+			-2px 2px 8px rgba(0, 0, 0, 0.5),
+			-2px -2px 8px rgba(0, 0, 0, 0.5);
+	}
+</style>

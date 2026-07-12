@@ -1,0 +1,56 @@
+---
+import astroplate from '../../../_assets/themes/astroplate.png';
+import atom from '../../../_assets/themes/atom.png';
+import moreLPThemes from '../../../_assets/themes/more-lp-themes.png';
+import positivus from '../../../_assets/themes/positivus.png';
+import sendit from '../../../_assets/themes/sendit.png';
+import stone from '../../../_assets/themes/stone.png';
+import EcosystemPanel from '../EcosystemPanel.astro';
+
+const themes = [
+	{
+		href: '/themes/details/sendit/',
+		title: 'Sendit',
+		author: 'CloudCannon',
+		src: sendit,
+		isSeenOnMobile: true,
+	},
+	{
+		href: '/themes/details/stone/',
+		title: 'Stone',
+		author: 'm6v3l9',
+		src: stone,
+		isSeenOnMobile: true,
+	},
+	{
+		href: '/themes/details/positivus/',
+		title: 'Positivus',
+		author: 'Manul Thanura',
+		src: positivus,
+		isSeenOnMobile: true,
+	},
+	{
+		href: '/themes/details/atom/',
+		title: 'Atom',
+		author: 'Méschac Irung',
+		src: atom,
+		isSeenOnMobile: false,
+	},
+	{
+		href: '/themes/details/astroplate/',
+		title: 'Astroplate',
+		author: 'Zeon Studio',
+		src: astroplate,
+		isSeenOnMobile: false,
+	},
+];
+---
+
+<EcosystemPanel
+	{themes}
+	moreCard={{
+		href: '/themes/1/?search=&categories%5B%5D=landing-page',
+		image: moreLPThemes,
+		title: 'Browse more landing page themes',
+	}}
+/>

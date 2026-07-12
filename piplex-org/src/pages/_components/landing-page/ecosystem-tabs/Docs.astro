@@ -1,0 +1,38 @@
+---
+import astroDS from '../../../_assets/themes/astro-design-system.png';
+import ion from '../../../_assets/themes/ion.png';
+import starlight from '../../../_assets/themes/starlight.png';
+import EcosystemPanel from '../EcosystemPanel.astro';
+
+const themes = [
+	{
+		href: '/themes/details/starlight/',
+		title: 'Starlight',
+		author: 'Astro',
+		src: starlight,
+		isSeenOnMobile: true,
+	},
+	{
+		href: '/themes/details/astro-design-system-docs/',
+		title: 'Astro Design System',
+		author: 'jordi',
+		src: astroDS,
+		isSeenOnMobile: false,
+	},
+	{
+		href: '/themes/details/ion/',
+		title: 'Ion',
+		author: 'Louis Escher',
+		src: ion,
+		isSeenOnMobile: true,
+	},
+];
+---
+
+<EcosystemPanel
+	{themes}
+	moreLink={{
+		href: '/themes/1/?search=&categories%5B%5D=docs',
+		title: 'Browse more documentation themes',
+	}}
+/>

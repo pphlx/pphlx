@@ -1,0 +1,34 @@
+---
+import { getEntry } from 'astro:content';
+
+type Props = {
+	name?: string;
+	image?: string;
+	lg?: boolean;
+};
+
+let { name, image, lg = false } = Astro.props;
+
+if (!image && name) {
+	const author = await getEntry('authors', name);
+	image = author?.data.image?.src;
+}
+---
+
+{
+	image && (
+		<img
+			class:list={[
+				'my-0 inline-block rounded-full border border-astro-gray-100',
+				lg ? 'h-6 w-6 md:h-10 md:w-10' : 'h-6 w-6',
+			]}
+			src={image}
+			alt=""
+			aria-hidden="true"
+			width={48}
+			height={48}
+			loading="eager"
+			decoding="async"
+		/>
+	)
+}

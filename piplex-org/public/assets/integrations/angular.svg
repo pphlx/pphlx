@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="960px" height="960px" viewBox="0 0 960 960" style="enable-background:new 0 0 960 960;" xml:space="preserve">
+<defs>
+	<!-- Modern Angular Gradient Definitions -->
+	<linearGradient id="angular-left" x1="0%" y1="0%" x2="100%" y2="100%">
+		<stop offset="0%" stop-color="#e92c86" />
+		<stop offset="100%" stop-color="#ff5a36" />
+	</linearGradient>
+	<linearGradient id="angular-right" x1="0%" y1="0%" x2="100%" y2="100%">
+		<stop offset="0%" stop-color="#c3002f" />
+		<stop offset="100%" stop-color="#e92c86" />
+	</linearGradient>
+	<linearGradient id="angular-bottom" x1="0%" y1="0%" x2="100%" y2="0%">
+		<stop offset="0%" stop-color="#ff5a36" />
+		<stop offset="100%" stop-color="#ff8f00" />
+	</linearGradient>
+</defs>
+<g>
+	<!-- Right facet -->
+	<polygon points="562.6,109.8 804.1,629.5 829.2,233.1" fill="url(#angular-right)" />
+	<!-- Bottom facet -->
+	<polygon points="624.9,655.9 334.3,655.9 297.2,745.8 479.6,849.8 662,745.8" fill="url(#angular-bottom)" />
+	<!-- Inner A triangle/crossbar -->
+	<polygon points="384.1,539.3 575.2,539.3 479.6,307" fill="url(#angular-left)" />
+	<!-- Left facet -->
+	<polygon points="396.6,109.8 130,233.1 155.1,629.5" fill="url(#angular-left)" />
+</g>
+</svg>

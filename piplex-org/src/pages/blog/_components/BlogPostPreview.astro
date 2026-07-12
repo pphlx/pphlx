@@ -1,0 +1,62 @@
+---
+import { Image } from 'astro:assets';
+import { format } from 'date-fns';
+import { resolveCoverImage } from '~/content/blog/_resolveImage.js';
+
+export type Props = {
+	isCaseStudy: boolean;
+	post: {
+		id: string;
+		data: {
+			title: string;
+			description: string;
+			publishDate: Date;
+			coverImage?: string;
+		};
+	};
+	imageLoading: 'lazy' | 'eager';
+};
+
+const { post, isCaseStudy, imageLoading } = Astro.props;
+
+const image = await resolveCoverImage(post);
+---
+
+<article
+	class="relative border border-astro-gray-500 bg-astro-gray-600 p-4 outline-astro-pink-light transition-transform duration-300 ease-out focus-within:outline hover:scale-[1.03]"
+	aria-labelledby={post.id}
+>
+	<header>
+		<time class="code text-astro-gray-200" datetime={post.data.publishDate.toISOString()}>
+			{format(post.data.publishDate, 'MMMM d, yyyy')}
+		</time>
+	</header>
+	<div class="-mx-4">
+		{
+			image && (
+				<Image
+					src={image}
+					width="766"
+					widths={[766, 1500]}
+					sizes="90vw"
+					alt=""
+					class="my-4"
+					loading={imageLoading}
+				/>
+			)
+		}
+	</div>
+
+	<div class="mt-6 grid gap-x-16 gap-y-4 md:grid-cols-2">
+		<h3 class="heading-4 md:heading-3" id={post.id}>
+			<a
+				href={isCaseStudy ? `/case-studies/${post.id}/` : `/blog/${post.id}/`}
+				data-astro-prefetch
+				class="outline-none after:absolute after:inset-0"
+			>
+				{post.data.title}
+			</a>
+		</h3>
+		<p class="text-astro-gray-200">{post.data.description}</p>
+	</div>
+</article>

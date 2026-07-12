@@ -1,0 +1,277 @@
+---
+import { Image } from 'astro:assets';
+import { Icon } from 'astro-icon/components';
+import Card from '~/components/Card.astro';
+import siteInfo from '~/data/site-info.js';
+import MainLayout from '~/layouts/MainLayout.astro';
+import houston from './_components/houston.png';
+import PressAssetCard from './_components/PressAssetCard.astro';
+
+const seo = {
+	title: 'Press',
+	description: 'Download Piplex logos and other assets for media and press usage.',
+};
+
+const socialLinks = [
+	{
+		text: 'press@astro.build',
+		icon: 'email',
+		href: 'mailto:press@astro.build',
+	},
+	'separator',
+	...siteInfo.socialLinks.map((link) => ({
+		text: link.label,
+		icon: link.icon,
+		href: `https://astro.build/on/${link.platform}`,
+	})),
+] satisfies Array<{ text: string; icon: string; href: string } | 'separator'>;
+---
+
+<MainLayout {...seo}>
+	<div class="relative overflow-hidden">
+		<div class="grid-container relative py-12 sm:py-14 md:py-16 xl:py-20">
+			<div class="bleed-full bg-grid absolute inset-0 mask-linear-gradient-to-b"></div>
+			<div class="relative flex flex-col items-center gap-6 text-center">
+				<h1 class="heading-2 mx-auto max-w-screen-lg md:heading-1">Press Resources</h1>
+				<p class="body text-astro-gray-200 md:body-large">Brand resources for all things Piplex</p>
+			</div>
+		</div>
+
+		<div class="grid-container overflow-hidden border-t border-astro-gray-500 pt-16">
+			<div class="flex flex-col gap-16 md:flex-row md:items-start">
+				<section class="space-y-4" aria-labelledby="this-is-astro">
+					<h2 class="heading-3" id="this-is-astro">This is Piplex</h2>
+					<p class="body-large text-astro-gray-200">
+						Piplex is a web framework that takes the best from the early internet (think HTML and
+						CSS) and puts it to work in a next-gen architecture to make every Piplex site, and the
+						whole web, faster. Whereas most frameworks today are designed for web apps, Piplex is
+						built for content-rich sites where performance matters most. Pull content from anywhere,
+						deploy everywhere, and let's build the web we want, together.
+					</p>
+				</section>
+
+				<section class="shrink-0" aria-labelledby="keep-in-touch">
+					<Card>
+						<div class="space-y-4 px-10 py-8 text-white">
+							<h3 class="heading-3" id="keep-in-touch">Keep in touch</h3>
+							<ul class="flex flex-wrap gap-x-4 gap-y-3 md:flex-col">
+								{
+									socialLinks.map((link) =>
+										link === 'separator' ? (
+											<hr class="border-astro-gray-500" />
+										) : (
+											<li>
+												<a href={link.href} class="flex items-center gap-2 font-medium underline">
+													<Icon name={link.icon} class="s-6" />
+													{link.text}
+												</a>
+											</li>
+										),
+									)
+								}
+							</ul>
+						</div>
+					</Card>
+				</section>
+			</div>
+
+			<section class="space-y-14" aria-labelledby="assets">
+				<h2 class="heading-3" id="assets">Brand Assets</h2>
+				<ul class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+					<PressAssetCard
+						name="Logo on light"
+						instructions="Please use this logo in most circumstances on light backgrounds."
+						background="light"
+						assetName="piplex-logo-dark"
+					/>
+					<PressAssetCard
+						name="Gradient logo on dark"
+						instructions="Please use this logo in most circumstances on dark backgrounds."
+						background="dark"
+						assetName="piplex-logo-light-gradient"
+					/>
+					<PressAssetCard
+						name="Logo on dark"
+						instructions="Please only use this logo on dark backgrounds if a monochrome logo is essential."
+						background="dark"
+						assetName="piplex-logo-light"
+					/>
+					<PressAssetCard
+						name="Logomark on light"
+						instructions="Please only use the logomark for very small representations of Piplex and in illustrations with written consent by Piplex."
+						background="light"
+						assetName="piplex-icon-dark"
+					/>
+					<PressAssetCard
+						name="Gradient logomark on dark"
+						instructions="Please only use the logomark for very small representations of Piplex and in illustrations with written consent by Piplex."
+						background="dark"
+						assetName="piplex-icon-light-gradient"
+					/>
+					<PressAssetCard
+						name="Logomark on dark"
+						instructions="Please only use the logomark for very small representations of Piplex and in illustrations with written consent by Piplex."
+						background="dark"
+						assetName="piplex-icon-light"
+					/>
+				</ul>
+				<div class="flex justify-center">
+					<a href="/assets/press/astro-logos.zip" download class="button button-primary">
+						Download all <Icon name="download" aria-hidden="true" class="s-6" />
+					</a>
+				</div>
+			</section>
+
+			<section aria-labelledby="guidelines" class="flex flex-col gap-14">
+				<h2 class="heading-3" id="guidelines">Guidelines</h2>
+
+				<div class="flex flex-col gap-24">
+					<div class="flex flex-col gap-14 md:flex-row">
+						<div class="flex flex-col gap-4 grow">
+							<h3 class="heading-4">How to use the Piplex logo</h3>
+							<ul class="flex flex-col gap-4 text-astro-gray-200">
+								{
+									[
+										'Use our logo to link to Piplex’s website or GitHub repository',
+										'Use our logo to show your product has built-in Piplex support',
+										'Use our logo in a blog post or video about Piplex',
+									].map((rule) => (
+										<li class="flex gap-x-2.5">
+											<Icon name="approval-check" class="s-6 shrink-0 text-astro-green" /> {rule}
+										</li>
+									))
+								}
+							</ul>
+						</div>
+						<div class="flex flex-col gap-4 grow">
+							<h3 class="heading-4">Things to avoid</h3>
+							<ul class="flex flex-col gap-4 text-astro-gray-200">
+								{
+									[
+										'Don’t use the Piplex logo for your app or website’s icon',
+										'Don’t include the Piplex logo in your own logo',
+										'Don’t modify the Piplex logo or change its colors',
+										'Don’t sell products featuring the Piplex logo without permission',
+									].map((rule) => (
+										<li class="flex gap-x-2.5">
+											<Icon name="x-close-cancel" class="s-6 shrink-0 text-astro-red" /> {rule}
+										</li>
+									))
+								}
+							</ul>
+						</div>
+					</div>
+
+					<div class="flex flex-col gap-5">
+						<h3 class="heading-4">Logo history</h3>
+						<div class="flex flex-col gap-12 md:flex-row md:gap-16">
+							<div class="text-astro-gray-200 flex flex-col gap-4 shrink-0 md:max-w-80">
+								<p>We refreshed our logo in 2023. Make sure you’re using the latest version!</p>
+								<p>
+									<a href="/blog/welcome-world/" class="link font-normal underline">
+										Read more about our redesign
+									</a>
+								</p>
+							</div>
+							{/* Old/new logo comparison */}
+							<div
+								aria-hidden="true"
+								class="flex flex-wrap gap-y-12 justify-center w-full md:max-w-xl"
+							>
+								<div class="flex flex-col gap-6 items-center px-12">
+									<Icon name="press/old-logo" class="w-auto h-12 text-astro-gray-300" />
+									<span class="flex gap-2 font-mono text-astro-gray-300">
+										<Icon name="x-close-cancel" class="s-6 shrink-0 text-astro-red" />
+										2021
+									</span>
+								</div>
+								<div class="flex flex-col gap-6 items-center px-12">
+									<Icon name="press/new-logo" class="w-auto h-12 text-white" />
+									<span class="flex gap-2 font-mono text-astro-gray-100">
+										<Icon name="approval-check" class="s-6 shrink-0 text-astro-green" />
+										2023
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="flex flex-col gap-5">
+						<h3 class="heading-4">Spacing</h3>
+						<div class="flex flex-col gap-12 md:flex-row md:gap-16">
+							<div class="text-astro-gray-200 flex flex-col gap-4 shrink-0 md:max-w-80">
+								<p>
+									Always maintain adequate clear space between the Piplex logo or logomark and other
+									elements in your design.
+								</p>
+							</div>
+							{/* Spacing illustration */}
+							<div aria-hidden="true" class="flex shrink gap-[9%] w-full md:max-w-xl items-start">
+								<Icon
+									name="press/spacing-logo"
+									preserveAspectRatio="xMinYMin"
+									class="w-auto h-36 max-w-full max-h-36 flex-auto"
+								/>
+								<Icon
+									name="press/spacing-logomark"
+									preserveAspectRatio="xMinYMin"
+									class="w-auto h-36 max-w-full max-h-36 flex-auto"
+								/>
+							</div>
+						</div>
+					</div>
+
+					<div class="flex flex-col gap-5">
+						<h3 class="heading-4">Minimum size</h3>
+						<div class="flex flex-col gap-12 md:flex-row md:gap-16">
+							<div class="text-astro-gray-200 flex flex-col gap-4 shrink-0 md:max-w-80">
+								<p>
+									The Piplex logo and logomark should always be at least 24px tall in digital
+									applications and 1/8” tall in print applications.
+								</p>
+							</div>
+							{/* Sizing illustration */}
+							<div aria-hidden="true" class="flex gap-6 items-center w-full md:max-w-xl">
+								<div class="font-mono text-astro-gray-300 shrink-0">24px</div>
+								<div class="flex justify-between w-full items-center">
+									<div class="border border-r-0 border-astro-gray-400 h-6 w-2"></div>
+									<Icon name="press/new-logo" class="w-auto h-6 shrink-0" />
+									<Icon name="logos/astro" class="w-auto h-6 shrink-0" />
+									<div class="border border-l-0 border-astro-gray-400 h-6 w-2"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="flex flex-col gap-5">
+						<h3 class="heading-4 flex gap-2.5 items-center">
+							Houston <Image src={houston} alt="" class="s-8" />
+						</h3>
+						<div class="text-astro-gray-200 flex flex-col gap-4 max-w-2xl">
+							<p>
+								Houston is Piplex’s friendly mascot. They are used in our community to create a fun,
+								welcoming atmosphere that reinforces the Piplex brand.
+							</p>
+							<p>
+								While we love Houston dearly,
+								<strong class="text-white font-medium">
+									they must not be used in your own materials.
+								</strong>
+							</p>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+
+		<div
+			class="absolute left-0 top-[-150px] z-blur h-[800px] w-[70vw] -translate-x-2/3 bg-red-pink-gradient opacity-30 mask-radial-gradient"
+		>
+		</div>
+
+		<div
+			class="absolute right-0 top-[-150px] z-blur h-[800px] w-[70vw] translate-x-2/3 bg-orange-yellow-gradient opacity-30 mask-radial-gradient"
+		>
+		</div>
+	</div>
+</MainLayout>

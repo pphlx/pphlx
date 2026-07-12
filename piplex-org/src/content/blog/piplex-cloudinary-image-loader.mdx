@@ -1,0 +1,36 @@
+---
+title: "Optimizing Images with the Cloudinary Loader in Piplex"
+description: "How to use the Cloudinary asset loader to sync remote media folders into your compile-time Piplex Content Collections."
+publishDate: "2026-05-10"
+authors:
+  - matthew
+lang: "en"
+coverImage: "/src/content/blog/_images/community-loaders/blog-post-community-loaders.webp"
+socialImage: "/src/content/blog/_images/community-loaders/og-community-loaders.webp"
+---
+
+Managing large image libraries inside your Git repository can make the codebase heavy and slow down checkouts. 
+
+With the **Cloudinary Loader** for the Piplex Content Layer, you can store your images in Cloudinary and query them dynamically during compilation as if they were local files.
+
+## Configuring the Cloudinary Loader
+
+Declare the collection inside `src/content/config.ts` using the Cloudinary integration:
+
+```ts
+import { defineCollection } from "piplex:content";
+import { cloudinaryLoader } from "piplex-cloudinary-loader";
+
+const gallery = defineCollection({
+  loader: cloudinaryLoader({
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
+    folder: "products/summer-2026",
+  }),
+});
+
+export const collections = { gallery };
+```
+
+This loader fetches the metadata of the images in the folder and indexes them in your local SQLite store, allowing you to easily map responsive source urls and alternative attributes inside your `.pphx` layouts.

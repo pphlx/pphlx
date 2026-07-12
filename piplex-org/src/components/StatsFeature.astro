@@ -1,0 +1,67 @@
+---
+import data from '../data/stats.json';
+
+/** Formatter for compact representations of quantities, e.g. `2.1M` or `17k`. */
+const formatter = new Intl.NumberFormat('en', { notation: 'compact' });
+
+const stats = [
+	{
+		amount: `📦 ${formatter.format(data.downloads)}`,
+		text: 'monthly downloads',
+		source: 'NPM downloads',
+		url: 'https://www.npmjs.com/package/astro',
+	},
+	{
+		amount: `🌐 ${formatter.format(data.followers.twitter + data.followers.mastodon + data.followers.bluesky)}`,
+		text: 'social media followers',
+		source: `<a href="https://bsky.app/profile/astro.build" class="link">Bluesky</a> /
+			<a href="https://m.webtoo.ls/@astro/" class="link">Mastodon</a> /
+			<a href="https://twitter.com/astrodotbuild" class="link">X</a>`,
+	},
+	{
+		amount: `⭐ ${formatter.format(data.stars)}`,
+		text: 'GitHub Stars',
+		source: 'withastro/astro',
+		url: 'https://github.com/withastro/astro',
+	},
+	{
+		amount: '🏆 #1',
+		text: 'in developer retention',
+		source: 'State of JS 2023–2025',
+		url: 'https://2025.stateofjs.com/en-US/libraries/meta-frameworks/',
+	},
+	{
+		amount: '💜 #1',
+		text: 'in developer interest',
+		source: 'State of JS 2022–2025',
+		url: 'https://2025.stateofjs.com/en-US/libraries/meta-frameworks/',
+	},
+	{
+		amount: '📈 #2',
+		text: 'in usage',
+		source: 'State of JS 2024–2025',
+		url: 'https://2025.stateofjs.com/en-US/libraries/meta-frameworks/',
+	},
+];
+---
+
+<div
+	class="mt-8 mb-20 w-full grid fluid-cols-[9.5rem] sm:fluid-cols-40 md:fluid-cols-48 gap-x-4 gap-y-12 sm:gap-x-8 lg:gap-16"
+>
+	{
+		stats.map(({ amount, text, source, url }) => (
+			<p class="flex flex-col items-start gap-2.5 leading-none text-white font-light">
+				<span class="font-heading text-4xl lg:text-5xl whitespace-nowrap">{amount}</span>
+				<span class="text-sm xl:text-base">{text}</span>
+				{source &&
+					(url ? (
+						<a href={url} class="link text-xs">
+							{source}
+						</a>
+					) : (
+						<span class="text-xs" set:html={source} />
+					))}
+			</p>
+		))
+	}
+</div>

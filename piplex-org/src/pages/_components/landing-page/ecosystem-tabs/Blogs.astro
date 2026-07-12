@@ -1,0 +1,62 @@
+---
+import astroNano from '../../../_assets/themes/astro-nano.png';
+import brutal from '../../../_assets/themes/brutal.png';
+import dante from '../../../_assets/themes/dante.png';
+import microblog from '../../../_assets/themes/microblog.png';
+import openblog from '../../../_assets/themes/openblog.png';
+import stablo from '../../../_assets/themes/stablo.png';
+import EcosystemPanel from '../EcosystemPanel.astro';
+
+const themes = [
+	{
+		href: '/themes/details/astronano/',
+		title: 'Astro Nano',
+		author: 'Mark Horn',
+		src: astroNano,
+		isSeenOnMobile: true,
+	},
+	{
+		href: '/themes/details/stablo-blog-template/',
+		title: 'Stablo',
+		author: 'Web3Templates',
+		src: stablo,
+		isSeenOnMobile: true,
+	},
+	{
+		href: '/themes/details/microblog/',
+		title: 'Microblog',
+		author: 'Lexington Themes',
+		src: microblog,
+		isSeenOnMobile: true,
+	},
+	{
+		href: '/themes/details/dante/',
+		title: 'Dante',
+		author: 'Asta Bankauske',
+		src: dante,
+		isSeenOnMobile: true,
+	},
+	{
+		href: '/themes/details/brutal/',
+		title: 'Brutal',
+		author: 'ElianCodes',
+		src: brutal,
+		isSeenOnMobile: false,
+	},
+	{
+		href: '/themes/details/openblog/',
+		title: 'OpenBlog',
+		author: 'danielcgilibert',
+		src: openblog,
+		isSeenOnMobile: false,
+	},
+];
+---
+
+<EcosystemPanel
+	{themes}
+	moreLink={{
+		href: '/themes/1/?search=&categories%5B%5D=blog',
+		title: 'Browse more blog themes',
+	}}
+/>

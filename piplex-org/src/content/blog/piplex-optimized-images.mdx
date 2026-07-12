@@ -1,0 +1,42 @@
+---
+title: "Built-in Image Optimization in Piplex"
+description: "How the Piplex compiler provides automatic image optimization, layout shift prevention, and WebP generation for PHP monoliths."
+publishDate: "June 7, 2026"
+authors:
+  - erika
+  - fred
+lang: "en"
+coverImage: "/src/content/blog/_images/images/blog-hero-image-updates.webp"
+socialImage: "/src/content/blog/_images/images/og-image-image-better.jpg"
+---
+
+Images are often the heaviest assets on a webpage. When deploying websites to traditional backends (such as WordPress, WHMCS, or custom PHP servers), managing responsive images, converting them to modern formats like WebP, and preventing layout shifts usually requires complex PHP plugins or slow runtime scripts.
+
+To solve this, **Piplex** integrates automatic image optimization directly into its Go-compiled compiler pipeline!
+
+## How it works
+
+When compiling your `.pphx` files, you can use the built-in `<Image />` component. Simply import it and point it to your local assets:
+
+```html
+@import { Image } from 'piplex:assets'
+@import myImage from '../assets/banner.png'
+
+<Image src={myImage} alt="Feature Banner" />
+```
+
+During the build process, the Piplex Go compiler analyzes this element and does the following:
+
+1.  **WebP Conversion**: Automatically converts your source PNG/JPG into an optimized `.webp` file.
+2.  **Layout Shift (CLS) Prevention**: Infers the image width and height automatically, outputting explicit attributes in the HTML `<img>` tag to prevent page content jumps during loads.
+3.  **Modern Attributes**: Appends `loading="lazy"` and `decoding="async"` by default for fast page loading.
+
+The output inside your compiled `.php` files is a clean, optimized `<img>` tag pointing to your static assets directory:
+
+```html
+<img src="/assets/banner.XXXXXX.webp" width="1200" height="600" loading="lazy" decoding="async" alt="Feature Banner" />
+```
+
+## No Dynamic Server Cost
+
+Unlike other frameworks that optimize images dynamically at request-time (introducing CPU bottlenecks and slow initial page loads on your PHP server), Piplex pre-compiles optimized assets at build-time. Your server only has to serve static files, keeping response times under 20ms.

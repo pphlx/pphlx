@@ -1,0 +1,36 @@
+---
+title: "Built-in SQLite Support in Piplex"
+description: "How Piplex uses local SQLite engines to cache and query content collections at compile-time with full schema validation."
+publishDate: "2026-03-12"
+authors:
+  - matt
+lang: "en"
+coverImage: "/src/content/blog/_images/content-layer-deep-dive/blog-post-content-layer.png"
+socialImage: "/src/content/blog/_images/content-layer-deep-dive/og-content-layer.png"
+---
+
+Managing thousands of local Markdown or JSON records can slow down compile times in traditional SSG engines. To address this, **Piplex** features a built-in SQLite engine inside its Go-compiled compiler binary.
+
+This allows developers to query content collections natively using SQL, while the compiler caches the structured database records locally on-disk.
+
+## Defining SQLite Collections
+
+You declare your database schemas in `src/content/config.ts` using the Zod validation library:
+
+```ts
+import { defineCollection, z } from 'piplex:content';
+
+const products = defineCollection({
+  // Use the built-in SQLite database engine
+  schema: z.object({
+    id: z.string(),
+    name: z.string(),
+    price: z.number(),
+    category: z.enum(['hardware', 'software']),
+  }),
+});
+
+export const collections = { products };
+```
+
+During compilation, Piplex reads your source entries, validates them against the schema, and builds a temporary local SQLite database pool on disk (`.piplex/content.db`), allowing you to fetch records with lightning-fast speeds.

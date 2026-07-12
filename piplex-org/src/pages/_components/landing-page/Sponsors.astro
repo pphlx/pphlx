@@ -1,0 +1,187 @@
+---
+import { Icon } from 'astro-icon/components';
+import StripWidth from './StripWidth.astro';
+
+const exclusiveSponsors = [
+	{
+		height: 74,
+		label: 'Netlify',
+		src: 'sponsors/netlify',
+		href: 'https://www.netlify.com/?utm_campaign=Astro-2024&utm_source=astro-referral',
+	},
+	{
+		height: 32,
+		label: 'Webflow',
+		src: 'sponsors/webflow',
+		href: 'https://webflow.com/feature/cloud?utm_source=Astro&utm_medium=tech-partner&utm_campaign=fy26-astro&utm_content=fy26-homepage-sponsors',
+	},
+	{
+		height: 68,
+		label: 'Cloudflare',
+		src: 'sponsors/cloudflare',
+		href: 'https://www.cloudflare.com/?utm_source=astro&utm_medium=astro&utm_campaign=astro',
+	},
+];
+
+const mainSponsors = [
+	{
+		height: 26,
+		label: 'Mux',
+		src: 'sponsors/mux',
+		href: 'https://www.mux.com?utm_campaign=21819274-Astro&utm_source=astro',
+	},
+	{
+		height: 32,
+		label: 'ImageKit',
+		src: 'sponsors/imagekit',
+		href: 'https://imagekit.io/?utm_source=astro&utm_medium=astro&utm_campaign=astro',
+	},
+	{
+		height: 44,
+		label: 'CloudCannon',
+		src: 'sponsors/cloudcannon',
+		href: 'https://cloudcannon.com/',
+	},
+	{
+		height: 32,
+		label: 'Mintlify',
+		src: 'sponsors/mintlify',
+		href: 'https://www.mintlify.com/',
+	},
+];
+
+const sponsors = [
+	{
+		height: 64,
+		label: 'ArcJet',
+		src: 'sponsors/arcjet',
+		href: 'https://arcjet.com/?ref=astro.build',
+	},
+	{
+		height: 60,
+		label: 'Datadog',
+		src: 'sponsors/datadog',
+		href: 'https://www.datadoghq.com/',
+	},
+	{
+		height: 25,
+		label: 'Databento',
+		src: 'sponsors/databento',
+		href: 'https://databento.com/?utm_source=astro&utm_medium=sponsor&utm_content=display',
+	},
+	{
+		height: 48,
+		label: 'Forminit',
+		src: 'sponsors/forminit',
+		href: 'https://forminit.com/',
+	},
+	{
+		height: 28,
+		label: 'Fortuna',
+		src: 'sponsors/fortuna',
+		href: 'https://hirefortuna.com/',
+	},
+	{
+		height: 18,
+		label: 'BairesDev',
+		src: 'sponsors/bairesdev',
+		href: 'https://www.bairesdev.com/sponsoring-open-source-projects/',
+	},
+	{
+		height: 20,
+		label: 'N-iX',
+		src: 'sponsors/n-ix',
+		href: 'https://www.n-ix.com/',
+	},
+];
+
+/** Iterate over an array in chunks of a given size. */
+function* chunk<T>(array: T[], chunkSize: number) {
+	for (let i = 0; i < array.length; i += chunkSize) {
+		yield array.slice(i, i + chunkSize);
+	}
+}
+/** Break an array into rows of 2 or 3 items, choosing the column count that results in the fullest final row. */
+function rows<T>(array: T[]): T[][] {
+	const columnCount = array.length % 2 > array.length % 3 ? 3 : 2;
+	return [...chunk(array, columnCount)];
+}
+
+const largeSponsorRows = [...rows(exclusiveSponsors), ...rows(mainSponsors)];
+---
+
+<section class="mt-20 md:mt-24 lg:mt-28 xl:mt-36 w-full max-w-screen-xl mx-auto px-4 sm:px-8">
+	<h2
+		class="max-w-screen-md mx-auto font-heading text-2xl lg:text-3xl font-bold text-white text-balance text-center"
+	>
+		Astro is free, open-source software made possible by these wonderful sponsors
+	</h2>
+
+	<div
+		class="mt-8 lg:mt-10 max-w-4xl w-full mx-auto border border-astro-dark-100/20 bg-astro-dark-800 rounded-xl sm:rounded-2xl overflow-hidden"
+	>
+		{
+			largeSponsorRows.map((group, index, rows) => (
+				<div
+					class:list={[
+						{ 1: 'lg:grid-cols-1', 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3' }[group.length],
+						'lg:h-60 lg:grid lg:gap-y-4 text-center items-center justify-center lg:divide-x divide-y lg:divide-y-0 divide-astro-dark-100/20',
+						{ 'border-b border-astro-dark-100/20': index < rows.length - 1 },
+					]}
+				>
+					{group.map((sponsor) => (
+						<a
+							href={sponsor.href}
+							rel="sponsored"
+							target="_blank"
+							class="h-40 p-4 lg:size-full basis-1/3 flex items-center justify-center -outline-offset-2 hover:bg-astro-gray-100/5 bg-clip-padding transition-colors duration-400"
+						>
+							<StripWidth>
+								<Icon
+									class="w-full"
+									name={sponsor.src}
+									height={sponsor.height}
+									aria-hidden="true"
+								/>
+							</StripWidth>
+							<span class="sr-only">{sponsor.label}</span>
+						</a>
+					))}
+				</div>
+			))
+		}
+
+		<div class="grid grid-cols-2 lg:flex lg:flex-wrap divide-y divide-astro-dark-100/20">
+			{
+				sponsors.map((sponsor) => (
+					<a
+						href={sponsor.href}
+						rel="sponsored"
+						target="_blank"
+						class="h-32 lg:h-44 grow shrink basis-1/2 p-4 lg:basis-1/4 flex flex-col items-center justify-center gap-2 sm:gap-4 first:border-t first:border-astro-dark-100/20 odd:border-r odd:border-astro-dark-100/20 lg:[&:nth-child(2)]:border-r lg:[&:nth-child(6)]:border-r lg:border-astro-dark-100/20 hover:bg-astro-gray-100/5 bg-clip-padding transition-colors  duration-400 last:odd:col-span-2 last:odd:border-r-0 -outline-offset-2"
+					>
+						<StripWidth>
+							<Icon name={sponsor.src} height={sponsor.height} aria-hidden="true" class="w-full" />
+						</StripWidth>
+						<span class="sr-only">{sponsor.label}</span>
+					</a>
+				))
+			}
+			<a
+				href="https://opencollective.com/astrodotbuild"
+				rel="sponsored"
+				target="_blank"
+				class="h-32 lg:h-44 grow shrink basis-1/2 p-4 lg:basis-1/4 flex flex-col items-center justify-center gap-2 first:border-t first:border-astro-dark-100/20 odd:border-r odd:border-astro-dark-100/20 lg:[&:nth-child(2)]:border-r lg:[&:nth-child(6)]:border-r lg:border-astro-dark-100/20 hover:bg-astro-gray-100/5 bg-clip-padding transition-colors duration-400 last:odd:col-span-2 last:odd:border-r-0 -outline-offset-2"
+			>
+				<Icon
+					name="heart"
+					width="24"
+					height="24"
+					aria-hidden="true"
+					class="w-full text-astro-red"
+				/>
+				<span class="text-astro-gray-200 text-center leading-snug">Sponsor Astro</span>
+			</a>
+		</div>
+	</div>
+</section>

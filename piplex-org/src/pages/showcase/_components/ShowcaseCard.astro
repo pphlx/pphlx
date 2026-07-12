@@ -1,0 +1,36 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+
+export type Props = { site: CollectionEntry<'showcase'> };
+
+const { site } = Astro.props;
+const { image } = site.data;
+---
+
+<article
+	class:list={[
+		'group relative flex aspect-video h-full w-full cursor-pointer flex-col overflow-hidden bg-astro-gray-600',
+	]}
+>
+	<a href={site.data.url} rel="noopener nofollow ugc" target="_blank" class="h-full w-full">
+		<span class="sr-only">{site.data.title}</span>
+		<Image
+			src={image}
+			width={site.data.highlight ? 1600 : 800}
+			alt=""
+			class="h-full w-full object-cover"
+		/>
+
+		<footer
+			class="pointer-events-none absolute bottom-0 z-10 flex w-full flex-col gap-2 bg-astro-gray-500/95 p-4 opacity-0 transition-opacity duration-300 ease-out group-focus-within:opacity-100 group-hover:opacity-100"
+		>
+			<h2 class="heading-5">{site.data.title}</h2>
+			<p class="body flex flex-row items-center gap-2">
+				<span>{site.data.url}</span>
+				<Icon name="external-link" class="s-6" aria-hidden="true" />
+			</p>
+		</footer>
+	</a>
+</article>

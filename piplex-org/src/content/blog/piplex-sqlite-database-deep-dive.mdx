@@ -1,0 +1,40 @@
+---
+title: "Piplex SQLite Content Layer: A Technical Deep Dive"
+description: "A deep dive into how the Go-compiled Piplex binary embeds SQLite to run high-performance SQL queries over your project collections."
+publishDate: "2026-04-18"
+authors:
+  - matt
+lang: "en"
+coverImage: "/src/content/blog/_images/content-layer-deep-dive/blog-post-content-layer.png"
+socialImage: "/src/content/blog/_images/content-layer-deep-dive/og-content-layer.png"
+---
+
+When websites scale to tens of thousands of pages, in-memory metadata storage can run out of memory. 
+
+To solve this, **Piplex** embeds SQLite inside its Go compiler. This post takes a technical look under the hood at how Piplex configures, indexes, and queries this local content database.
+
+## Embedding SQLite in the Go Compiler
+
+By leveraging Go's native SQLite bindings, Piplex mounts a local database file (`.piplex/content.db`) during compilation. When you run `piplex build`:
+
+1.  **Ingestion**: Loaders read Markdown files, remote CMS APIs, or JSON datasets.
+2.  **Schema Check**: Fields are parsed and checked using Zod definitions.
+3.  **On-Disk Sync**: Validated records are written into indexed SQLite tables.
+4.  **PHP Serialization**: A static metadata snapshot is exported so that your dynamic PHP layouts can read records from a fast local cache table without making expensive network calls.
+
+## Writing SQL Queries
+
+Because your collections are written to an actual SQLite file, you can use standard SQL expressions to filter your content:
+
+```ts
+import { getCollection } from 'piplex:content';
+
+// Fetch only active hardware products costing less than $100
+const saleProducts = await getCollection('products', {
+  where: "category = 'hardware' AND price < 100",
+  orderBy: "price ASC",
+  limit: 10
+});
+```
+
+This ensures that only matching entries are loaded into the page generation process, keeping your memory usage minimal and compile times extremely short.

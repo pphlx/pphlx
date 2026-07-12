@@ -32,3 +32,9 @@ yarn-error.log*
 # Piplex Compiler Temporary Files
 src/.piplex_entry.js
 piplex.vite.config.mjs
+
+# WiX Installer Artifacts and Binaries
+.wix-bin/
+*.msi
+*.wixobj
+*.wixpdb

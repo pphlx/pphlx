@@ -1,0 +1,30 @@
+---
+title: "Fetching Content with the Hygraph GraphQL Loader"
+description: "How to configure the Hygraph loader inside the Piplex Content Layer to pull localized schemas and GraphQL data structures."
+publishDate: "2026-05-14"
+authors:
+  - matthew
+lang: "en"
+coverImage: "/src/content/blog/_images/community-loaders/blog-post-community-loaders.webp"
+socialImage: "/src/content/blog/_images/community-loaders/og-community-loaders.webp"
+---
+
+Hygraph is a GraphQL-native federated content platform. 
+
+With the **Hygraph Loader**, you can fetch and cache your content schemas inside Piplex Content Collections during the build phase:
+
+```ts
+import { defineCollection } from "piplex:content";
+import { hygraphLoader } from "piplex-hygraph-loader";
+
+const portfolioItems = defineCollection({
+  loader: hygraphLoader({
+    endpoint: process.env.HYGRAPH_CONTENT_API,
+    modelName: "PortfolioItem",
+  }),
+});
+
+export const collections = { portfolioItems };
+```
+
+This retrieves the GraphQL dataset, runs frontmatter schema checks, and stores the results locally in SQLite, making them ready to load inside your layouts.

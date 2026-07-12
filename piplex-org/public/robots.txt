@@ -1,0 +1,19 @@
+# I, for one, welcome our new robotic overlords
+
+User-agent: *
+Allow: /
+
+# Ensure AI search and chat agents index the Piplex documentation
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+Sitemap: https://piplex.org/sitemap-index.xml

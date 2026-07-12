@@ -1,0 +1,38 @@
+---
+import astroShopify from '../../../_assets/themes/astro-shopify.png';
+import quickStore from '../../../_assets/themes/quick-store.png';
+import skincare from '../../../_assets/themes/SKNCRE.png';
+import EcosystemPanel from '../EcosystemPanel.astro';
+
+const themes = [
+	{
+		href: '/themes/details/astro-shopify/',
+		title: 'Astro Shopify',
+		author: 'thomasKn',
+		src: astroShopify,
+		isSeenOnMobile: true,
+	},
+	{
+		href: '/themes/details/quick-store/',
+		title: 'Quick Store',
+		author: 'Lexington Themes',
+		src: quickStore,
+		isSeenOnMobile: true,
+	},
+	{
+		href: '/themes/details/skncre-a-hygraph-cosmetics-brand-e-commerce/',
+		title: 'SKNCRE',
+		author: 'Bryan Robinson',
+		src: skincare,
+		isSeenOnMobile: false,
+	},
+];
+---
+
+<EcosystemPanel
+	{themes}
+	moreLink={{
+		href: '/themes/1/?search=&categories%5B%5D=ecommerce',
+		title: 'Browse more e-commerce themes',
+	}}
+/>

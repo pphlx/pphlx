@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Inter:wght@100..900&family=Outfit:wght@100..900&display=swap');
+
+
+
+
+@font-face {
+	font-family: inter-fallback;
+	ascent-override: 90.2%;
+	descent-override: 22.48%;
+	line-gap-override: 0%;
+	size-adjust: 107.4%;
+	src: local('Arial');
+}

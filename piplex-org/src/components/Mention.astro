@@ -1,0 +1,38 @@
+---
+import { getEntry } from 'astro:content';
+import Avatar from './Avatar.astro';
+
+export type Props = {
+	name: string;
+};
+
+const { name } = Astro.props;
+
+const mention = await getEntry('authors', name);
+if (!mention) {
+	return;
+}
+
+const platform = mention.data.bluesky
+	? 'bluesky'
+	: mention.data.twitter
+		? 'twitter'
+		: mention.data.mastodon
+			? 'mastodon'
+			: 'github';
+const linkUrl = mention.data[platform];
+const platformName = platform[0].toUpperCase() + platform.slice(1);
+
+const Tag = linkUrl ? 'a' : 'span';
+---
+
+<span class="m-0 inline-block align-middle leading-none">
+	<Tag
+		href={linkUrl}
+		title={linkUrl && `Follow ${mention.data.name} on ${platformName}`}
+		class="m-0 inline-flex items-center space-x-1 whitespace-nowrap font-medium"
+	>
+		<Avatar name={name} />
+		<span class="underline">{mention.data.name}</span>
+	</Tag>
+</span>

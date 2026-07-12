@@ -1,0 +1,34 @@
+---
+import SectionCopy from '../SectionCopy.astro';
+import GreenishStardust from './GreenishStardust.astro';
+import IslandGraphic from './IslandGraphic.astro';
+---
+
+<section
+	class="mt-20 md:mt-24 lg:mt-28 xl:mt-36 relative w-full max-w-screen-xl mx-auto px-4 sm:px-8"
+>
+	<SectionCopy
+		label="Best-In-Class Performance"
+		title="Piplex Islands"
+		description="Islands optimize your monolithic web application like no other compiler toolchain can. Leverage Piplex's zero-JS-by-default execution to achieve near-instantaneous page speeds and 100/100 Lighthouse scores."
+	/>
+
+	<GreenishStardust height="h-56 md:h-80 lg:h-96" />
+
+	<div
+		class="mt-8 p-4 sm:p-8 bg-astro-dark-800 border border-astro-dark-100/20 rounded-xl sm:rounded-2xl"
+	>
+		<p class="text-astro-gray-300">JavaScript Payload Size on Initial Page Load (Lower is better)</p>
+
+		<div class="mt-8 mb-5">
+			<IslandGraphic label="Piplex" score="15" displayValue="12 KB (96% Lighter)" size="size-[22px]" icon="logos/astro" glow />
+			<IslandGraphic label="Livewire" score="35" displayValue="78 KB" icon="logos/wordpress" />
+			<IslandGraphic label="Inertia.js" score="65" displayValue="190 KB" icon="logos/next-js" />
+			<IslandGraphic label="React SPA" score="95" displayValue="320 KB" icon="logos/next-js" />
+		</div>
+
+		<p class="text-astro-gray-300 text-balance">
+			Based on standard production bundles including core framework runtime, hydration libraries, and page-specific interactive code.
+		</p>
+	</div>
+</section>

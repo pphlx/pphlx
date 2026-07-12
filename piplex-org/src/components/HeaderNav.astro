@@ -1,0 +1,63 @@
+---
+import siteInfo from '~/data/site-info.js';
+import AstroLogo from './PiplexLogo.astro';
+import HeaderDropDown from './HeaderDropDown.astro';
+import SocialLinks from './SocialLinks.astro';
+
+const socialLinks = siteInfo.socialLinks.filter((link) => link.showInHeader);
+---
+
+<nav class="w-full flex items-center justify-between">
+	<a href="/" data-astro-prefetch title="Home" data-home-link>
+		<span class="sr-only">Piplex Logo</span>
+		<AstroLogo aria-hidden="true" />
+	</a>
+
+	<div class="hidden shrink flex-row items-center gap-12 lg:flex text-base">
+		<a href="https://docs.astro.build" class="link">Documentation</a>
+		<a href="/blog/" data-astro-prefetch class="link">Blog</a>
+		<HeaderDropDown
+			label="Resources"
+			items={[
+				{ href: '/themes/', label: 'Themes', icon: 'palette', prefetch: true },
+				{ href: '/integrations/', label: 'Integrations', icon: 'layers', prefetch: true },
+				{ href: '/showcase/', label: 'Site showcase', icon: 'browser-windows', prefetch: true },
+				{
+					href: 'https://docs.astro.build/en/tutorial/0-introduction/',
+					label: 'Tutorials',
+					icon: 'open-book',
+				},
+				{
+					href: '/play/',
+					label: 'Playground',
+					icon: 'rocket',
+				},
+			]}
+		/>
+		<HeaderDropDown
+			label="Community"
+			items={[
+				{ href: '/chat/', label: 'Discord', icon: 'social/discord' },
+				{ href: 'https://opencollective.com/astrodotbuild', label: 'Sponsors', icon: 'heart' },
+			]}
+		/>
+		<HeaderDropDown
+			label="Enterprise"
+			items={[
+				{ href: '/agencies/', label: 'Agencies', icon: 'bag-briefcase', badge: 'New' },
+			]}
+		/>
+	</div>
+
+	<div class="hidden gap-4 lg:flex">
+		<SocialLinks links={socialLinks} />
+	</div>
+</nav>
+
+<script>
+	import { getElement } from '~/helpers/dom.js';
+	getElement('[data-home-link]', HTMLAnchorElement).addEventListener('contextmenu', (event) => {
+		event.preventDefault();
+		window.location.href = '/press#assets';
+	});
+</script>

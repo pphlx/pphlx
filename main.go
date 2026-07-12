@@ -2,6 +2,8 @@ package main
 
 import (
 	"archive/zip"
+	"bufio"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -36,6 +38,9 @@ type Component struct {
 	IsLayout      bool
 	IsJsComponent bool
 }
+
+//go:embed mcp/*
+var mcpFS embed.FS
 
 var (
 	importRegex      = regexp.MustCompile(`(?m)^@import\s+(\w+)\s+from\s+'([^']+)'\s*\r?\n?`)
@@ -72,6 +77,19 @@ func main() {
 				os.Exit(1)
 			}
 			fmt.Println("Dependency added successfully!")
+			os.Exit(0)
+		}
+		if cmd == "mcp" {
+			if len(os.Args) > 2 && strings.ToLower(os.Args[2]) == "install" {
+				err := installMCPServer()
+				if err != nil {
+					fmt.Printf("Error installing MCP server: %v\n", err)
+					os.Exit(1)
+				}
+				fmt.Println("Piplex MCP server registered successfully!")
+				os.Exit(0)
+			}
+			runMCPServer()
 			os.Exit(0)
 		}
 	}
@@ -235,7 +253,7 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 			compiledPage = strings.ReplaceAll(compiledPage, "{{PIPLEX_JS}}", jsTag)
 
 			os.MkdirAll(filepath.Dir(phpOutPath), 0755)
-			err = ioutil.WriteFile(phpOutPath, []byte(compiledPage), 0644)
+			err = ioutil.WriteFile(phpOutPath, []byte(strings.TrimLeft(compiledPage, " \t\r\n")), 0644)
 			if err != nil {
 				return err
 			}
@@ -1045,6 +1063,379 @@ func addDependency(repoURL string, projectDir string) error {
 	newManifestData, err := json.MarshalIndent(manifest, "", "  ")
 	if err == nil {
 		ioutil.WriteFile(manifestPath, newManifestData, 0644)
+	}
+
+	return nil
+}
+
+// MCP JSON-RPC Protocol Structs
+type JSONRPCRequest struct {
+	JSONRPC string          `json:"jsonrpc"`
+	ID      interface{}     `json:"id,omitempty"`
+	Method  string          `json:"method"`
+	Params  json.RawMessage `json:"params,omitempty"`
+}
+
+type JSONRPCResponse struct {
+	JSONRPC string      `json:"jsonrpc"`
+	ID      interface{} `json:"id"`
+	Result  interface{} `json:"result,omitempty"`
+	Error   interface{} `json:"error,omitempty"`
+}
+
+type ToolListResult struct {
+	Tools []Tool `json:"tools"`
+}
+
+type Tool struct {
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	InputSchema InputSchema `json:"inputSchema"`
+}
+
+type InputSchema struct {
+	Type       string              `json:"type"`
+	Properties map[string]Property `json:"properties"`
+	Required   []string            `json:"required,omitempty"`
+}
+
+type Property struct {
+	Type        string   `json:"type"`
+	Description string   `json:"description,omitempty"`
+	Enum        []string `json:"enum,omitempty"`
+}
+
+type ToolCallResult struct {
+	Content []Content `json:"content"`
+}
+
+type Content struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+type ToolCallArguments struct {
+	Query          string `json:"query,omitempty"`
+	Framework      string `json:"framework,omitempty"`
+	ComponentName  string `json:"componentName,omitempty"`
+	TargetPagePath string `json:"targetPagePath,omitempty"`
+	Topic          string `json:"topic,omitempty"`
+}
+
+func runMCPServer() {
+	// Write initialization log to stderr (standard stdout is reserved for JSON-RPC)
+	fmt.Fprintln(os.Stderr, "Piplex MCP server starting on stdio...")
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		var req JSONRPCRequest
+		if err := json.Unmarshal([]byte(line), &req); err != nil {
+			sendError(req.ID, -32700, "Parse error: invalid JSON received")
+			continue
+		}
+
+		switch req.Method {
+		case "initialize":
+			// Acknowledge connection and capabilities
+			res := JSONRPCResponse{
+				JSONRPC: "2.0",
+				ID:      req.ID,
+				Result: map[string]interface{}{
+					"protocolVersion": "2024-11-05",
+					"capabilities": map[string]interface{}{
+						"tools": map[string]interface{}{},
+					},
+					"serverInfo": map[string]string{
+						"name":    "piplex-mcp",
+						"version": "1.0.0",
+					},
+				},
+			}
+			sendResponse(res)
+
+		case "notifications/initialized":
+			// Client initialized handshake, no action needed
+
+		case "tools/list":
+			res := JSONRPCResponse{
+				JSONRPC: "2.0",
+				ID:      req.ID,
+				Result: ToolListResult{
+					Tools: []Tool{
+						{
+							Name:        "piplex/search_docs",
+							Description: "Search the Piplex documentation database.",
+							InputSchema: InputSchema{
+								Type: "object",
+								Properties: map[string]Property{
+									"query": {Type: "string", Description: "Search keyword"},
+								},
+								Required: []string{"query"},
+							},
+						},
+						{
+							Name:        "piplex/generate_island",
+							Description: "Generate a component template file and append the @import statement inside a .pphx template.",
+							InputSchema: InputSchema{
+								Type: "object",
+								Properties: map[string]Property{
+									"framework": {
+										Type:        "string",
+										Description: "The UI framework layout style",
+										Enum:        []string{"react", "vue", "svelte", "solid", "preact"},
+									},
+									"componentName":  {Type: "string", Description: "PascalCase component name (e.g. ShoppingCart)"},
+									"targetPagePath": {Type: "string", Description: "Absolute path to the target .pphx file"},
+								},
+								Required: []string{"framework", "componentName", "targetPagePath"},
+							},
+						},
+						{
+							Name:        "piplex/get_best_practices",
+							Description: "Get best practice guidelines for Piplex development topics.",
+							InputSchema: InputSchema{
+								Type: "object",
+								Properties: map[string]Property{
+									"topic": {
+										Type:        "string",
+										Description: "Target guideline topic",
+										Enum:        []string{"state-sharing", "styling", "routing", "php-variables"},
+									},
+								},
+								Required: []string{"topic"},
+							},
+						},
+					},
+				},
+			}
+			sendResponse(res)
+
+		case "tools/call":
+			var callArgs struct {
+				Name      string            `json:"name"`
+				Arguments ToolCallArguments `json:"arguments"`
+			}
+			if err := json.Unmarshal(req.Params, &callArgs); err != nil {
+				sendError(req.ID, -32602, "Invalid params")
+				continue
+			}
+
+			result, err := handleToolCall(callArgs.Name, callArgs.Arguments)
+			if err != nil {
+				sendError(req.ID, -32603, err.Error())
+			} else {
+				res := JSONRPCResponse{
+					JSONRPC: "2.0",
+					ID:      req.ID,
+					Result:  result,
+				}
+				sendResponse(res)
+			}
+
+		default:
+			sendError(req.ID, -32601, "Method not found")
+		}
+	}
+}
+
+func handleToolCall(toolName string, args ToolCallArguments) (interface{}, error) {
+	switch toolName {
+	case "piplex/search_docs":
+		query := strings.ToLower(args.Query)
+		docs := fmt.Sprintf("No exact matches found for \"%s\".\n\nPiplex standard syntax:\n- Templates use the .pphx extension.\n- Framework integration components are imported using @import (e.g. @import Button from '../components/ThemeLayout').", query)
+
+		if strings.Contains(query, "import") || strings.Contains(query, "extension") {
+			docs = "Importing components in Piplex:\n- React/JSX components can omit extensions: @import Header from './Header'\n- Vue, Svelte, Solid, and Preact components must include their extensions: @import Counter from './Counter.vue' or @import Card from './Card.svelte'"
+		} else if strings.Contains(query, "state") || strings.Contains(query, "share") {
+			docs = "State Sharing in Piplex:\n- Expose state globally or dispatch custom events between framework islands: window.dispatchEvent(new CustomEvent('piplex-state-update', { detail: data }))\n- Svelte or Vue islands can listen and react in real-time."
+		}
+
+		return ToolCallResult{
+			Content: []Content{
+				{Type: "text", Text: docs},
+			},
+		}, nil
+
+	case "piplex/generate_island":
+		// 1. Verify target page exists
+		targetPath := args.TargetPagePath
+		if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+			return nil, fmt.Errorf("target template file does not exist at: %s", targetPath)
+		}
+
+		// 2. Find nearest project directory (contain piplex.json) to locate src/components
+		dir := filepath.Dir(targetPath)
+		projectDir := ""
+		for {
+			if _, err := os.Stat(filepath.Join(dir, "piplex.json")); err == nil {
+				projectDir = dir
+				break
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+		if projectDir == "" {
+			projectDir = filepath.Dir(targetPath)
+		}
+
+		// Read piplex.json to resolve srcDir, defaulting to "src"
+		srcDirName := "src"
+		manifestPath := filepath.Join(projectDir, "piplex.json")
+		if manifestData, err := ioutil.ReadFile(manifestPath); err == nil {
+			var manifest map[string]interface{}
+			if err := json.Unmarshal(manifestData, &manifest); err == nil {
+				if val, ok := manifest["srcDir"]; ok {
+					if srcStr, isStr := val.(string); isStr {
+						srcDirName = srcStr
+					}
+				}
+			}
+		}
+
+		componentsDir := filepath.Join(projectDir, srcDirName, "components")
+		os.MkdirAll(componentsDir, 0755)
+
+		fileExtension := "jsx"
+		boilerplateCode := ""
+
+		switch args.Framework {
+		case "react":
+			fileExtension = "jsx"
+			boilerplateCode = fmt.Sprintf("export default function %s() {\n  return (\n    <button className=\"px-4 py-2 bg-blue-600 text-white rounded\">\n      %s Island\n    </button>\n  );\n}\n", args.ComponentName, args.ComponentName)
+		case "vue":
+			fileExtension = "vue"
+			boilerplateCode = fmt.Sprintf("<template>\n  <button class=\"px-4 py-2 bg-emerald-600 text-white rounded\">\n    {{ label }}\n  </button>\n</template>\n\n<script>\nexport default {\n  data() {\n    return {\n      label: '%s Island'\n    };\n  }\n};\n</script>\n", args.ComponentName)
+		case "svelte":
+			fileExtension = "svelte"
+			boilerplateCode = fmt.Sprintf("<script>\n  let label = '%s Island';\n</script>\n\n<button class=\"px-4 py-2 bg-orange-600 text-white rounded\">\n  {label}\n</button>\n", args.ComponentName)
+		case "solid":
+			fileExtension = "solid.jsx"
+			boilerplateCode = fmt.Sprintf("import { createSignal } from \"solid-js\";\n\nexport default function %s() {\n  const [label] = createSignal(\"%s Island\");\n  return (\n    <button class=\"px-4 py-2 bg-cyan-600 text-white rounded\">\n      {label()}\n    </button>\n  );\n}\n", args.ComponentName, args.ComponentName)
+		case "preact":
+			fileExtension = "js"
+			boilerplateCode = fmt.Sprintf("export default function %s() {\n  return (\n    <button class=\"px-4 py-2 bg-indigo-600 text-white rounded\">\n      %s Island\n    </button>\n  );\n}\n", args.ComponentName, args.ComponentName)
+		}
+
+		componentFilename := fmt.Sprintf("%s.%s", args.ComponentName, fileExtension)
+		componentFullPath := filepath.Join(componentsDir, componentFilename)
+
+		// Write component file
+		if err := ioutil.WriteFile(componentFullPath, []byte(boilerplateCode), 0644); err != nil {
+			return nil, fmt.Errorf("failed to write component file: %v", err)
+		}
+
+		// Inject @import at the top of the template file
+		pageData, err := ioutil.ReadFile(targetPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read template page: %v", err)
+		}
+		pageContent := string(pageData)
+
+		extImport := fmt.Sprintf(".%s", fileExtension)
+		if args.Framework == "react" {
+			extImport = ""
+		}
+		importStatement := fmt.Sprintf("@import %s from '../components/%s%s'\n", args.ComponentName, args.ComponentName, extImport)
+
+		if !strings.Contains(pageContent, fmt.Sprintf("@import %s", args.ComponentName)) {
+			newContent := importStatement + pageContent
+			ioutil.WriteFile(targetPath, []byte(newContent), 0644)
+		}
+
+		successMessage := fmt.Sprintf("[Success] Generated %s component: %s\nUpdated template: %s", args.Framework, componentFullPath, targetPath)
+		return ToolCallResult{
+			Content: []Content{
+				{Type: "text", Text: successMessage},
+			},
+		}, nil
+
+	case "piplex/get_best_practices":
+		topic := args.Topic
+		responseText := ""
+
+		if topic == "state-sharing" {
+			responseText = "Best Practice: Share reactive state across separate framework islands using custom window events or micro-stores, avoiding heavy framework-specific context APIs."
+		} else if topic == "styling" {
+			responseText = "Best Practice: Piplex supports tailwind out of the box. Scope vanilla CSS styles inside components to avoid global stylesheet conflicts."
+		} else {
+			responseText = fmt.Sprintf("Guidelines for topic: %s. Always preserve Smarty Variable key structures when referencing PHP properties inside template blocks.", topic)
+		}
+
+		return ToolCallResult{
+			Content: []Content{
+				{Type: "text", Text: responseText},
+			},
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("tool not found: %s", toolName)
+	}
+}
+
+func sendResponse(res JSONRPCResponse) {
+	data, _ := json.Marshal(res)
+	fmt.Println(string(data))
+}
+
+func sendError(id interface{}, code int, message string) {
+	res := JSONRPCResponse{
+		JSONRPC: "2.0",
+		ID:      id,
+		Error: map[string]interface{}{
+			"code":    code,
+			"message": message,
+		},
+	}
+	sendResponse(res)
+}
+
+func installMCPServer() error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get user home directory: %v", err)
+	}
+
+	mcpDestDir := filepath.Join(homeDir, ".gemini", "antigravity-ide", "mcp", "piplex")
+	err = os.MkdirAll(mcpDestDir, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create destination directory: %v", err)
+	}
+
+	files := []string{
+		"mcp/search_docs.json",
+		"mcp/generate_island.json",
+		"mcp/get_best_practices.json",
+		"mcp/instructions.md",
+	}
+
+	for _, file := range files {
+		data, err := mcpFS.ReadFile(file)
+		if err != nil {
+			return fmt.Errorf("failed to read embedded file %s: %v", file, err)
+		}
+
+		baseName := filepath.Base(file)
+		destPath := filepath.Join(mcpDestDir, baseName)
+
+		if baseName == "instructions.md" {
+			execPath, err := os.Executable()
+			if err == nil {
+				execPath = filepath.Clean(execPath)
+				content := string(data)
+				content = strings.Replace(content, `F:\VS CODE\Rust\piplex\piplex.exe`, execPath, 1)
+				data = []byte(content)
+			}
+		}
+
+		err = ioutil.WriteFile(destPath, data, 0644)
+		if err != nil {
+			return fmt.Errorf("failed to write file %s to %s: %v", baseName, destPath, err)
+		}
+		fmt.Printf("Registered tool file: %s\n", destPath)
 	}
 
 	return nil

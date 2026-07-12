@@ -1,0 +1,63 @@
+---
+import { Code } from 'astro-expressive-code/components';
+
+const standardCode = `@import BuyButton from '../components/BuyButton.jsx'
+@import Layout from '../layouts/ProductPageLayout'
+
+{|
+// Fetch product details from PHP database
+$product = $db->query("SELECT * FROM products LIMIT 1");
+$price = $product['price'];
+|}
+
+<Layout>
+  <img src="{|= $product['imageUrl'] |}" alt="" />
+  <h2>{|= $product['name'] |}</h2>
+  <BuyButton id="{|= $product['id'] |}" price="{|= $price |}" client:load />
+</Layout>`;
+
+const threeDCode = `@import ProductCanvas from '../components/ProductCanvas.js'
+@import BuyButton from '../components/BuyButton.js'
+@import Layout from '../layouts/ProductPageLayout'
+
+{|
+// Fetch product details from PHP database
+$product = $db->query("SELECT * FROM products LIMIT 1");
+$price = $product['price'];
+|}
+
+<Layout>
+  <ProductCanvas model="{|= $product['modelUrl'] |}" client:load />
+  <h2>{|= $product['name'] |}</h2>
+  <BuyButton id="{|= $product['id'] |}" price="{|= $price |}" client:load />
+</Layout>`;
+---
+
+<div class="bg-[#07040F] p-1 rounded-[20px]">
+	<div class="w-full h-80 xl:h-96 min-h-80 code" id="code-standard-container">
+		<Code
+			lang="php"
+			meta="{1, 13}"
+			code={standardCode}
+		/>
+	</div>
+	<div class="w-full h-80 xl:h-96 min-h-80 code hidden" id="code-3d-container">
+		<Code
+			lang="php"
+			meta="{1-2, 12, 14}"
+			code={threeDCode}
+		/>
+	</div>
+</div>
+
+<style>
+	.code :global(:is(.expressive-code, figure, pre)) {
+		height: 100%;
+	}
+	.code :global(:is(pre)) {
+		@apply border border-astro-dark-100/20 rounded-2xl;
+	}
+	.hidden {
+		display: none;
+	}
+</style>

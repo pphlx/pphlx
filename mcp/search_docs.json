@@ -1,0 +1,16 @@
+{
+  "name": "piplex/search_docs",
+  "description": "Search the Piplex documentation database.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "Search keyword"
+      }
+    },
+    "required": [
+      "query"
+    ]
+  }
+}
