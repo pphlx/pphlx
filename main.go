@@ -106,19 +106,19 @@ func main() {
 	}
 
 	// 1. Read config (looking for pphlx.config.mjs first, then fallback to json)
-	configPath := "pphlx.config.mjs"
+	configPath := "./pphlx.config.mjs"
 	isMjs := true
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		configPath = "pphlx.config.json"
+		configPath = "./pphlx.config.json"
 		isMjs = false
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
-			configPath = "pphlx.json"
+			configPath = "./pphlx.json"
 			if _, err := os.Stat(configPath); os.IsNotExist(err) {
 				// Fallback to test_project if run from compiler root
-				configPath = filepath.Join("test_project", "pphlx.config.mjs")
+				configPath = "./test_project/pphlx.config.mjs"
 				isMjs = true
 				if _, err := os.Stat(configPath); os.IsNotExist(err) {
-					configPath = filepath.Join("test_project", "pphlx.config.json")
+					configPath = "./test_project/pphlx.config.json"
 					isMjs = false
 				}
 			}
