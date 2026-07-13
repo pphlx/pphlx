@@ -1,10 +1,10 @@
-# Piplex CLI Installer for Windows PowerShell
+# PPHLX CLI Installer for Windows PowerShell
 # Downloads and installs the native Windows binary into user profile path without requiring administrator privileges.
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "------------------------------------------------" -ForegroundColor Cyan
-Write-Host "      Piplex Windows CLI Installer Boot Sequence" -ForegroundColor Cyan
+Write-Host "      PPHLX Windows CLI Installer Boot Sequence" -ForegroundColor Cyan
 Write-Host "------------------------------------------------" -ForegroundColor Cyan
 
 # 1. Detect CPU Architecture
@@ -19,10 +19,10 @@ switch -regex ($Arch) {
 }
 
 # 2. Get target version tag (Hardcoded for dev phase)
-$Repo = "KillerTyzon/Piplex"
+$Repo = "KillerTyzon/PPHLX"
 $Tag = "v1.0.0"
 
-$ZipName = "piplex-windows-$Arch.zip"
+$ZipName = "pphlx-windows-$Arch.zip"
 $DownloadUrl = "https://github.com/$Repo/releases/download/$Tag/$ZipName"
 
 Write-Host "Detected System: Windows ($Arch)" -ForegroundColor Green
@@ -30,20 +30,20 @@ Write-Host "Target Release:  $Tag" -ForegroundColor Green
 Write-Host "Downloading:     $DownloadUrl" -ForegroundColor Gray
 
 # 3. Download to Temp Directory
-$TempDir = Join-Path $env:TEMP "piplex-installer-$(Get-Random)"
+$TempDir = Join-Path $env:TEMP "pphlx-installer-$(Get-Random)"
 New-Item -ItemType Directory -Path $TempDir -Force | Out-Null
-$ZipPath = Join-Path $TempDir "piplex.zip"
+$ZipPath = Join-Path $TempDir "pphlx.zip"
 
 try {
     Invoke-WebRequest -Uri $DownloadUrl -OutFile $ZipPath -UseBasicParsing
 } catch {
-    Write-Error "Failed to download the Piplex release zip. It might not be uploaded yet."
+    Write-Error "Failed to download the PPHLX release zip. It might not be uploaded yet."
     exit 1
 }
 
 # 4. Extract Zip
 Write-Host "Extracting files..." -ForegroundColor Gray
-$InstallDir = Join-Path $HOME ".piplex\bin"
+$InstallDir = Join-Path $HOME ".pphlx\bin"
 if (-not (Test-Path $InstallDir)) {
     New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
 }
@@ -61,7 +61,7 @@ if ($UserPath -split ";" -notcontains $InstallDir) {
 }
 
 Write-Host "------------------------------------------------" -ForegroundColor Cyan
-Write-Host "  Success! Piplex has been installed successfully." -ForegroundColor Green
+Write-Host "  Success! PPHLX has been installed successfully." -ForegroundColor Green
 Write-Host "  Please RESTART your terminal/VS Code for PATH updates to load." -ForegroundColor Yellow
-Write-Host "  Verify by running: piplex --version" -ForegroundColor Green
+Write-Host "  Verify by running: pphlx --version" -ForegroundColor Green
 Write-Host "------------------------------------------------" -ForegroundColor Cyan

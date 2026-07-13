@@ -1,4 +1,4 @@
-module piplex
+module pphlx
 
 go 1.25.6
 

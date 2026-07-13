@@ -1,6 +1,6 @@
 {
-  "name": "piplex/get_best_practices",
-  "description": "Get best practice guidelines for Piplex development topics.",
+  "name": "pphlx/get_best_practices",
+  "description": "Get best practice guidelines for PPHLX development topics.",
   "inputSchema": {
     "type": "object",
     "properties": {

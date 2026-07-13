@@ -1,0 +1,44 @@
+---
+title: "Hybrid Rendering: Mixing Compiled PHP and Pre-rendered Static HTML"
+description: "How PPHLX compiles specific layouts into static files while keeping others dynamic on the PHP server."
+publishDate: "January 26, 2026"
+authors:
+  - nate
+socialImage: "/src/content/blog/_images/hybrid-rendering/social.webp"
+coverImage: "/src/content/blog/_images/hybrid-rendering/cover.webp"
+lang: "en"
+---
+
+With PPHLX, developers no longer have to choose between a fully static site and a fully server-side layout. By default, PPHLX compiles your `.pphx` files to dynamic `.php` files that run natively on your server. However, you can toggle individual pages to compile as pre-rendered flat `.html` files instead.
+
+This is **Hybrid Rendering**—combining the raw performance of pre-rendered static HTML for public pages with the full, dynamic power of server-side PHP for dashboard paths, plugins, or admin areas.
+
+## How the PPHLX Compilation Pipeline Works
+
+The PPHLX Go compiler analyzes your templates and routes them to different output files depending on their configuration:
+
+1.  **Dynamic PHP Routes (Default)**: Emits standard `.php` files containing server-side instructions, variables, and database connections. This layout is rendered fresh on every server request.
+2.  **Static HTML Routes**: Emits pre-rendered `.html` files. The compiler processes the components at build-time, rendering them into a flat HTML tree. The client-side framework scripts are bundled into an optimized `.js` asset.
+
+## Setting Up Hybrid Rendering
+
+To compile a page statically, simply export the `prerender` setting inside your template:
+
+```html
+---
+// This specific route will compile to static HTML at build time!
+export const prerender = true;
+---
+<div class="landing-hero">
+  <h1>Welcome to our Pre-rendered Landing Page</h1>
+</div>
+```
+
+When you run `PPHLX build`, the compiler analyzes this declaration, writes the output directly to a flat `index.html` file, and keeps your other templates (like `dashboard.pphx`) compiled as `dashboard.php` for live execution on your server.
+
+## Ideal Use Cases for Monoliths
+
+*   **Public Landing Pages**: Keep your website home page and marketing resources pre-rendered to flat HTML for sub-millisecond loading performance and easy CDN caching.
+*   **Dynamic API Endpoints**: Keep endpoints running as dynamic `.php` files to write and read from database systems (like WordPress `wpdb` or WHMCS models).
+*   **Checkout & Customer Panels**: Run interactive client paths as live server-side templates with direct access to user session states (`$_SESSION`).
+

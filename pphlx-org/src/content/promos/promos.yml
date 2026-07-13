@@ -1,0 +1,17 @@
+agencies:
+  href: /agencies/
+  eyebrow: PPHLX Partner Agencies
+  title: Get PPHLX support from the pros
+  description: From landing pages to ecommerce, get the expert assistance you need&nbsp;→
+  image:
+    src: ./meteor.webp
+    alt: ''
+
+swag:
+  href: /blog/integrating-PPHLX-with-whmcs-and-wordpress/
+  title: Build Plug-and-Play Themes
+  description: Learn how to integrate PPHLX with WordPress and WHMCS template structures without any Node.js toolchains&nbsp;→
+  image:
+    src: ./swag.webp
+    alt: ''
+

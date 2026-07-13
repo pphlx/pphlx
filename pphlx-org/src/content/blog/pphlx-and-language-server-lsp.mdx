@@ -1,0 +1,26 @@
+---
+title: "PPHLX + Volar: Powers the PPHLX LSP"
+description: "How we leveraged the Volar framework to build the PPHLX Language Server (LSP), delivering syntax highlighting and code intelligence."
+publishDate: "March 11, 2026"
+authors:
+  - erika
+socialImage: "/src/content/blog/_images/astro-ecosystem-love/social-og.webp"
+lang: "en"
+---
+
+At PPHLX, we want developers to have a top-tier editing experience when writing `.pphx` files. But supporting mixed template files—where native HTML, PHP code blocks, `@import` directives, and interactive React/Vue/Svelte component islands all live in a single file—requires powerful language tools.
+
+To build this experience, we leveraged the incredible open-source project **[Volar](https://volarjs.dev/)**.
+
+## What is Volar?
+
+Originally developed by the Vue team, Volar has transformed into a framework-agnostic language tooling framework. It provides a reliable base for developers to build Language Servers (LSP) for custom template engines.
+
+By migrating the **PPHLX Language Server** to Volar, we were able to deliver a robust developer experience inside code editors:
+
+-   **Multi-Syntax Highlighting**: Real-time syntax detection for HTML tags, inline PHP blocks, and imported Svelte/React scripts.
+-   **Autocomplete & IntelliSense**: Full autocomplete recommendations for imported component props and PHP function variables.
+-   **Diagnostic Checks**: Instant red squiggles and alerts for compilation syntax errors before you even run the compiler.
+
+By building on top of Volar, we deleted thousands of lines of custom parser code and significantly reduced our IDE extension maintenance cost, letting us focus on the core Go compilation performance.
+

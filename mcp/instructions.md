@@ -1,9 +1,9 @@
-# Piplex MCP Server Instructions
+# PPHLX MCP Server Instructions
 
-To run the Piplex MCP server in Antigravity IDE:
+To run the PPHLX MCP server in Antigravity IDE:
 
 ### Execution Configuration
-*   **Command**: `F:\VS CODE\Rust\piplex\piplex.exe`
+*   **Command**: `F:\VS CODE\GO\PPHLX\pphlx.exe`
 *   **Arguments**: `mcp`
 *   **Transport**: `stdio`
 

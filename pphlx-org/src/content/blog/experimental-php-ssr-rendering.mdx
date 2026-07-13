@@ -1,0 +1,67 @@
+---
+title: "Native Server-Side PHP Rendering with PPHLX"
+description: "Announcing experimental support for server-side layout compilation and SSR in PPHLX"
+publishDate: "April 5, 2026"
+socialImage: "/src/content/blog/_images/experimental-ssr/social.webp"
+lang: "en"
+authors:
+  - matthew
+---
+
+Today we are thrilled to announce experimental support for server-side layout compilation and rendering (SSR) in PPHLX. With PPHLX, we’ve unlocked entirely new use-cases (dynamic PHP plugins, anyone?) and scale that just weren’t possible before. Our implementation combines PPHLX’s unique template approach with native PHP features like session authentication, backend database access, direct global variables, and more.
+
+If you’re ready to jump in, head over to [the docs](https://docs.PPHLX.org/en/guides/server-side-rendering/) and get started.
+
+## Motivation
+
+We heard you! One of the questions we get most often is “Can PPHLX compile component islands to run inside my existing PHP layouts?”
+
+When we set out to build PPHLX, we decided to focus on the traditional server environments, popularly called monolithic backends (WordPress, WHMCS, Magento, custom PHP platforms). These platforms came with some important limitations when developers tried to use modern frontend frameworks:
+
+- To use React, Vue, or Svelte, you traditionally had to build a separate Single Page Application (SPA), hosting it on a Node.js process and connecting via APIs.
+- Setting up a Node.js runtime process on shared hosts or standard client servers introduces extra cost, complexity, and a fragile toolchain.
+- Interactive components like shopping carts or login buttons couldn't easily access the native PHP session state (`$_SESSION` or WHMCS Smarty variables) without multiple API roundtrips.
+
+From Day 1, we knew that PPHLX’s approach to compiled PHP layouts was uniquely positioned to solve this problem.
+
+## Enter: Native PHP Server-Side Rendering (SSR)
+
+PPHLX compiles your `.pphx` templates directly into standard `.php` files. This means your UI frameworks compile to a single, static JavaScript/CSS bundle for the browser, while the template structure itself is written in native PHP.
+
+Take user authentication for instance. With standard SPAs, you have to query an API like `/api/auth` and show loading spinners while waiting for the response.
+
+With PPHLX, you can write native PHP variables and session checks directly inside your template using standard PHP server code:
+
+```pphx
+@import Counter from '../components/Counter.svelte'
+@import Header from '../components/Header.jsx'
+
+{|
+// Example: src/pages/index.pphx
+// We can use standard PHP session checks directly on the server
+if (!isset($_SESSION['user_id'])) {
+    header("Location: /login.php");
+    exit;
+}
+$user = getUser($_SESSION['user_id']);
+|}
+
+<div class="container">
+  <Header user="{|= htmlspecialchars($user['name']) |}" />
+  <Counter />
+</div>
+```
+
+The PPHLX Go compiler reads this page, compiles Svelte and React code blocks into static browser assets, and emits a standard, high-performance `.php` file that runs natively on Apache or Nginx without any Node.js overhead.
+
+## Deploying Anywhere PHP Runs
+
+Because the compiler outputs pure static files (CSS/JS) and native PHP code, there are no special hosting requirements or cloud adapters needed:
+
+- Deploy on cheap shared server hosts (GoDaddy, HostGator, etc.).
+- Drop compiled files directly inside a **WordPress** theme folder.
+- Embed layouts inside a **WHMCS** admin addon directory.
+- Upload templates to a **Magento** or Laravel application.
+
+SSR support in PPHLX is currently experimental. Over the next few months, we’ll be releasing more helpers and extensions to make it even easier to connect with major PHP frameworks out-of-the-box.
+

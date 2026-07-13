@@ -1,0 +1,100 @@
+---
+title: "CMS and API Data Loaders in PPHLX"
+description: "How to use Content Layer loaders to pull remote data from WordPress, WHMCS, Notion, or Stripe APIs into local type-safe static collections."
+publishDate: "2026-05-19"
+authors:
+  - matthew
+lang: "en"
+coverImage: "/src/content/blog/_images/community-loaders/blog-post-community-loaders.webp"
+socialImage: "/src/content/blog/_images/community-loaders/og-community-loaders.webp"
+---
+
+With the introduction of the PPHLX Content Layer, you can ingest structured content from any source and compile it into local, type-safe collections. 
+
+Rather than querying external CMS platforms or APIs dynamically on every user page load (which increases server response latency and risks hitting API rate limits), PPHLX uses **loaders** to fetch and cache remote schemas during compilation.
+
+Here is an overview of the loaders you can use to pull content from popular platforms:
+
+## 1. WordPress REST API Loader
+
+Many projects require pulling post content from a legacy WordPress site while serving the frontend from a fast custom PHP host. The WordPress loader queries the `/wp-json/wp/v2/posts` endpoint and caches entries locally:
+
+```ts
+import { defineCollection } from "PPHLX:content";
+import { wordpressLoader } from "PPHLX-wordpress-loader";
+
+const blogPosts = defineCollection({
+  loader: wordpressLoader({
+    baseUrl: "https://myblog.com",
+    postType: "posts",
+  }),
+});
+
+export const collections = { blogPosts };
+```
+
+## 2. WHMCS Billing Database Loader
+
+For WHMCS billing panels and client areas, you can load product pricing grids directly from local database tables during the build cycle, ensuring your sales pages are always in sync with your system configuration:
+
+```ts
+import { defineCollection, z } from "PPHLX:content";
+import { whmcsProductLoader } from "PPHLX-whmcs-loader";
+
+const billingProducts = defineCollection({
+  loader: whmcsProductLoader({
+    groupId: 1, // Sync products in group 1
+  }),
+  schema: z.object({
+    id: z.number(),
+    name: z.string(),
+    description: z.string(),
+    paytype: z.string(),
+  }),
+});
+
+export const collections = { billingProducts };
+```
+
+## 3. Stripe Products Loader
+
+To display physical goods or subscriptions, the Stripe loader pulls catalog information directly from the Stripe API:
+
+```ts
+import { defineCollection } from "PPHLX:content";
+import { stripeProductLoader } from "PPHLX-stripe-loader";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+const storeCatalog = defineCollection({
+  loader: stripeProductLoader({
+    client: stripe,
+    limit: 100,
+  }),
+});
+
+export const collections = { storeCatalog };
+```
+
+## Accessing Collections in Templates
+
+Once a collection is defined and compiled, you can fetch its entries inside your `.pphx` files:
+
+```pphx
+@import { getCollection } from 'PPHLX:content'
+
+{|
+$posts = getCollection('blogPosts');
+|}
+
+<div class="articles">
+  {| foreach ($posts as $post): |}
+    <article>
+      <h2>{|= htmlspecialchars($post['title']) |}</h2>
+      <div>{|= $post['content'] |}</div>
+    </article>
+  {| endforeach; |}
+</div>
+```
+

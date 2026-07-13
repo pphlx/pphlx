@@ -1,12 +1,12 @@
-# Piplex MSI Installer Auto-Builder Script
-# This script downloads WiX Toolset binaries temporarily and compiles the piplex.msi installer.
+# PPHLX MSI Installer Auto-Builder Script
+# This script downloads WiX Toolset binaries temporarily and compiles the pphlx.msi installer.
 
 $ProjectDir = Get-Location
 $TempWixDir = Join-Path $ProjectDir ".wix-bin"
 
 # 1. Compile the Go binary first to ensure it's up to date
 Write-Host "Compiling Go binary..." -ForegroundColor Cyan
-go build -o piplex.exe main.go
+go build -o pphlx.exe main.go
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Go compilation failed!"
     exit 1
@@ -42,7 +42,7 @@ Write-Host "Using WiX Light: $LightPath" -ForegroundColor Gray
 
 # 3. Compile wxs to wixobj
 Write-Host "Running Candle compiler..." -ForegroundColor Cyan
-& $CandlePath -nologo piplex.wxs -out piplex.wixobj
+& $CandlePath -nologo pphlx.wxs -out pphlx.wixobj
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Candle compilation failed!"
     exit 1
@@ -50,16 +50,16 @@ if ($LASTEXITCODE -ne 0) {
 
 # 4. Link wixobj to MSI
 Write-Host "Linking MSI installer..." -ForegroundColor Cyan
-& $LightPath -nologo piplex.wixobj -out piplex.msi
+& $LightPath -nologo pphlx.wixobj -out pphlx.msi
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Linking failed!"
     exit 1
 }
 
 # Clean up build artifacts
-if (Test-Path piplex.wixobj) { Remove-Item piplex.wixobj }
-if (Test-Path piplex.wixpdb) { Remove-Item piplex.wixpdb }
+if (Test-Path pphlx.wixobj) { Remove-Item pphlx.wixobj }
+if (Test-Path pphlx.wixpdb) { Remove-Item pphlx.wixpdb }
 
 Write-Host "------------------------------------------------" -ForegroundColor Green
-Write-Host "Success! Generated installer: $ProjectDir\piplex.msi" -ForegroundColor Green
+Write-Host "Success! Generated installer: $ProjectDir\pphlx.msi" -ForegroundColor Green
 Write-Host "------------------------------------------------" -ForegroundColor Green

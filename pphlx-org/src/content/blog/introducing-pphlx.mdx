@@ -1,0 +1,63 @@
+---
+title: "Introducing PPHLX: Drop UI Frameworks Directly into PHP"
+authors:
+  - fred
+  - nate
+description: |
+  We're excited to announce PPHLX, a new compilation framework designed to compile React, Vue, and Svelte islands directly into native PHP and HTML templates with zero runtime Node.js overhead.
+publishDate: "June 8, 2026"
+permalink: "https://PPHLX.org/blog/introducing-PPHLX"
+lang: "en"
+---
+
+import Note from "/src/components/Note.astro"
+
+There's a simple secret to building a faster monolithic website — _just compile frameworks directly to your backend layouts_.
+
+Modern web development has been moving towards complex Node.js hosting environments, serverless endpoints, and high runtime overhead. But for many production platforms—including legacy server hosts, WordPress sites, WHMCS addons, and Magento templates—running a background Node.js process is impossible or too expensive.
+
+Today we are excited to publicly share **PPHLX**: a new kind of compiler that compiles React, Vue, Svelte, Solid, and Preact components directly into native PHP code blocks and static layouts. 
+
+## Key Features
+
+- **Bring Your Own Framework (BYOF):** Mix and match React, Vue, Svelte, Solid, and Preact components on the same screen.
+- **Zero Node.js Runtime Process:** PPHLX compiles your components down to static HTML and native PHP variables. You only need standard PHP to serve the pages.
+- **On-Demand Hydration:** Hydrate interactive components dynamically in the browser (e.g. Svelte buttons, React forms) while keeping layouts lightweight.
+- **Tailwind & CSS Isolation:** Scoped component styles and compiled Tailwind classes bundle seamlessly into static assets.
+
+This marks the first beta release of PPHLX. **Bugs and compilation edge-cases are still to be expected at this early stage.** We would love your early feedback as we move towards a v1.0 release later this year.
+
+<Note>
+
+To learn more about PPHLX and start building your first template, check out [our Getting Started guide.](https://docs.PPHLX.org)
+
+</Note>
+
+## Getting Started
+
+Starting a new project in PPHLX is easy with our Go-compiled binary:
+
+```shell
+# install the PPHLX compiler binary
+curl -fsSL https://PPHLX.org/install.sh | sh
+
+# start the dev server
+PPHLX dev
+```
+
+## How PPHLX Works
+
+In PPHLX, you compose your pages using the `.pphx` template format. You can import component islands using `@import` statements:
+
+```html
+@import Counter from '../components/Counter.svelte'
+@import Header from '../components/Header.jsx'
+
+<div class="container">
+  <Header />
+  <Counter />
+</div>
+```
+
+The PPHLX compiler parses these layouts, bundles the framework components into a single static JS and CSS file, and converts the template structure into a standard PHP file. In production, you just drop these compiled assets and PHP templates directly into your WHMCS addon or shared server directory, and let Apache/Nginx serve it at maximum speed.
+

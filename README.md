@@ -1,6 +1,6 @@
-# Piplex Compiler Core
+# PPHLX Compiler Core
 
-Piplex (`piplex.org`) is a fast, zero-dependency compiler written in Go that compiles modern, component-based PHP templates (`.pphx`) into standard, standalone, production-ready `.php` files.
+PPHLX (`pphlx.org`) is a fast, zero-dependency compiler written in Go that compiles modern, component-based PHP templates (`.pphx`) into standard, standalone, production-ready `.php` files.
 
 It gives developers the speed, layout nesting, and component reusability of modern frontend frameworks (like React or Astro) while deploying native, zero-runtime overhead PHP pages compatible with any environment (including WHMCS, WordPress, or standard shared hosting).
 
@@ -21,7 +21,7 @@ It gives developers the speed, layout nesting, and component reusability of mode
 
 ## Template Syntax Reference
 
-Piplex provides a brand-aligned, zero-typing-fatigue syntax that bridges frontend markup and backend PHP logic:
+PPHLX provides a brand-aligned, zero-typing-fatigue syntax that bridges frontend markup and backend PHP logic:
 
 ### 1. Echo Expression: `{|= [expression] |}`
 Compiles directly to standard PHP echo syntax. Safe to use in text nodes and attributes:
@@ -32,8 +32,8 @@ Compiles directly to standard PHP echo syntax. Safe to use in text nodes and att
 *Output:*
 ```html
 <h1>Welcome, <?php echo $user->name; ?></h1>
-<div id="piplex-preactcart-..." class="piplex-island"></div>
-<script>window.piplexProps["..."] = {"price": "<?php echo $productPrice; ?>"};</script>
+<div id="pphlx-preactcart-..." class="pphlx-island"></div>
+<script>window.__PPHLX_DATA__["..."] = {"price": "<?php echo $productPrice; ?>"};</script>
 ```
 
 ### 2. Logic & Statements: `{| [statement] |}`
@@ -48,28 +48,28 @@ Compiles directly to standard PHP control/logical syntax blocks:
 
 ## Configuration Architecture
 
-Piplex uses a dual-configuration structure:
+PPHLX uses a dual-configuration structure:
 
-### 1. Project Manifest (`piplex.json`)
+### 1. Project Manifest (`pphlx.json`)
 Analogous to `package.json`. Declares project meta, triggers, and third-party UI packages:
 ```json
 {
   "name": "my-portal-addon",
   "version": "1.0.0",
   "scripts": {
-    "dev": "piplex dev",
-    "build": "piplex build"
+    "dev": "pphlx dev",
+    "build": "pphlx build"
   },
   "dependencies": {
-    "piplex-ui-core": "^1.0.0"
+    "pphlx-ui-core": "^1.0.0"
   }
 }
 ```
 
-### 2. Compiler Config (`piplex.config.mjs`)
+### 2. Compiler Config (`pphlx.config.mjs`)
 Analogous to `astro.config.mjs`. Configures source directories, target paths, and asset outputs:
 ```javascript
-import { defineConfig } from "piplex/config";
+import { defineConfig } from "pphlx/config";
 
 export default defineConfig({
   srcDir: "src",
@@ -83,20 +83,20 @@ export default defineConfig({
 
 ## CLI Usage
 
-Piplex runs locally on your development machine as a single native binary:
+PPHLX runs locally on your development machine as a single native binary:
 
 ### Compile Once
 ```bash
-piplex
+pphlx
 # or
-piplex build
+pphlx build
 ```
 
 ### Start Watcher (Rebuild on Save)
 ```bash
-piplex dev
+pphlx dev
 # or
-piplex watch
+pphlx watch
 ```
 
 ---

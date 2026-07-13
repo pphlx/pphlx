@@ -17,7 +17,7 @@ export default function FeedbackCard(props) {
       <h3 style={{ color: '#61dafb', marginTop: 0 }}>React: {props.title || "Feedback Module"}</h3>
       {!submitted ? (
         <div>
-          <p>Rate your experience with Piplex:</p>
+          <p>Rate your experience with PPHLX:</p>
           <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
             {ratings.map(r => (
               <button

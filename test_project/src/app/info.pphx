@@ -21,8 +21,8 @@ $svelteYears = 12;       // Target duration from user settings
 $solidLabel = "SolidJS Stopwatch (Telemetry Session)";
 $preactPrice = 34.99;    // Loaded from product database pricing table
 
-$alpineFaqQuestion = "How does Piplex Monolithic integration work?";
-$alpineFaqAnswer = "Piplex compiles down to standard native PHP and vanilla CSS/JS. It can be dropped directly inside WHMCS, WordPress, or Laravel monoliths, consuming active database connections and sessions seamlessly.";
+$alpineFaqQuestion = "How does PPHLX Monolithic integration work?";
+$alpineFaqAnswer = "PPHLX compiles down to standard native PHP and vanilla CSS/JS. It can be dropped directly inside WHMCS, WordPress, or Laravel monoliths, consuming active database connections and sessions seamlessly.";
 
 $angularDefaultName = "Enterprise Admin User";
 $vanillaStartBg = "#1e293b";
@@ -30,7 +30,7 @@ $vanillaStartBg = "#1e293b";
 
 <Layout>
     <div class="info-page max-w-5xl mx-auto p-6 font-sans text-white">
-        <h1 class="text-4xl font-extrabold text-blue-500 mb-2">Piplex Ultimate Multi-Framework Showcase</h1>
+        <h1 class="text-4xl font-extrabold text-blue-500 mb-2">PPHLX Ultimate Multi-Framework Showcase</h1>
         <p class="text-gray-400 mb-8">This page demonstrates the concurrent execution and client-side hydration of 11 distinct frontend and backend technologies running side-by-side on a single PHP monolithic thread.</p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

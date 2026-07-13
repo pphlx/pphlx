@@ -1,5 +1,5 @@
 <template name="Alert">
-    <div class="alert alert-{{type ?? 'info'}} piplex-alert" role="alert">
+    <div class="alert alert-{{type ?? 'info'}} pphlx-alert" role="alert">
         <span class="alert-message">{{slot}}</span>
         <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
     </div>

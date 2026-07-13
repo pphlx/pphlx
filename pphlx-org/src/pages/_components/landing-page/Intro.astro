@@ -1,0 +1,57 @@
+---
+import GemIcon from '~/components/GemIcon.astro';
+import IntroPoint from '../IntroPoint.astro';
+---
+
+<section class="mt-20 sm:mt-36 xs:p-6 mx-auto w-full max-w-screen-xl space-y-8 p-4 sm:p-8">
+	<div class="space-y-1">
+		<span class="bg-clip-text text-transparent bg-red-pink-gradient font-semibold"
+			>What is PPHLX?</span
+		>
+		<h2
+			class="max-w-screen-lg text-balance text-2xl font-light font-heading md:text-3xl xl:text-4xl md:leading-tight"
+		>
+			<strong>PPHLX</strong> is a native component compiler optimized for building high-performance
+			PHP monolithic applications.
+		</h2>
+	</div>
+
+	<div class="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12 lg:grid-cols-3">
+		<IntroPoint title="Server-First">
+			<GemIcon slot="icon" icon="ri/server-line" gradient="blue-green" />
+			<Fragment slot="description">
+				PPHLX renders component islands on the server, compiling layouts into native,
+				standalone PHP code with zero runtime Node.js overhead in production.
+			</Fragment>
+		</IntroPoint>
+
+		<IntroPoint title="Monolithic-Ready">
+			<GemIcon slot="icon" icon="ri/file-list-3-line" gradient="red-pink" />
+			<Fragment slot="description">
+				PPHLX is designed to drop compiled outputs directly inside WHMCS addons, WordPress, Magento templates, or shared server hosts without Node.js apps.
+			</Fragment>
+		</IntroPoint>
+
+		<IntroPoint title="Multi-Framework" gradient="bg-orange-yellow-gradient">
+			<GemIcon slot="icon" icon="ri/dashboard-line" gradient="orange-yellow" />
+			<Fragment slot="description">
+				Extend PPHLX with your favorite tools. Mount React, Vue, Svelte, or SolidJS components
+				side-by-side on the same screen, hydrated via static PHP layouts.
+			</Fragment>
+		</IntroPoint>
+	</div>
+</section>
+
+<style>
+	h2 {
+		font-variation-settings:
+			'wght' 290,
+			'wdth' 490 !important;
+	}
+
+	h2 strong {
+		font-variation-settings:
+			'wght' 475,
+			'wdth' 490;
+	}
+</style>

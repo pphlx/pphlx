@@ -1,8 +1,8 @@
 # Compiled binaries
-piplex
-piplex.exe
-piplex-dbg
-piplex-dbg.exe
+pphlx
+pphlx.exe
+pphlx-dbg
+pphlx-dbg.exe
 
 # Test project build folder
 */dist/*
@@ -29,12 +29,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Piplex Compiler Temporary Files
-src/.piplex_entry.js
-piplex.vite.config.mjs
+# PPHLX Compiler Temporary Files
+src/.pphlx_entry.js
+pphlx.vite.config.mjs
 
 # WiX Installer Artifacts and Binaries
 .wix-bin/
 *.msi
 *.wixobj
 *.wixpdb
+*.vsix

@@ -1,6 +1,6 @@
 {
-  "name": "piplex/search_docs",
-  "description": "Search the Piplex documentation database.",
+  "name": "pphlx/search_docs",
+  "description": "Search the PPHLX documentation database.",
   "inputSchema": {
     "type": "object",
     "properties": {

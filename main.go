@@ -57,16 +57,16 @@ func main() {
 		cmd := strings.ToLower(os.Args[1])
 		if cmd == "add" {
 			if len(os.Args) < 3 {
-				fmt.Println("Error: piplex add requires a repository URL.")
-				fmt.Println("Usage: piplex add github.com/username/repo[@version]")
+				fmt.Println("Error: pphlx add requires a repository URL.")
+				fmt.Println("Usage: pphlx add github.com/username/repo[@version]")
 				os.Exit(1)
 			}
 			repo := os.Args[2]
 			
-			// Find piplex.json directory
+			// Find pphlx.json directory
 			projectDir := "."
-			if _, err := os.Stat("piplex.json"); os.IsNotExist(err) {
-				if _, err := os.Stat("test_project/piplex.json"); err == nil {
+			if _, err := os.Stat("pphlx.json"); os.IsNotExist(err) {
+				if _, err := os.Stat("test_project/pphlx.json"); err == nil {
 					projectDir = "test_project"
 				}
 			}
@@ -86,7 +86,7 @@ func main() {
 					fmt.Printf("Error installing MCP server: %v\n", err)
 					os.Exit(1)
 				}
-				fmt.Println("Piplex MCP server registered successfully!")
+				fmt.Println("PPHLX MCP server registered successfully!")
 				os.Exit(0)
 			}
 			runMCPServer()
@@ -94,7 +94,7 @@ func main() {
 		}
 	}
 
-	fmt.Println("Piplex Compiler Starting...")
+	fmt.Println("PPHLX Compiler Starting...")
 
 	// Default command is "build", check if user passed "dev" or "watch"
 	mode := "build"
@@ -105,20 +105,20 @@ func main() {
 		}
 	}
 
-	// 1. Read config (looking for piplex.config.mjs first, then fallback to json)
-	configPath := "piplex.config.mjs"
+	// 1. Read config (looking for pphlx.config.mjs first, then fallback to json)
+	configPath := "pphlx.config.mjs"
 	isMjs := true
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		configPath = "piplex.config.json"
+		configPath = "pphlx.config.json"
 		isMjs = false
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
-			configPath = "piplex.json"
+			configPath = "pphlx.json"
 			if _, err := os.Stat(configPath); os.IsNotExist(err) {
 				// Fallback to test_project if run from compiler root
-				configPath = filepath.Join("test_project", "piplex.config.mjs")
+				configPath = filepath.Join("test_project", "pphlx.config.mjs")
 				isMjs = true
 				if _, err := os.Stat(configPath); os.IsNotExist(err) {
-					configPath = filepath.Join("test_project", "piplex.config.json")
+					configPath = filepath.Join("test_project", "pphlx.config.json")
 					isMjs = false
 				}
 			}
@@ -249,8 +249,8 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 			cssTag := fmt.Sprintf(`<link rel="stylesheet" href="%s">`, cssRelPath)
 			jsTag := fmt.Sprintf(`<script src="%s"></script>`, jsRelPath)
 
-			compiledPage = strings.ReplaceAll(compiledPage, "{{PIPLEX_CSS}}", cssTag)
-			compiledPage = strings.ReplaceAll(compiledPage, "{{PIPLEX_JS}}", jsTag)
+			compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", cssTag)
+			compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", jsTag)
 
 			os.MkdirAll(filepath.Dir(phpOutPath), 0755)
 			err = ioutil.WriteFile(phpOutPath, []byte(strings.TrimLeft(compiledPage, " \t\r\n")), 0644)
@@ -278,14 +278,14 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 		ioutil.WriteFile(cssOut, []byte(globalCSS.String()), 0644)
 	}
 	
-	// Inject lightweight Piplex Islands hydration runtime
+	// Inject lightweight PPHLX Islands hydration runtime
 	runtimeScript := `
-// Piplex Islands Runtime
+// PPHLX Islands Runtime
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".piplex-island").forEach(island => {
+  document.querySelectorAll(".pphlx-island").forEach(island => {
     const compName = island.getAttribute("data-component");
     const islandId = island.id;
-    const props = window.piplexProps ? window.piplexProps[islandId] : {};
+    const props = window.pphlxProps ? window.pphlxProps[islandId] : {};
     
     if (window[compName]) {
       const ComponentModule = window[compName];
@@ -457,7 +457,7 @@ func startWatcher(config Config, projectDir string) {
 // compilePage parses imports, layouts, and expands components
 func compilePage(content string, currentDir string, srcDir string) (string, []string, []string, error) {
 	// Pre-process custom bracket syntax to standard PHP tags first
-	content = parsePiplexBrackets(content)
+	content = parsePphlxBrackets(content)
 
 	var cssBundles []string
 	var jsBundles []string
@@ -478,8 +478,8 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 		isPackage := strings.HasPrefix(relPath, "github.com/") || strings.HasPrefix(relPath, "gitlab.com/")
 
 		if ext == "" {
-			if isPackage {
-				compPath = filepath.Clean(filepath.Join(srcDir, "../.piplex/packages", relPath+".pphx"))
+			if (isPackage) {
+				compPath = filepath.Clean(filepath.Join(srcDir, "../.pphlx/packages", relPath+".pphx"))
 			} else {
 				compPath = filepath.Clean(filepath.Join(currentDir, relPath+".pphx"))
 				if _, err := os.Stat(compPath); os.IsNotExist(err) {
@@ -491,8 +491,8 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 				// Fallback to JS/Vue/Svelte/TS/Solid extensions
 				for _, jsExt := range []string{".jsx", ".tsx", ".js", ".vue", ".svelte", ".solid.jsx", ".solid.tsx", ".ts"} {
 					var testPath string
-					if isPackage {
-						testPath = filepath.Clean(filepath.Join(srcDir, "../.piplex/packages", relPath+jsExt))
+					if (isPackage) {
+						testPath = filepath.Clean(filepath.Join(srcDir, "../.pphlx/packages", relPath+jsExt))
 					} else {
 						testPath = filepath.Clean(filepath.Join(currentDir, relPath+jsExt))
 					}
@@ -514,7 +514,7 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 			}
 		} else {
 			if isPackage {
-				compPath = filepath.Clean(filepath.Join(srcDir, "../.piplex/packages", relPath))
+				compPath = filepath.Clean(filepath.Join(srcDir, "../.pphlx/packages", relPath))
 			} else {
 				compPath = filepath.Clean(filepath.Join(currentDir, relPath))
 				if _, err := os.Stat(compPath); os.IsNotExist(err) {
@@ -556,7 +556,7 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 			if err != nil {
 				return "", nil, nil, fmt.Errorf("failed to read imported component %s: %v", compName, err)
 			}
-			processedCompContent := parsePiplexBrackets(string(compContent))
+			processedCompContent := parsePphlxBrackets(string(compContent))
 			compObj = parseComponent(compName, processedCompContent, compPath)
 		}
 
@@ -718,7 +718,7 @@ func renderJSComponent(comp Component, attrs string, slot string) string {
 		}
 	}
 	
-	islandId := fmt.Sprintf("piplex-%s-%d", strings.ToLower(comp.Name), time.Now().UnixNano())
+	islandId := fmt.Sprintf("pphlx-%s-%d", strings.ToLower(comp.Name), time.Now().UnixNano())
 	
 	var propsBuilder strings.Builder
 	propsBuilder.WriteString("{")
@@ -741,10 +741,10 @@ func renderJSComponent(comp Component, attrs string, slot string) string {
 	propsBuilder.WriteString("}")
 
 	var result strings.Builder
-	result.WriteString(fmt.Sprintf(`<div id="%s" class="piplex-island" data-component="%s" data-hydrate="%s"></div>`, islandId, comp.Name, hydrate))
+	result.WriteString(fmt.Sprintf(`<div id="%s" class="pphlx-island" data-component="%s" data-hydrate="%s"></div>`, islandId, comp.Name, hydrate))
 	result.WriteString("\n<script>\n")
-	result.WriteString(fmt.Sprintf("  window.piplexProps = window.piplexProps || {};\n"))
-	result.WriteString(fmt.Sprintf("  window.piplexProps[%q] = %s;\n", islandId, propsBuilder.String()))
+	result.WriteString(fmt.Sprintf("  window.pphlxProps = window.pphlxProps || {};\n"))
+	result.WriteString(fmt.Sprintf("  window.pphlxProps[%q] = %s;\n", islandId, propsBuilder.String()))
 	result.WriteString("</script>\n")
 	
 	return result.String()
@@ -770,7 +770,7 @@ func renderTemplate(comp Component, attrs string, slot string) string {
 		varName := submatches[1]
 		
 		// Skip system placeholders so they can be injected in the final build stage
-		if varName == "PIPLEX_CSS" || varName == "PIPLEX_JS" {
+		if varName == "PPHLX_CSS" || varName == "PPHLX_JS" {
 			return match
 		}
 
@@ -808,8 +808,8 @@ func parseMjsField(content string, fieldName string) string {
 	return ""
 }
 
-// parsePiplexBrackets converts custom {|= } and {| } tags to standard PHP echo and code blocks
-func parsePiplexBrackets(content string) string {
+// parsePphlxBrackets converts custom {|= } and {| } tags to standard PHP echo and code blocks
+func parsePphlxBrackets(content string) string {
 	phpBracketEchoRegex := regexp.MustCompile(`(?s)\{\|=\s*(.*?)\s*\|\}`)
 	phpBracketStatementRegex := regexp.MustCompile(`(?s)\{\|\s*(.*?)\s*\|\}`)
 
@@ -824,7 +824,7 @@ func parsePiplexBrackets(content string) string {
 
 // runViteBuild generates a temporary entry file, compiles Vue/Svelte components, and appends the result
 func runViteBuild(config Config, projectDir string) error {
-	entryPath := filepath.Join(projectDir, "src", ".piplex_entry.js")
+	entryPath := filepath.Join(projectDir, "src", ".pphlx_entry.js")
 	var entryContent strings.Builder
 
 	for name, path := range viteComponents {
@@ -846,7 +846,7 @@ func runViteBuild(config Config, projectDir string) error {
 		return fmt.Errorf("failed to write Vite entry file: %v", err)
 	}
 
-	viteConfigPath := filepath.Join(projectDir, "piplex.vite.config.mjs")
+	viteConfigPath := filepath.Join(projectDir, "pphlx.vite.config.mjs")
 	viteConfig := `
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
@@ -857,10 +857,10 @@ export default defineConfig({
   plugins: [vue(), svelte(), solidPlugin()],
   build: {
     lib: {
-      entry: 'src/.piplex_entry.js',
+      entry: 'src/.pphlx_entry.js',
       formats: ['iife'],
-      name: 'PiplexViteComponents',
-      fileName: () => 'piplex_vite.js'
+      name: 'PphlxViteComponents',
+      fileName: () => 'pphlx_vite.js'
     },
     rollupOptions: {
       external: ['vue'],
@@ -881,7 +881,7 @@ export default defineConfig({
 	fmt.Println("Running local Vite compilation for Vue/Svelte components...")
 	
 	// Use powershell shell exec to spawn npx command on Windows safely
-	cmd := exec.Command("cmd", "/c", "npx vite build --config piplex.vite.config.mjs")
+	cmd := exec.Command("cmd", "/c", "npx vite build --config pphlx.vite.config.mjs")
 	cmd.Dir = projectDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -892,7 +892,7 @@ export default defineConfig({
 	}
 
 	// Append compiled bundles to global JS
-	viteBundlePath := filepath.Join(projectDir, "dist", "assets", "js", "piplex_vite.js")
+	viteBundlePath := filepath.Join(projectDir, "dist", "assets", "js", "pphlx_vite.js")
 	viteJS, err := ioutil.ReadFile(viteBundlePath)
 	if err == nil {
 		jsOut := filepath.Join(projectDir, config.JsOut)
@@ -949,7 +949,7 @@ func addDependency(repoURL string, projectDir string) error {
 	}
 
 	// Create temporary directory for ZIP download
-	tempDir, err := ioutil.TempDir("", "piplex-pkg-")
+	tempDir, err := ioutil.TempDir("", "pphlx-pkg-")
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir: %v", err)
 	}
@@ -974,7 +974,7 @@ func addDependency(repoURL string, projectDir string) error {
 	}
 	defer r.Close()
 
-	destDir := filepath.Join(projectDir, ".piplex", "packages", domain, username, repo)
+	destDir := filepath.Join(projectDir, ".pphlx", "packages", domain, username, repo)
 	// Clean previous package directory if exists
 	os.RemoveAll(destDir)
 	err = os.MkdirAll(destDir, 0755)
@@ -1037,8 +1037,8 @@ func addDependency(repoURL string, projectDir string) error {
 		}
 	}
 
-	// 4. Update piplex.json dependencies
-	manifestPath := filepath.Join(projectDir, "piplex.json")
+	// 4. Update pphlx.json dependencies
+	manifestPath := filepath.Join(projectDir, "pphlx.json")
 	var manifest map[string]interface{}
 	
 	if manifestData, err := ioutil.ReadFile(manifestPath); err == nil {
@@ -1124,7 +1124,7 @@ type ToolCallArguments struct {
 
 func runMCPServer() {
 	// Write initialization log to stderr (standard stdout is reserved for JSON-RPC)
-	fmt.Fprintln(os.Stderr, "Piplex MCP server starting on stdio...")
+	fmt.Fprintln(os.Stderr, "PPHLX MCP server starting on stdio...")
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for scanner.Scan() {
@@ -1147,7 +1147,7 @@ func runMCPServer() {
 						"tools": map[string]interface{}{},
 					},
 					"serverInfo": map[string]string{
-						"name":    "piplex-mcp",
+						"name":    "pphlx-mcp",
 						"version": "1.0.0",
 					},
 				},
@@ -1164,8 +1164,8 @@ func runMCPServer() {
 				Result: ToolListResult{
 					Tools: []Tool{
 						{
-							Name:        "piplex/search_docs",
-							Description: "Search the Piplex documentation database.",
+							Name:        "pphlx/search_docs",
+							Description: "Search the PPHLX documentation database.",
 							InputSchema: InputSchema{
 								Type: "object",
 								Properties: map[string]Property{
@@ -1175,7 +1175,7 @@ func runMCPServer() {
 							},
 						},
 						{
-							Name:        "piplex/generate_island",
+							Name:        "pphlx/generate_island",
 							Description: "Generate a component template file and append the @import statement inside a .pphx template.",
 							InputSchema: InputSchema{
 								Type: "object",
@@ -1192,8 +1192,8 @@ func runMCPServer() {
 							},
 						},
 						{
-							Name:        "piplex/get_best_practices",
-							Description: "Get best practice guidelines for Piplex development topics.",
+							Name:        "pphlx/get_best_practices",
+							Description: "Get best practice guidelines for PPHLX development topics.",
 							InputSchema: InputSchema{
 								Type: "object",
 								Properties: map[string]Property{
@@ -1241,14 +1241,14 @@ func runMCPServer() {
 
 func handleToolCall(toolName string, args ToolCallArguments) (interface{}, error) {
 	switch toolName {
-	case "piplex/search_docs":
+	case "pphlx/search_docs":
 		query := strings.ToLower(args.Query)
-		docs := fmt.Sprintf("No exact matches found for \"%s\".\n\nPiplex standard syntax:\n- Templates use the .pphx extension.\n- Framework integration components are imported using @import (e.g. @import Button from '../components/ThemeLayout').", query)
+		docs := fmt.Sprintf("No exact matches found for \"%s\".\n\nPPHLX standard syntax:\n- Templates use the .pphx extension.\n- Framework integration components are imported using @import (e.g. @import Button from '../components/ThemeLayout').", query)
 
 		if strings.Contains(query, "import") || strings.Contains(query, "extension") {
-			docs = "Importing components in Piplex:\n- React/JSX components can omit extensions: @import Header from './Header'\n- Vue, Svelte, Solid, and Preact components must include their extensions: @import Counter from './Counter.vue' or @import Card from './Card.svelte'"
+			docs = "Importing components in PPHLX:\n- React/JSX components can omit extensions: @import Header from './Header'\n- Vue, Svelte, Solid, and Preact components must include their extensions: @import Counter from './Counter.vue' or @import Card from './Card.svelte'"
 		} else if strings.Contains(query, "state") || strings.Contains(query, "share") {
-			docs = "State Sharing in Piplex:\n- Expose state globally or dispatch custom events between framework islands: window.dispatchEvent(new CustomEvent('piplex-state-update', { detail: data }))\n- Svelte or Vue islands can listen and react in real-time."
+			docs = "State Sharing in PPHLX:\n- Expose state globally or dispatch custom events between framework islands: window.dispatchEvent(new CustomEvent('pphlx-state-update', { detail: data }))\n- Svelte or Vue islands can listen and react in real-time."
 		}
 
 		return ToolCallResult{
@@ -1257,18 +1257,18 @@ func handleToolCall(toolName string, args ToolCallArguments) (interface{}, error
 			},
 		}, nil
 
-	case "piplex/generate_island":
+	case "pphlx/generate_island":
 		// 1. Verify target page exists
 		targetPath := args.TargetPagePath
 		if _, err := os.Stat(targetPath); os.IsNotExist(err) {
 			return nil, fmt.Errorf("target template file does not exist at: %s", targetPath)
 		}
 
-		// 2. Find nearest project directory (contain piplex.json) to locate src/components
+		// 2. Find nearest project directory (contain pphlx.json) to locate src/components
 		dir := filepath.Dir(targetPath)
 		projectDir := ""
 		for {
-			if _, err := os.Stat(filepath.Join(dir, "piplex.json")); err == nil {
+			if _, err := os.Stat(filepath.Join(dir, "pphlx.json")); err == nil {
 				projectDir = dir
 				break
 			}
@@ -1282,9 +1282,9 @@ func handleToolCall(toolName string, args ToolCallArguments) (interface{}, error
 			projectDir = filepath.Dir(targetPath)
 		}
 
-		// Read piplex.json to resolve srcDir, defaulting to "src"
+		// Read pphlx.json to resolve srcDir, defaulting to "src"
 		srcDirName := "src"
-		manifestPath := filepath.Join(projectDir, "piplex.json")
+		manifestPath := filepath.Join(projectDir, "pphlx.json")
 		if manifestData, err := ioutil.ReadFile(manifestPath); err == nil {
 			var manifest map[string]interface{}
 			if err := json.Unmarshal(manifestData, &manifest); err == nil {
@@ -1353,14 +1353,14 @@ func handleToolCall(toolName string, args ToolCallArguments) (interface{}, error
 			},
 		}, nil
 
-	case "piplex/get_best_practices":
+	case "pphlx/get_best_practices":
 		topic := args.Topic
 		responseText := ""
 
 		if topic == "state-sharing" {
 			responseText = "Best Practice: Share reactive state across separate framework islands using custom window events or micro-stores, avoiding heavy framework-specific context APIs."
 		} else if topic == "styling" {
-			responseText = "Best Practice: Piplex supports tailwind out of the box. Scope vanilla CSS styles inside components to avoid global stylesheet conflicts."
+			responseText = "Best Practice: PPHLX supports tailwind out of the box. Scope vanilla CSS styles inside components to avoid global stylesheet conflicts."
 		} else {
 			responseText = fmt.Sprintf("Guidelines for topic: %s. Always preserve Smarty Variable key structures when referencing PHP properties inside template blocks.", topic)
 		}
@@ -1399,7 +1399,7 @@ func installMCPServer() error {
 		return fmt.Errorf("failed to get user home directory: %v", err)
 	}
 
-	mcpDestDir := filepath.Join(homeDir, ".gemini", "antigravity-ide", "mcp", "piplex")
+	mcpDestDir := filepath.Join(homeDir, ".gemini", "antigravity-ide", "mcp", "pphlx")
 	err = os.MkdirAll(mcpDestDir, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to create destination directory: %v", err)
@@ -1426,7 +1426,7 @@ func installMCPServer() error {
 			if err == nil {
 				execPath = filepath.Clean(execPath)
 				content := string(data)
-				content = strings.Replace(content, `F:\VS CODE\Rust\piplex\piplex.exe`, execPath, 1)
+				content = strings.Replace(content, `F:\VS CODE\GO\PPHLX\pphlx.exe`, execPath, 1)
 				data = []byte(content)
 			}
 		}

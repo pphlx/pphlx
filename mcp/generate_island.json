@@ -1,5 +1,5 @@
 {
-  "name": "piplex/generate_island",
+  "name": "pphlx/generate_island",
   "description": "Generate a component template file and append the @import statement inside a .pphx template.",
   "inputSchema": {
     "type": "object",

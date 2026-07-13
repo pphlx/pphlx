@@ -1,0 +1,30 @@
+---
+title: "Static Layout Pre-Rendering and CDN Caching in PPHLX"
+description: "How PPHLX allows compiling specific layout routes into static HTML and assets for lightning-fast CDN caching."
+publishDate: "January 25, 2026"
+authors:
+  - matthew
+lang: "en"
+---
+
+import Note from '../../components/Note.astro';
+
+<Note>
+  Unlike frontend-only frameworks where server-side rendering is an afterthought, PPHLX is server-first by default. This post explains how you can pre-render specific layouts to flat HTML files for CDN edge caching.
+</Note>
+
+By default, PPHLX compiles your `.pphx` files into native `.php` server templates. However, when building high-traffic sections of your application (like public-facing landing pages, checkout start screens, or catalog index files), you can compile pages to flat HTML for maximum delivery performance:
+
+```shell
+PPHLX build --static
+```
+
+## Modular Static Compilation
+
+With the static compilation flag, the Go compiler parses your pages and does two things:
+
+- **Pre-renders Templates**: Renders the complete HTML tree at build-time, completely bypassing PHP execution overhead for those specific pages.
+- **Bundles Island Assets**: Automatically aggregates React, Svelte, or Vue client scripts into compressed static assets ready for edge delivery.
+
+This allows developers building monolithic applications (like WHMCS addons or WordPress themes) to keep their highly dynamic backend routes running on native PHP, while pre-rendering static, lightning-fast HTML pages to be served straight from CDNs.
+

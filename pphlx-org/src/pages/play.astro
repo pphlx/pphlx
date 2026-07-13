@@ -1,0 +1,2288 @@
+---
+import '~/styles/tailwind.css';
+import PPHLXLogo from '~/components/PPHLXLogo.astro';
+
+// Default templates for unified multi-framework hydration demo
+const defaultCode = `@import ProductImage from 'components/ProductImage.js'
+@import StarRating from 'components/StarRating.solid.jsx'
+@import BuyButton from 'components/BuyButton.svelte'
+
+{|
+// Establish database mock state (simulated PHP backend)
+$productName = "MacBook Pro";
+$productDesc = "Our most advanced series of chips ever built for a pro laptop. Each chip in the M5 family delivers phenomenal CPU performance, faster unified memory, and up to twice as fast SSD storage, allowing you to fly through AI tasks at mind-bending speeds.";
+$priceUSD = 2599.00;
+$availableStock = 3;
+$initialStars = 5;
+$badgeText = "Pro Choice";
+$imageUrl = "/assets/mac-macbook-pro.webp";
+|}
+
+<!-- Multi-Framework Hydrated Product Card (React + Solid + Svelte + PHP) -->
+<div class="max-w-sm mx-auto my-6 bg-[#0f1115]/95 border border-[#1f2430] rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden relative group hover:border-[#4bf3c8]/50 transition-all duration-500">
+  
+  <!-- React Component: ProductImage (Handles product image and badge) -->
+  <ProductImage url={$imageUrl} badge={$badgeText} client:load />
+
+  <!-- PHP server-side data interpolation -->
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-3.5">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-[#4bf3c8] bg-[#4bf3c8]/10 border border-[#4bf3c8]/20 px-2.5 py-1 rounded-full shadow-[0_0_12px_rgba(75,243,200,0.1)]">Developer Edition</span>
+      <span class="text-xs font-medium text-gray-400 font-mono">Stock: <span class="text-[#4bf3c8]">{|= $availableStock |}</span> left</span>
+    </div>
+
+    <h2 class="text-xl font-bold text-white mb-2 font-sans tracking-tight hover:text-[#4bf3c8] transition-colors">{|= $productName |}</h2>
+    <p class="text-xs text-gray-400 leading-relaxed mb-4 font-sans">{|= $productDesc |}</p>
+    
+    <!-- Solid Component: StarRating (Interactive star ratings widget) -->
+    <StarRating initialRating={$initialStars} client:load />
+
+    <div class="h-[1px] bg-gradient-to-r from-transparent via-gray-800 to-transparent my-4"></div>
+    
+    <div class="flex items-center justify-between mt-4">
+      <div>
+        <p class="text-[9px] text-gray-500 uppercase font-semibold tracking-wider">Special Offer Price</p>
+        <p class="text-2xl font-extrabold text-white font-sans tracking-tight">\${|= number_format($priceUSD, 2) |}</p>
+      </div>
+      
+      <!-- Svelte Component: BuyButton (Add-to-cart button tracking count) -->
+      <BuyButton stock={$availableStock} client:load />
+    </div>
+  </div>
+</div>
+`;
+
+const defaultProductImage = `import React from 'react';
+export default function ProductImage({ url, badge }) {
+    return (
+        <div className="relative overflow-hidden rounded-t-3xl bg-gradient-to-b from-[#1b202e] to-[#0d0f14] h-52 flex items-center justify-center border-b border-[#1f2430]">
+            <img src={url} alt="Product" className="object-cover w-4/5 h-auto hover:scale-105 transition-transform duration-500" />
+            {badge && (
+                <span className="absolute top-4 left-4 bg-[#4bf3c8]/15 border border-[#4bf3c8]/30 text-[#4bf3c8] backdrop-blur-md text-[9px] font-bold px-2.5 py-1 rounded-lg shadow-[0_0_15px_rgba(75,243,200,0.15)] uppercase tracking-wider">
+                    {badge}
+                </span>
+            )}
+        </div>
+    );
+}
+`;
+
+const defaultStarRating = `import { createSignal, For } from 'solid-js';
+export default function StarRating({ initialRating }) {
+    const [rating, setRating] = createSignal(initialRating);
+    return (
+        <div class="flex items-center gap-1.5 my-3 select-none">
+            <For each={[1, 2, 3, 4, 5]}>
+                {(star) => (
+                    <button onClick={() => setRating(star)} class="focus:outline-none transition-transform hover:scale-125 active:scale-95">
+                        <svg class="w-4 h-4 transition-all" fill={star <= rating() ? "#4bf3c8" : "none"} stroke="#4bf3c8" stroke-width="1.8" style={star <= rating() ? "filter: drop-shadow(0 0 4px rgba(75, 243, 200, 0.45))" : ""} viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.969 0 1.371 1.24.588 1.81l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.883a1 1 0 00-1.18 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118l-3.97-2.883c-.783-.57-.38-1.81.588-1.81h4.906a1 1 0 00.95-.69l1.519-4.674z" />
+                        </svg>
+                    </button>
+                )}
+            </For>
+            <span class="text-[#4bf3c8]/80 text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-[#4bf3c8]/10 border border-[#4bf3c8]/20 font-mono">({rating()}/5)</span>
+        </div>
+    );
+}
+`;
+
+const defaultBuyButton = `<script>
+  export let stock = 0;
+  let count = 0;
+  function handleAdd() {
+    if (count < stock) {
+      count++;
+    }
+  }
+</script>
+<div class="flex flex-col items-center gap-1.5">
+  <button on:click={handleAdd} class="bg-gradient-to-r from-[#4bf3c8] to-[#00d2a0] hover:from-[#00d2a0] hover:to-[#4bf3c8] text-[#080a0d] text-[11px] font-extrabold py-2 px-4 rounded-xl transition-all shadow-[0_4px_20px_rgba(75,243,200,0.35)] flex items-center gap-1.5 select-none active:scale-95 hover:scale-105 border-none">
+    <svg class="w-3.5 h-3.5 stroke-[#080a0d]" fill="none" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+    Add {count > 0 ? \`(\${count})\` : ''}
+  </button>
+  {#if count >= stock}
+    <span class="text-[#ef4444] text-[9px] font-bold mt-1 shadow-[0_0_8px_rgba(239,68,68,0.2)] bg-[#ef4444]/10 border border-[#ef4444]/20 px-2 py-0.5 rounded-md">Max stock reached</span>
+  {/if}
+</div>
+`;
+---
+<!DOCTYPE html>
+<html lang="en" class="h-full overflow-hidden bg-astro-dark-950 text-astro-gray-100 [color-scheme:dark]">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>PPHLX Playground</title>
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	
+	<!-- Google Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+	
+	<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+	<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
+	
+	<style>
+		body {
+			font-family: 'Inter', sans-serif;
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+			width: 100vw;
+			overflow: hidden;
+			background-color: #0c0e12;
+		}
+		
+		/* Custom Scrollbar */
+		::-webkit-scrollbar {
+			width: 8px;
+			height: 8px;
+		}
+		::-webkit-scrollbar-track {
+			background: #0c0e12;
+		}
+		::-webkit-scrollbar-thumb {
+			background: #23262d;
+			border-radius: 4px;
+		}
+		::-webkit-scrollbar-thumb:hover {
+			background: #343841;
+		}
+	</style>
+</head>
+<body class="flex flex-col h-screen w-screen overflow-hidden">
+
+	<!-- Header Bar (Integrated Minimal IDE Title Bar) -->
+	<header class="flex items-center justify-between px-6 py-2 border-b border-[#1b1f27] bg-[#0c0e12] select-none h-12">
+		<div class="flex items-center gap-3">
+			<a href="/" class="flex items-center hover:opacity-85 transition-opacity text-white">
+				<PPHLXLogo class="h-8 w-auto" />
+			</a>
+			<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#1b1f27] text-astro-gray-400 border border-[#2e3440] font-mono">REPL Playground</span>
+		</div>
+		<div class="flex items-center gap-4">
+			<!-- Reset Example Code -->
+			<button id="btn-reset-code" class="text-xs font-semibold px-3 py-1 rounded bg-[#1b1f27] hover:bg-[#de4343] border border-[#2e3440] text-astro-gray-200 hover:text-white transition-all flex items-center gap-1.5" title="Reset all files to default example code">
+				<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+				</svg>
+				Reset Code
+			</button>
+
+			<!-- VSIX Installation Trigger -->
+			<button id="btn-install-vsix" class="text-xs font-semibold px-3 py-1 rounded bg-[#1b1f27] hover:bg-[#282d38] border border-[#2e3440] text-astro-gray-200 hover:text-white transition-all flex items-center gap-1.5">
+				<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+				</svg>
+				Install VSIX Extension
+			</button>
+			<input type="file" id="vsix-uploader" class="hidden" accept=".vsix" />
+
+			<a href="/blog/PPHLX-live-database-queries-deep-dive/" class="text-xs font-semibold text-[#acafff] hover:text-white transition-colors">
+				Back to Blog
+			</a>
+		</div>
+	</header>
+
+	<!-- Main Workspace -->
+	<div class="w-full flex-1 min-h-0 flex flex-row overflow-hidden bg-[#0c0e12]">
+		<!-- VS Code Activity Bar (Leftmost) -->
+		<div class="w-12 bg-[#090b0e] border-r border-[#1b1f27] flex flex-col items-center py-3 gap-4 flex-shrink-0 select-none">
+			<!-- Explorer Icon Button -->
+			<button id="activity-btn-explorer" class="p-2 rounded-lg text-[#4bf3c8] hover:text-white transition-colors bg-[#111318] border border-[#1b1f27]" title="Toggle Explorer Sidebar">
+				<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+				</svg>
+			</button>
+		</div>
+
+		<!-- Sidebar File Explorer (Left) -->
+		<div id="explorer-sidebar" class="w-60 flex flex-col border-r border-[#1b1f27] bg-[#0c0e12] h-full flex-shrink-0 select-none">
+			<div class="flex items-center justify-between px-4 py-2 border-b border-[#1b1f27] h-10 bg-[#0c0e12]">
+				<span class="text-[10px] font-bold tracking-wider text-astro-gray-400 uppercase">Explorer</span>
+				<div class="flex gap-1">
+					<button id="btn-root-upload-file" title="Upload Files" class="p-1 hover:bg-[#1b1f27] rounded text-astro-gray-300 hover:text-white transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+						</svg>
+					</button>
+					<button id="btn-root-new-file" title="New File" class="p-1 hover:bg-[#1b1f27] rounded text-astro-gray-300 hover:text-white transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+						</svg>
+					</button>
+					<button id="btn-root-new-folder" title="New Folder" class="p-1 hover:bg-[#1b1f27] rounded text-astro-gray-300 hover:text-white transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+						</svg>
+					</button>
+				</div>
+			</div>
+			
+			<!-- Collapsible Pane Header (VS Code style) -->
+			<div class="flex items-center gap-1.5 px-4 py-1.5 bg-[#111318] border-b border-[#1b1f27] cursor-pointer hover:bg-[#17191e] select-none text-astro-gray-300 hover:text-white transition-colors" id="btn-toggle-tree-pane">
+				<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 transition-transform duration-150" id="chevron-tree-pane" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+				</svg>
+				<span class="text-[9px] font-bold tracking-wider uppercase font-mono">WORKSPACE</span>
+			</div>
+			
+			<!-- File List Container -->
+			<div id="file-list" class="flex-1 overflow-y-auto py-2 px-1 flex flex-col gap-0.5">
+				<!-- Dynamically filled by JS -->
+			</div>
+		</div>
+
+		<!-- Editor & Preview Available Workspace (Subtracts left sidebar Explorer width) -->
+		<div class="flex-1 flex flex-row min-h-0 h-full">
+			<!-- Editor Workspace (Left) -->
+			<div class="w-1/2 flex flex-col border-r border-[#1b1f27] h-full">
+				<div class="flex items-center justify-between px-4 py-2 bg-[#0c0e12] border-b border-[#1b1f27] h-10">
+					<div class="flex items-center gap-2">
+						<button id="btn-toggle-sidebar" class="p-1 hover:bg-[#1b1f27] rounded text-astro-gray-400 hover:text-white transition-colors" title="Toggle Explorer Sidebar">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+							</svg>
+						</button>
+						<span id="active-file-title" class="text-xs font-semibold tracking-wider text-astro-gray-300 font-mono">index.pphx</span>
+					</div>
+					<div class="flex items-center gap-2">
+						<span class="text-[10px] text-[#4bf3c8] font-mono flex items-center gap-1.5 font-semibold">
+							<span class="w-1.5 h-1.5 rounded-full bg-[#4bf3c8] animate-pulse"></span> LOCAL SANDBOX
+						</span>
+						<button id="btn-copy-input" class="p-1 hover:bg-[#1b1f27] rounded text-astro-gray-400 hover:text-white transition-colors" title="Copy code to clipboard">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="svg-copy-input-normal">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+							</svg>
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-green-400 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="svg-copy-input-success">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+							</svg>
+						</button>
+					</div>
+				</div>
+				<div id="input-editor" class="flex-1 w-full bg-[#0c0e12]"></div>
+				<div id="image-preview-container" class="flex-1 w-full bg-[#0c0e12] flex flex-col items-center justify-center p-6 text-astro-gray-400 hidden select-none">
+					<div class="max-w-md w-full flex flex-col items-center gap-4 bg-[#111318] p-6 border border-[#1b1f27] rounded-xl">
+						<img id="image-preview-element" class="max-h-64 object-contain rounded-lg border border-[#232731] bg-grid-pattern p-2" src="" alt="Selected Preview" />
+						<div class="w-full text-center space-y-1.5 font-mono text-xs text-astro-gray-300">
+							<p>File Path: <span id="image-preview-path" class="text-white"></span></p>
+							<p>Dimensions: <span id="image-preview-dimensions" class="text-[#4bf3c8]">-</span></p>
+							<p>File Size: <span id="image-preview-size" class="text-[#54b9ff]">-</span></p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Preview Pane (Right) -->
+			<div class="w-1/2 flex flex-col h-full bg-[#0f1115]">
+				<!-- Output Tabs -->
+				<div class="flex items-center justify-between px-2 bg-[#0c0e12] border-b border-[#1b1f27] h-10">
+					<div class="flex gap-1">
+						<button id="tab-php" class="px-4 py-2 text-xs font-semibold tracking-wide border-b-2 border-[#54b9ff] text-white bg-[#0f1115] transition-all rounded-t-md">
+							Compiled PHP
+						</button>
+						<button id="tab-preview" class="px-4 py-2 text-xs font-semibold tracking-wide border-b-2 border-transparent text-[#858B98] hover:text-white transition-all rounded-t-md">
+							HTML Preview
+						</button>
+					</div>
+					<div class="flex items-center gap-2 mr-2">
+						<span class="text-[10px] text-astro-gray-300 font-mono font-semibold animate-pulse" id="compile-time">Compiled in 0ms</span>
+						<button id="btn-copy-output" class="p-1 hover:bg-[#1b1f27] rounded text-astro-gray-400 hover:text-white transition-colors" title="Copy output to clipboard">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="svg-copy-output-normal">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+							</svg>
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-green-400 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="svg-copy-output-success">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+							</svg>
+						</button>
+						<button id="btn-download-output" class="p-1 hover:bg-[#1b1f27] rounded text-[#4bf3c8] hover:text-white transition-colors" title="Download compiled standalone PHP page">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+							</svg>
+						</button>
+					</div>
+				</div>
+				
+				<!-- Tab Content Areas -->
+				<div class="flex-1 relative overflow-hidden h-full">
+					<!-- PHP Output Area -->
+					<div id="output-container-php" class="absolute inset-0 w-full h-full">
+						<div id="output-editor" class="w-full h-full bg-[#0f1115]"></div>
+					</div>
+					<!-- HTML Preview Area -->
+					<div id="output-container-preview" class="absolute inset-0 w-full h-full hidden bg-white">
+						<iframe id="preview-iframe" class="w-full h-full border-0 bg-white"></iframe>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Premium Custom IDE Modals -->
+	<div id="ide-modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-[9999] hidden animate-fade-in">
+		<div id="ide-modal-card" class="w-96 rounded-lg bg-[#111318] border border-[#232731] shadow-2xl p-5 select-none transform scale-95 opacity-0 transition-all duration-200">
+			<h3 id="ide-modal-title" class="text-sm font-bold text-white mb-2 font-sans">Title</h3>
+			<p id="ide-modal-message" class="text-xs text-[#858b98] mb-4 font-sans leading-relaxed">Message description.</p>
+			<div id="ide-modal-input-container" class="mb-4 hidden">
+				<input type="text" id="ide-modal-input" class="w-full px-3 py-2 text-xs rounded bg-[#171a21] border border-[#2e3440] text-white focus:outline-none focus:border-[#54b9ff] font-mono" placeholder="..." />
+			</div>
+			<div class="flex items-center justify-end gap-2.5">
+				<button id="ide-modal-btn-cancel" class="px-3.5 py-1.5 rounded text-xs font-semibold text-[#858b98] hover:text-white hover:bg-[#1b1f27] border border-transparent transition-all">Cancel</button>
+				<button id="ide-modal-btn-confirm" class="px-3.5 py-1.5 rounded text-xs font-semibold text-white bg-[#54b9ff] hover:bg-[#45a4eb] transition-all">Confirm</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Custom Explorer Context Menu -->
+	<div id="explorer-context-menu" class="fixed bg-[#111318] border border-[#232731] rounded-lg shadow-2xl py-1 z-[10000] hidden min-w-[160px] select-none text-astro-gray-300 font-sans text-xs">
+		<!-- New sub-menu -->
+		<div class="relative group">
+			<button class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-white flex justify-between items-center transition-colors">
+				<span class="flex items-center gap-1.5">
+					<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-astro-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+					</svg>
+					New
+				</span>
+				<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-astro-gray-400" viewBox="0 0 20 20" fill="currentColor">
+					<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+				</svg>
+			</button>
+			<div class="absolute left-full top-0 ml-0.5 bg-[#111318] border border-[#232731] rounded-lg shadow-2xl py-1 hidden group-hover:block min-w-[120px]">
+				<button id="ctx-new-file" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-white flex items-center gap-1.5 transition-colors">
+					<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-astro-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+					</svg>
+					File
+				</button>
+				<button id="ctx-new-folder" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-white flex items-center gap-1.5 transition-colors">
+					<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-astro-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+					</svg>
+					Folder
+				</button>
+			</div>
+		</div>
+		<div class="h-[1px] bg-[#232731] my-1"></div>
+		<button id="ctx-split-v" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-white flex items-center gap-1.5 transition-colors">
+			<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-astro-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+			</svg>
+			Split Vertical
+		</button>
+		<button id="ctx-split-h" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-white flex items-center gap-1.5 transition-colors">
+			<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-astro-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+			</svg>
+			Split Horizontal
+		</button>
+		<button id="ctx-duplicate" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-white flex items-center gap-1.5 transition-colors">
+			<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-astro-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-6a2 2 0 00-2 2z" />
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM8 5.5h6A2.5 2.5 0 0116.5 8v6a2.5 2.5 0 01-5 0v-6A2.5 2.5 0 018 5.5z" />
+			</svg>
+			Duplicate
+		</button>
+		<button id="ctx-rename" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-white flex items-center gap-1.5 transition-colors">
+			<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-astro-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+			</svg>
+			Rename
+		</button>
+		<div class="h-[1px] bg-[#232731] my-1"></div>
+		<button id="ctx-copy-path" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-white flex items-center gap-1.5 transition-colors">
+			Copy Path
+		</button>
+		<button id="ctx-copy-rel-path" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-white flex items-center gap-1.5 transition-colors">
+			Copy Relative Path
+		</button>
+		<div class="h-[1px] bg-[#232731] my-1"></div>
+		<button id="ctx-delete" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-red-400 text-red-500 font-semibold flex items-center gap-1.5 transition-colors">
+			<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+			</svg>
+			Delete
+		</button>
+	</div>
+
+	<!-- Hidden input file uploader element -->
+	<input type="file" id="file-uploader" multiple class="hidden" accept="image/*,.svg" />
+
+	<!-- Monaco Editor & Virtual File System Script -->
+	<script is:inline define:vars={{ defaultCode, defaultProductImage, defaultStarRating, defaultBuyButton }}>
+		// Setup Monaco loader path safely
+		if (typeof require !== 'undefined') {
+			require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
+		}
+
+		// State Variables
+		const STORAGE_KEY = 'pphlx_playground_vfs';
+		const CUSTOM_LANGS_KEY = 'pphlx_playground_custom_langs';
+		
+		const defaultFiles = {
+			'index.pphx': defaultCode,
+			'components/ProductImage.js': defaultProductImage,
+			'components/StarRating.solid.jsx': defaultStarRating,
+			'components/BuyButton.svelte': defaultBuyButton
+		};
+
+		// Premium IDE Modal Helper System
+		const modalOverlay = document.getElementById('ide-modal-overlay');
+		const modalCard = document.getElementById('ide-modal-card');
+		const modalTitle = document.getElementById('ide-modal-title');
+		const modalMessage = document.getElementById('ide-modal-message');
+		const modalInputContainer = document.getElementById('ide-modal-input-container');
+		const modalInput = document.getElementById('ide-modal-input');
+		const modalBtnCancel = document.getElementById('ide-modal-btn-cancel');
+		const modalBtnConfirm = document.getElementById('ide-modal-btn-confirm');
+
+		let activeModalCallback = null;
+
+		function showIdeModal({ title, message, showInput, placeholder, confirmText, cancelText, onConfirm }) {
+			modalTitle.textContent = title;
+			modalMessage.textContent = message || '';
+			
+			if (showInput) {
+				modalInputContainer.classList.remove('hidden');
+				modalInput.value = '';
+				modalInput.placeholder = placeholder || '';
+				setTimeout(() => modalInput.focus(), 50);
+			} else {
+				modalInputContainer.classList.add('hidden');
+			}
+
+			modalBtnConfirm.textContent = confirmText || 'Confirm';
+			modalBtnConfirm.className = (confirmText === 'Delete' || confirmText === 'Reset')
+				? 'px-3.5 py-1.5 rounded text-xs font-semibold text-white bg-[#de4343] hover:bg-[#c93232] transition-all'
+				: 'px-3.5 py-1.5 rounded text-xs font-semibold text-white bg-[#54b9ff] hover:bg-[#45a4eb] transition-all';
+			
+			modalBtnCancel.textContent = cancelText || 'Cancel';
+			if (cancelText === 'hidden') {
+				modalBtnCancel.classList.add('hidden');
+			} else {
+				modalBtnCancel.classList.remove('hidden');
+			}
+
+			// Show overlay and card with animation transition
+			modalOverlay.classList.remove('hidden');
+			setTimeout(() => {
+				modalCard.classList.remove('scale-95', 'opacity-0');
+				modalCard.classList.add('scale-100', 'opacity-100');
+			}, 10);
+
+			activeModalCallback = (confirmed) => {
+				const value = modalInput.value.trim();
+				// Hide card and overlay
+				modalCard.classList.remove('scale-100', 'opacity-100');
+				modalCard.classList.add('scale-95', 'opacity-0');
+				setTimeout(() => {
+					modalOverlay.classList.add('hidden');
+				}, 150);
+
+				if (confirmed && onConfirm) {
+					onConfirm(showInput ? value : true);
+				}
+			};
+		}
+
+		modalBtnCancel.onclick = () => {
+			if (activeModalCallback) activeModalCallback(false);
+		};
+
+		modalBtnConfirm.onclick = () => {
+			if (activeModalCallback) activeModalCallback(true);
+		};
+
+		modalInput.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				modalBtnConfirm.click();
+			} else if (e.key === 'Escape') {
+				modalBtnCancel.click();
+			}
+		});
+
+		let files = {};
+		let activeFile = 'index.pphx';
+		let selectedPath = 'index.pphx';
+		let selectedType = 'file';
+		let inlineEditingPath = null;
+		let inlineCreating = null;
+		let inputEditor = null;
+		let outputEditor = null;
+		const collapsedDirs = new Set();
+
+		// Load files from localStorage or default
+		function loadVfs() {
+			const stored = localStorage.getItem(STORAGE_KEY);
+			if (stored) {
+				try {
+					files = JSON.parse(stored);
+				} catch (e) {
+					files = { ...defaultFiles };
+				}
+			} else {
+				files = { ...defaultFiles };
+			}
+			
+			// Auto-upgrade workspace to the new premium e-commerce multi-framework layout
+			if (files['components/ProductCatalog.svelte'] !== undefined || files['components/ProductImage.js'] === undefined) {
+				files = { ...defaultFiles };
+				saveVfs();
+			}
+
+			// Ensure files is not empty
+			if (!files || Object.keys(files).length === 0) {
+				files = { ...defaultFiles };
+			}
+			
+			// Verify active file exists
+			if (!files[activeFile]) {
+				activeFile = Object.keys(files)[0] || 'index.pphx';
+			}
+		}
+
+		// Save Vfs state
+		function saveVfs() {
+			if (inputEditor) {
+				files[activeFile] = inputEditor.getValue();
+			}
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(files));
+		}
+
+		// Convert flat file list to nested folder tree
+		function buildTree(files) {
+			const root = { name: 'root', type: 'directory', path: '', children: {} };
+			
+			for (let filePath in files) {
+				const parts = filePath.split('/');
+				let current = root;
+				let accumulatedPath = '';
+				
+				for (let i = 0; i < parts.length; i++) {
+					const part = parts[i];
+					accumulatedPath = accumulatedPath ? `${accumulatedPath}/${part}` : part;
+					const isLast = i === parts.length - 1;
+					
+					if (isLast) {
+						current.children[part] = {
+							name: part,
+							type: 'file',
+							path: filePath
+						};
+					} else {
+						if (!current.children[part]) {
+							current.children[part] = {
+								name: part,
+								type: 'directory',
+								path: accumulatedPath,
+								children: {}
+							};
+						}
+						current = current.children[part];
+					}
+				}
+			}
+			if (inlineCreating) {
+				let current = root;
+				if (inlineCreating.parentPath) {
+					const parts = inlineCreating.parentPath.split('/');
+					for (let part of parts) {
+						if (current.children[part]) {
+							current = current.children[part];
+						}
+					}
+				}
+				current.children['__creating__'] = {
+					name: '',
+					type: inlineCreating.type === 'file' ? 'file' : 'directory',
+					path: inlineCreating.parentPath ? `${inlineCreating.parentPath}/` : '',
+					isCreating: true
+				};
+			}
+			return root;
+		}
+
+		// Render Explorer File List
+		function renderExplorer() {
+			const container = document.getElementById('file-list');
+			container.innerHTML = '';
+			const tree = buildTree(files);
+			
+			// Sort children and render root level items
+			Object.keys(tree.children).sort((a, b) => {
+				const typeA = tree.children[a].type;
+				const typeB = tree.children[b].type;
+				if (typeA !== typeB) {
+					return typeA === 'directory' ? -1 : 1;
+				}
+				return a.localeCompare(b);
+			}).forEach(childName => {
+				renderTreeNode(tree.children[childName], 0, container);
+			});
+		}
+
+		// Recursive tree node renderer
+		function renderTreeNode(node, depth, container) {
+			if (node.type === 'directory') {
+				const isCollapsed = collapsedDirs.has(node.path);
+				const isSelected = node.path === selectedPath;
+				const isEditing = node.path === inlineEditingPath;
+				const isCreating = node.isCreating;
+				
+				const div = document.createElement('div');
+				div.className = `flex items-center justify-between px-3 py-1 rounded text-xs font-medium cursor-pointer transition-colors group ${
+					isSelected ? 'bg-[#1b1f27]/70 text-white border-l-2 border-[#54b9ff]' : 'text-astro-gray-300 hover:bg-[#151821] hover:text-white'
+				}`;
+				div.style.paddingLeft = `${(depth * 12) + 8}px`;
+				
+				const leftSide = document.createElement('div');
+				leftSide.className = 'flex items-center gap-1.5 w-full truncate';
+				
+				if (!isCreating && !isEditing) {
+					const chevron = document.createElement('span');
+					chevron.className = 'flex items-center text-[10px] text-astro-gray-400';
+					chevron.innerHTML = isCollapsed 
+						? `<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>`
+						: `<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>`;
+					leftSide.appendChild(chevron);
+				} else {
+					const chevronDummy = document.createElement('span');
+					chevronDummy.className = 'w-3';
+					leftSide.appendChild(chevronDummy);
+				}
+				
+				const folderIcon = document.createElement('span');
+				folderIcon.className = 'text-[#87a5e6] flex items-center';
+				folderIcon.innerHTML = isCollapsed
+					? `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" /></svg>`
+					: `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2Vzm10 4a1 1 0 100-2h-3a1 1 0 000 2h3z" clip-rule="evenodd" /></svg>`;
+				leftSide.appendChild(folderIcon);
+				
+				if (isCreating || isEditing) {
+					const input = document.createElement('input');
+					input.type = 'text';
+					input.className = 'w-full px-1 py-0.5 text-[11px] rounded bg-[#171a21] border border-[#232731] text-white focus:outline-none focus:border-[#54b9ff] font-mono';
+					input.value = isEditing ? node.name : '';
+					
+					const finishAction = () => {
+						const val = input.value.trim();
+						if (!val) {
+							inlineCreating = null;
+							inlineEditingPath = null;
+							renderExplorer();
+							return;
+						}
+						if (isCreating) {
+							const newPath = node.path ? `${node.path}${val}/.gitkeep` : `${val}/.gitkeep`;
+							files[newPath] = '';
+							saveVfs();
+							inlineCreating = null;
+							selectedPath = node.path ? `${node.path}${val}` : val;
+							selectedType = 'directory';
+							renderExplorer();
+						} else {
+							const parentParts = node.path.split('/');
+							parentParts.pop();
+							const parentPath = parentParts.join('/');
+							const newPath = parentPath ? `${parentPath}/${val}` : val;
+							renameVfsPath(node.path, newPath);
+							inlineEditingPath = null;
+						}
+					};
+
+					input.onkeydown = (e) => {
+						if (e.key === 'Enter') {
+							finishAction();
+						} else if (e.key === 'Escape') {
+							inlineCreating = null;
+							inlineEditingPath = null;
+							renderExplorer();
+						}
+					};
+					input.onblur = finishAction;
+					leftSide.appendChild(input);
+					div.appendChild(leftSide);
+					container.appendChild(div);
+					setTimeout(() => input.focus(), 50);
+				} else {
+					const nameLabel = document.createElement('span');
+					nameLabel.className = 'font-sans font-medium tracking-wide';
+					nameLabel.textContent = node.name;
+					leftSide.appendChild(nameLabel);
+					div.appendChild(leftSide);
+					
+					div.onclick = (e) => {
+						e.stopPropagation();
+						selectedPath = node.path;
+						selectedType = 'directory';
+						if (isCollapsed) {
+							collapsedDirs.delete(node.path);
+						} else {
+							collapsedDirs.add(node.path);
+						}
+						renderExplorer();
+					};
+
+					div.oncontextmenu = (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						selectedPath = node.path;
+						selectedType = 'directory';
+						showContextMenu(e.clientX, e.clientY);
+					};
+					
+					const actions = document.createElement('div');
+					actions.className = 'flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity';
+					
+					const addFileBtn = document.createElement('button');
+					addFileBtn.className = 'hover:text-[#4bf3c8] p-0.5';
+					addFileBtn.title = 'New File';
+					addFileBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`;
+					addFileBtn.onclick = (e) => {
+						e.stopPropagation();
+						selectedPath = node.path;
+						selectedType = 'directory';
+						startInlineCreation('file');
+					};
+					actions.appendChild(addFileBtn);
+
+					const menuBtn = document.createElement('button');
+					menuBtn.className = 'hover:text-[#54b9ff] p-0.5';
+					menuBtn.title = 'More Actions';
+					menuBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>`;
+					menuBtn.onclick = (e) => {
+						e.stopPropagation();
+						showContextMenuAtElement(menuBtn, node.path, 'directory');
+					};
+					actions.appendChild(menuBtn);
+					
+					div.appendChild(actions);
+					container.appendChild(div);
+					
+					if (!isCollapsed) {
+						Object.keys(node.children).sort((a, b) => {
+							const typeA = node.children[a].type;
+							const typeB = node.children[b].type;
+							if (typeA !== typeB) {
+								return typeA === 'directory' ? -1 : 1;
+							}
+							return a.localeCompare(b);
+						}).forEach(childName => {
+							renderTreeNode(node.children[childName], depth + 1, container);
+						});
+					}
+				}
+			} else {
+				const isSelected = node.path === selectedPath;
+				const isActive = node.path === activeFile;
+				const isEditing = node.path === inlineEditingPath;
+				const isCreating = node.isCreating;
+				
+				const div = document.createElement('div');
+				div.className = `flex items-center justify-between px-3 py-1 rounded text-xs font-medium cursor-pointer transition-colors group ${
+					isActive ? 'bg-[#1b1f27] text-white border-l-2 border-[#54b9ff]' : isSelected ? 'bg-[#171a21]/50 border-l border-[#54b9ff]/30 text-white' : 'text-astro-gray-300 hover:bg-[#151821] hover:text-white'
+				}`;
+				div.style.paddingLeft = `${(depth * 12) + 22}px`;
+				
+				const leftSide = document.createElement('div');
+				leftSide.className = 'flex items-center gap-1.5 w-full truncate';
+				
+				const ext = (isCreating || !node.name) ? 'pphx' : node.name.split('.').pop();
+				let fileIconHtml = '';
+				let fileIconColor = 'text-astro-gray-400';
+				
+				if (ext === 'svelte') {
+					fileIconHtml = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>`;
+					fileIconColor = 'text-[#ff3e00]';
+				} else if (ext === 'js' || ext === 'jsx') {
+					fileIconHtml = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h18v18H3V3zm12.54 11.23c-.34-.58-.84-.96-1.53-1.11-.47-.11-.96-.16-1.44-.22v1.92c.38.05.74.19 1.05.41.25.18.42.44.49.74.07.31.06.63-.03.93-.15.42-.48.74-.91.88-.41.13-.85.12-1.25-.03-.32-.12-.6-.33-.79-.61-.26-.39-.37-.87-.31-1.34l-1.92.36c-.08.77.16 1.54.67 2.12.51.58 1.22.95 1.99 1.02.82.08 1.65-.12 2.33-.56.68-.45 1.15-1.15 1.28-1.96.14-.85-.16-1.72-.81-2.3z"/></svg>`;
+					fileIconColor = 'text-[#f7df1e]';
+				} else if (ext === 'pphx' || ext === 'php') {
+					fileIconHtml = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>`;
+					fileIconColor = 'text-[#4bf3c8]';
+				} else {
+					fileIconHtml = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`;
+				}
+				
+				const iconSpan = document.createElement('span');
+				iconSpan.className = fileIconColor + ' flex items-center';
+				iconSpan.innerHTML = fileIconHtml;
+				leftSide.appendChild(iconSpan);
+				
+				if (isCreating || isEditing) {
+					const input = document.createElement('input');
+					input.type = 'text';
+					input.className = 'w-full px-1 py-0.5 text-[11px] rounded bg-[#171a21] border border-[#232731] text-white focus:outline-none focus:border-[#54b9ff] font-mono';
+					input.value = isEditing ? node.name : '';
+					
+					const finishAction = () => {
+						const val = input.value.trim();
+						if (!val) {
+							inlineCreating = null;
+							inlineEditingPath = null;
+							renderExplorer();
+							return;
+						}
+						if (isCreating) {
+							const newPath = node.path ? `${node.path}${val}` : val;
+							files[newPath] = '';
+							saveVfs();
+							inlineCreating = null;
+							activeFile = newPath;
+							selectedPath = newPath;
+							selectedType = 'file';
+							switchFile(newPath);
+						} else {
+							const parentParts = node.path.split('/');
+							parentParts.pop();
+							const parentPath = parentParts.join('/');
+							const newPath = parentPath ? `${parentPath}/${val}` : val;
+							renameVfsPath(node.path, newPath);
+							inlineEditingPath = null;
+						}
+					};
+
+					input.onkeydown = (e) => {
+						if (e.key === 'Enter') {
+							finishAction();
+						} else if (e.key === 'Escape') {
+							inlineCreating = null;
+							inlineEditingPath = null;
+							renderExplorer();
+						}
+					};
+					input.onblur = finishAction;
+					leftSide.appendChild(input);
+					div.appendChild(leftSide);
+					container.appendChild(div);
+					setTimeout(() => input.focus(), 50);
+				} else {
+					const nameLabel = document.createElement('span');
+					nameLabel.className = 'font-mono truncate';
+					nameLabel.textContent = node.name;
+					leftSide.appendChild(nameLabel);
+					div.appendChild(leftSide);
+					
+					div.onclick = (e) => {
+						e.stopPropagation();
+						selectedPath = node.path;
+						selectedType = 'file';
+						switchFile(node.path);
+					};
+
+					div.oncontextmenu = (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						selectedPath = node.path;
+						selectedType = 'file';
+						showContextMenu(e.clientX, e.clientY);
+					};
+					
+					const menuBtn = document.createElement('button');
+					menuBtn.className = 'opacity-0 group-hover:opacity-100 hover:text-[#54b9ff] p-0.5 transition-opacity';
+					menuBtn.title = 'More Actions';
+					menuBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>`;
+					menuBtn.onclick = (e) => {
+						e.stopPropagation();
+						showContextMenuAtElement(menuBtn, node.path, 'file');
+					};
+					div.appendChild(menuBtn);
+					container.appendChild(div);
+				}
+			}
+		}
+
+		// Helper to create and activate a new VFS file
+		function createVfsFile(filePath) {
+			const cleanPath = filePath.trim();
+			if (!cleanPath) return;
+			if (files[cleanPath]) {
+				alert('File already exists!');
+				return;
+			}
+			files[cleanPath] = '';
+			saveVfs();
+			switchFile(cleanPath);
+		}
+
+		// Switch Active File
+		function switchFile(filePath) {
+			if (filePath === activeFile) return;
+			saveVfs();
+			activeFile = filePath;
+			document.getElementById('active-file-title').textContent = filePath;
+			
+			const ext = filePath.split('.').pop().toLowerCase();
+			const isImage = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext);
+			const isBinary = isImage && ext !== 'svg' && files[filePath] && files[filePath].startsWith('data:image/');
+
+			const inputEditorEl = document.getElementById('input-editor');
+			const imagePreviewContainer = document.getElementById('image-preview-container');
+			const imagePreviewElement = document.getElementById('image-preview-element');
+			const imagePreviewPath = document.getElementById('image-preview-path');
+			const imagePreviewDimensions = document.getElementById('image-preview-dimensions');
+			const imagePreviewLevelSize = document.getElementById('image-preview-size');
+
+			if (isBinary) {
+				inputEditorEl.style.display = 'none';
+				imagePreviewContainer.classList.remove('hidden');
+				imagePreviewContainer.style.display = 'flex';
+				
+				imagePreviewPath.textContent = filePath;
+				imagePreviewElement.src = files[filePath];
+				
+				const img = new Image();
+				img.onload = () => {
+					imagePreviewDimensions.textContent = `${img.width} x ${img.height} pixels`;
+				};
+				img.src = files[filePath];
+				
+				const base64Str = files[filePath].split(',')[1] || '';
+				const decodedLength = atob(base64Str).length;
+				let sizeStr = `${decodedLength} B`;
+				if (decodedLength > 1024 * 1024) {
+					sizeStr = `${(decodedLength / (1024 * 1024)).toFixed(2)} MB`;
+				} else if (decodedLength > 1024) {
+					sizeStr = `${(decodedLength / 1024).toFixed(2)} KB`;
+				}
+				imagePreviewLevelSize.textContent = sizeStr;
+			} else {
+				inputEditorEl.style.display = 'block';
+				imagePreviewContainer.classList.add('hidden');
+				imagePreviewContainer.style.display = 'none';
+
+				if (inputEditor) {
+					inputEditor.setValue(files[activeFile]);
+					let lang = 'html';
+					if (ext === 'js' || ext === 'jsx') lang = 'javascript';
+					else if (ext === 'ts' || ext === 'tsx') lang = 'typescript';
+					else if (ext === 'svelte') lang = 'html';
+					else if (ext === 'pphx') lang = 'pphlx';
+					
+					monaco.editor.setModelLanguage(inputEditor.getModel(), lang);
+				}
+			}
+			
+			renderExplorer();
+			doCompile();
+		}
+
+		// Sidebar Header Action Buttons (Root level creation)
+		const btnRootUploadFile = document.getElementById('btn-root-upload-file');
+		const fileUploader = document.getElementById('file-uploader');
+		if (btnRootUploadFile && fileUploader) {
+			btnRootUploadFile.onclick = () => {
+				fileUploader.click();
+			};
+			fileUploader.onchange = (e) => {
+				const filesList = e.target.files;
+				if (!filesList || filesList.length === 0) return;
+				
+				let parent = '';
+				if (selectedPath) {
+					if (selectedType === 'directory') {
+						parent = selectedPath + '/';
+					} else {
+						const parts = selectedPath.split('/');
+						parts.pop();
+						parent = parts.length > 0 ? parts.join('/') + '/' : '';
+					}
+				}
+
+				for (let i = 0; i < filesList.length; i++) {
+					const file = filesList[i];
+					const reader = new FileReader();
+					const targetPath = `${parent}${file.name}`;
+					
+					if (file.name.endsWith('.svg')) {
+						reader.onload = (event) => {
+							files[targetPath] = event.target.result;
+							saveVfs();
+							renderExplorer();
+							doCompile();
+						};
+						reader.readAsText(file);
+					} else {
+						reader.onload = (event) => {
+							files[targetPath] = event.target.result;
+							saveVfs();
+							renderExplorer();
+							doCompile();
+						};
+						reader.readAsDataURL(file);
+					}
+				}
+			};
+		}
+
+		const btnRootNewFile = document.getElementById('btn-root-new-file');
+		if (btnRootNewFile) {
+			btnRootNewFile.onclick = () => {
+				startInlineCreation('file');
+			};
+		}
+
+		const btnRootNewFolder = document.getElementById('btn-root-new-folder');
+		if (btnRootNewFolder) {
+			btnRootNewFolder.onclick = () => {
+				startInlineCreation('folder');
+			};
+		}
+
+		// Helper to start inline file/folder creation
+		function startInlineCreation(type) {
+			let parent = '';
+			if (selectedPath) {
+				if (selectedType === 'directory') {
+					parent = selectedPath;
+				} else {
+					const parts = selectedPath.split('/');
+					parts.pop();
+					parent = parts.join('/');
+				}
+			}
+			inlineCreating = { parentPath: parent, type: type };
+			if (parent) {
+				collapsedDirs.delete(parent);
+			}
+			renderExplorer();
+		}
+
+		// Helper to rename a file/folder path in virtual file system
+		function renameVfsPath(oldPath, newPath) {
+			if (oldPath === newPath) return;
+			if (!newPath) return;
+			
+			if (files[newPath]) {
+				showIdeModal({
+					title: 'Error',
+					message: 'A file or folder with that name already exists.',
+					confirmText: 'OK',
+					cancelText: 'hidden'
+				});
+				return;
+			}
+			
+			if (files[oldPath] !== undefined) {
+				files[newPath] = files[oldPath];
+				delete files[oldPath];
+				if (activeFile === oldPath) {
+					activeFile = newPath;
+				}
+				if (selectedPath === oldPath) {
+					selectedPath = newPath;
+				}
+			} else {
+				const prefix = oldPath + '/';
+				const newPrefix = newPath + '/';
+				const updatedFiles = {};
+				
+				for (let p in files) {
+					if (p.startsWith(prefix)) {
+						const relativePart = p.substring(prefix.length);
+						updatedFiles[newPrefix + relativePart] = files[p];
+					} else {
+						updatedFiles[p] = files[p];
+					}
+				}
+				files = updatedFiles;
+				if (activeFile.startsWith(prefix)) {
+					activeFile = newPrefix + activeFile.substring(prefix.length);
+				}
+				if (selectedPath.startsWith(prefix)) {
+					selectedPath = newPrefix + selectedPath.substring(prefix.length);
+				}
+			}
+			saveVfs();
+			renderExplorer();
+			doCompile();
+		}
+
+		// Helper to duplicate a file in the virtual file system
+		function duplicateVfsPath(path) {
+			if (!files[path]) return;
+			const parts = path.split('.');
+			const ext = parts.pop();
+			const base = parts.join('.');
+			
+			let suffix = 1;
+			let newPath = `${base}_copy.${ext}`;
+			while (files[newPath]) {
+				newPath = `${base}_copy_${suffix}.${ext}`;
+				suffix++;
+			}
+			
+			files[newPath] = files[path];
+			saveVfs();
+			renderExplorer();
+			doCompile();
+		}
+
+		// Show Context Menu at coordinates
+		const ctxMenu = document.getElementById('explorer-context-menu');
+		function showContextMenu(x, y) {
+			ctxMenu.style.left = `${x}px`;
+			ctxMenu.style.top = `${y}px`;
+			ctxMenu.classList.remove('hidden');
+		}
+
+		function showContextMenuAtElement(el, path, type) {
+			selectedPath = path;
+			selectedType = type;
+			const rect = el.getBoundingClientRect();
+			showContextMenu(rect.left, rect.bottom + window.scrollY);
+		}
+
+		function hideContextMenu() {
+			ctxMenu.classList.add('hidden');
+		}
+
+		// Close context menu on click outside
+		document.addEventListener('click', (e) => {
+			if (ctxMenu && !ctxMenu.contains(e.target)) {
+				hideContextMenu();
+			}
+		});
+
+		// Bind Context Menu Items
+		document.getElementById('ctx-new-file').onclick = () => {
+			hideContextMenu();
+			startInlineCreation('file');
+		};
+		document.getElementById('ctx-new-folder').onclick = () => {
+			hideContextMenu();
+			startInlineCreation('folder');
+		};
+		document.getElementById('ctx-split-v').onclick = () => {
+			hideContextMenu();
+			showIdeModal({
+				title: 'Split View',
+				message: 'Split layout is simulated in playground mode. The compiled code is updated in real-time on the right pane.',
+				confirmText: 'OK',
+				cancelText: 'hidden'
+			});
+		};
+		document.getElementById('ctx-split-h').onclick = () => {
+			hideContextMenu();
+			showIdeModal({
+				title: 'Split View',
+				message: 'Split layout is simulated in playground mode. The compiled code is updated in real-time on the right pane.',
+				confirmText: 'OK',
+				cancelText: 'hidden'
+			});
+		};
+		document.getElementById('ctx-duplicate').onclick = () => {
+			hideContextMenu();
+			if (selectedType === 'file') {
+				duplicateVfsPath(selectedPath);
+			} else {
+				showIdeModal({
+					title: 'Error',
+					message: 'Duplication is only supported for files.',
+					confirmText: 'OK',
+					cancelText: 'hidden'
+				});
+			}
+		};
+		document.getElementById('ctx-rename').onclick = () => {
+			hideContextMenu();
+			inlineEditingPath = selectedPath;
+			renderExplorer();
+		};
+		document.getElementById('ctx-copy-path').onclick = () => {
+			hideContextMenu();
+			const absPath = `F:/VS CODE/Rust/PPHLX/test_project/src/${selectedPath}`;
+			navigator.clipboard.writeText(absPath);
+		};
+		document.getElementById('ctx-copy-rel-path').onclick = () => {
+			hideContextMenu();
+			navigator.clipboard.writeText(selectedPath);
+		};
+		document.getElementById('ctx-delete').onclick = () => {
+			hideContextMenu();
+			deleteFile(selectedPath);
+		};
+
+		// Delete File or Directory
+		function deleteFile(filePath) {
+			showIdeModal({
+				title: 'Delete Item',
+				message: `Are you sure you want to delete ${filePath}? This action cannot be undone.`,
+				confirmText: 'Delete',
+				onConfirm: () => {
+					if (files[filePath] !== undefined) {
+						delete files[filePath];
+					} else {
+						const prefix = filePath + '/';
+						for (let p in files) {
+							if (p.startsWith(prefix)) {
+								delete files[p];
+							}
+						}
+					}
+					saveVfs();
+					
+					if (activeFile === filePath || !files[activeFile]) {
+						activeFile = Object.keys(files)[0] || 'index.pphx';
+					}
+					
+					document.getElementById('active-file-title').textContent = activeFile;
+					if (inputEditor && files[activeFile]) {
+						inputEditor.setValue(files[activeFile]);
+					}
+					renderExplorer();
+					doCompile();
+				}
+			});
+		}
+
+		// TextMate-to-Monarch runtime compiler
+		function compileTextMateToMonarch(tmGrammar) {
+			const isPphlx = tmGrammar && (
+				(tmGrammar.name && tmGrammar.name.toLowerCase().includes('pphlx')) ||
+				(tmGrammar.scopeName && tmGrammar.scopeName.toLowerCase().includes('pphlx'))
+			);
+			
+			if (isPphlx) {
+				return {
+					defaultToken: '',
+					tokenPostfix: '.pphlx',
+					keywords: [
+						'abstract', 'and', 'array', 'as', 'break', 'callable', 'case', 'catch', 
+						'class', 'clone', 'const', 'continue', 'declare', 'default', 'die', 
+						'do', 'echo', 'else', 'elseif', 'empty', 'enddeclare', 'endfor', 
+						'endforeach', 'endif', 'endswitch', 'endwhile', 'eval', 'exit', 
+						'extends', 'final', 'finally', 'for', 'foreach', 'function', 'global', 
+						'goto', 'if', 'implements', 'include', 'include_once', 'instanceof', 
+						'insteadof', 'interface', 'isset', 'list', 'namespace', 'new', 'or', 
+						'print', 'private', 'protected', 'public', 'require', 'require_once', 
+						'return', 'static', 'switch', 'throw', 'trait', 'try', 'unset', 'use', 
+						'var', 'while', 'xor', 'yield', 'import', 'from'
+					],
+					tokenizer: {
+						root: [
+							// Import directives: @import BuyButton from '../components/BuyButton.jsx'
+							[/^\s*@@import\s+[A-Z]\w*\s+from\s+['"][^'"]+['"]/, 'keyword'],
+							
+							// Match embedded PPHLX/PHP code
+							[/\{\|=?/, { token: 'delimiter.embedded', next: '@phpEmbedded' }],
+							[/<\?php/, { token: 'delimiter.embedded', next: '@phpEmbedded' }],
+							
+							// Match HTML comments
+							[/<!--/, 'comment', '@htmlComment'],
+							
+							// Match HTML tag openings & declarations
+							[/Metatag/, 'metatag', '@doctype'],
+							[/<\/[a-zA-Z0-9\-:]+>/, 'tag'],
+							[/<[a-zA-Z0-9\-:]+/, 'tag', '@htmlTag'],
+							
+							// Fallback text
+							[/[^<{]+/, ''],
+							[/./, '']
+						],
+						doctype: [
+							[/[^>]+/, 'metatag'],
+							[/>/, 'metatag', '@pop']
+						],
+						htmlComment: [
+							[/-->/, 'comment', '@pop'],
+							[/[^-->]+/, 'comment'],
+							[/./, 'comment']
+						],
+						htmlTag: [
+							[/>/, 'tag', '@pop'],
+							[/\/>/, 'tag', '@pop'],
+							[/[a-zA-Z0-9\-:]+\s*=/, 'attribute.name'],
+							[/"([^"\\]|\\.)*"/, 'string'],
+							[/'([^'\\]|\\.)*'/, 'string'],
+							[/[a-zA-Z0-9\-:]+/, 'attribute.value'],
+							[/[ \t\r\n]+/, '']
+						],
+						phpEmbedded: [
+							[/\|\}/, { token: 'delimiter.embedded', next: '@pop' }],
+							[/\?>/, { token: 'delimiter.embedded', next: '@pop' }],
+							
+							// PHP Variables
+							[/\$[a-zA-Z_]\w*/, 'variable'],
+							
+							// PHP Keywords
+							[/[a-zA-Z_]\w*/, {
+								cases: {
+									'@keywords': 'keyword',
+									'@default': 'identifier'
+								}
+							}],
+							
+							// PHP Strings
+							[/"([^"\\]|\\.)*"/, 'string'],
+							[/'([^'\\]|\\.)*'/, 'string'],
+							
+							// PHP Numbers
+							[/\d+/, 'number'],
+							
+							// PHP Comments
+							[/\/\/(?:(?!\|\})(?!\?>)[^\r\n])*/, 'comment'],
+							[/#(?:(?!\|\})(?!\?>)[^\r\n])*/, 'comment'],
+							[/\/\*/, 'comment', '@phpComment'],
+							
+							// Delimiters & operators
+							[/[{}()\[\],;+\-*\/%=&|^!<>]/, 'delimiter'],
+							[/[ \t\r\n]+/, '']
+						],
+						phpComment: [
+							[/\*\//, 'comment', '@pop'],
+							[/[^*]+/, 'comment'],
+							[/./, 'comment']
+						]
+					}
+				};
+			}
+
+			const scopeMap = {
+				'comment': 'comment',
+				'keyword': 'keyword',
+				'string': 'string',
+				'variable': 'variable',
+				'constant.numeric': 'number',
+				'storage': 'keyword',
+				'entity.name.tag': 'tag',
+				'entity.other.attribute-name': 'attribute.name',
+				'punctuation': 'delimiter',
+				'support': 'keyword'
+			};
+
+			function mapScope(scope) {
+				if (!scope) return 'identifier';
+				for (let key in scopeMap) {
+					if (scope.includes(key)) return scopeMap[key];
+				}
+				return 'identifier';
+			}
+
+			const monarch = {
+				tokenizer: {
+					root: []
+				}
+			};
+
+			if (tmGrammar && Array.isArray(tmGrammar.patterns)) {
+				tmGrammar.patterns.forEach((pattern, index) => {
+					// 1. Convert simple matches
+					if (pattern.match) {
+						let jsRegex;
+						try {
+							jsRegex = new RegExp(pattern.match.replace(/\\4/g, '').replace(/\\1/g, ''));
+						} catch (e) {
+							return; // Skip invalid JS regular expressions
+						}
+
+						if (pattern.captures) {
+							const tokens = [];
+							const maxGroup = Math.max(...Object.keys(pattern.captures).map(Number));
+							for (let i = 1; i <= maxGroup; i++) {
+								const capture = pattern.captures[i];
+								tokens.push(mapScope(capture ? capture.name : ''));
+							}
+							monarch.tokenizer.root.push([jsRegex, tokens]);
+						} else {
+							monarch.tokenizer.root.push([jsRegex, mapScope(pattern.name)]);
+						}
+					}
+
+					// 2. Convert begin/end block scopes (e.g. PHP brackets)
+					if (pattern.begin && pattern.end) {
+						const stateName = `state_${index}`;
+						let beginRegex, endRegex;
+						try {
+							beginRegex = new RegExp(pattern.begin);
+							endRegex = new RegExp(pattern.end);
+						} catch (e) {
+							return;
+						}
+
+						// Root transition
+						monarch.tokenizer.root.push([beginRegex, { token: 'delimiter.embedded', next: '@' + stateName }]);
+
+						// State definition
+						monarch.tokenizer[stateName] = [
+							[endRegex, { token: 'delimiter.embedded', next: '@pop' }]
+						];
+
+						// Inject inner patterns
+						if (Array.isArray(pattern.patterns)) {
+							pattern.patterns.forEach(inner => {
+								if (inner.match) {
+									try {
+										monarch.tokenizer[stateName].push([new RegExp(inner.match), mapScope(inner.name)]);
+									} catch (e) {}
+								}
+							});
+						}
+
+						// Default fallback for embedded code (e.g. PHP syntax fallback highlights)
+						monarch.tokenizer[stateName].push([/[^|]+/, 'variable']);
+					}
+				});
+			}
+
+			// Add basic defaults for standard tags/words
+			monarch.tokenizer.root.push([/[a-zA-Z_]\w*/, 'identifier']);
+
+			return monarch;
+		}
+
+		// VS Code VSIX file unpacker and language contributor
+		async function loadExtensionFromVsix(fileDataOrUrl) {
+			try {
+				const zip = new JSZip();
+				let loadedZip;
+				
+				if (typeof fileDataOrUrl === 'string') {
+					const response = await fetch(fileDataOrUrl);
+					const blob = await response.blob();
+					loadedZip = await zip.loadAsync(blob);
+				} else {
+					loadedZip = await zip.loadAsync(fileDataOrUrl);
+				}
+
+				// Find package.json
+				const packageJsonFile = loadedZip.file("extension/package.json");
+				if (!packageJsonFile) return null;
+				
+				const packageJsonText = await packageJsonFile.async("string");
+				const manifest = JSON.parse(packageJsonText);
+
+				if (!manifest.contributes || !manifest.contributes.languages) return null;
+
+				const results = [];
+
+				for (let lang of manifest.contributes.languages) {
+					// Find grammar definition
+					const grammarContrib = manifest.contributes.grammars.find(g => g.language === lang.id);
+					if (!grammarContrib) continue;
+
+					// Load grammar file
+					const grammarPath = grammarContrib.path.replace(/^\.\//, 'extension/');
+					const grammarFile = loadedZip.file(grammarPath);
+					if (!grammarFile) continue;
+
+					const grammarText = await grammarFile.async("string");
+					const tmGrammar = JSON.parse(grammarText);
+
+					// Compile TextMate to Monarch
+					const monarchGrammar = compileTextMateToMonarch(tmGrammar);
+
+					// Register language in Monaco if not already registered
+					const isRegistered = monaco.languages.getLanguages().some(l => l.id === lang.id);
+					if (!isRegistered) {
+						monaco.languages.register({ id: lang.id, extensions: lang.extensions });
+					}
+					monaco.languages.setMonarchTokensProvider(lang.id, monarchGrammar);
+
+					results.push({
+						id: lang.id,
+						extensions: lang.extensions,
+						monarch: monarchGrammar
+					});
+				}
+
+				// Save custom language definition to local storage to persist custom uploaded extensions
+				if (results.length > 0) {
+					const savedLangs = JSON.parse(localStorage.getItem(CUSTOM_LANGS_KEY) || '[]');
+					results.forEach(res => {
+						const existingIdx = savedLangs.findIndex(l => l.id === res.id);
+						if (existingIdx > -1) {
+							savedLangs[existingIdx] = res;
+						} else {
+							savedLangs.push(res);
+						}
+					});
+					localStorage.setItem(CUSTOM_LANGS_KEY, JSON.stringify(savedLangs));
+				}
+
+				return results;
+
+			} catch (e) {
+				console.error("Failed to load extension:", e);
+				return null;
+			}
+		}
+
+		// Simple compiler implementation for template parsing
+		function compilePphlx(code) {
+			const start = performance.now();
+			let imports = [];
+			
+			// 1. Process @import statements
+			const lines = code.split('\n');
+			const cleanLines = [];
+			
+			for (let line of lines) {
+				const importMatch = line.match(/^\s*@import\s+(\w+)\s+from\s+['"]([^'"]+)['"]/);
+				if (importMatch) {
+					imports.push({
+						name: importMatch[1],
+						path: importMatch[2]
+					});
+				} else {
+					cleanLines.push(line);
+				}
+			}
+			
+			let outputCode = cleanLines.join('\n');
+			
+			// 2. Parse brackets {|= ... |} -> <?php echo ...; ?>
+			outputCode = outputCode.replace(/\{\|=\s*([\s\S]*?)\s*\|\}/g, (match, expression) => {
+				const cleanExpr = expression.trim().replace(/;$/, '');
+				return `<?php echo ${cleanExpr}; ?>`;
+			});
+			
+			// 3. Parse brackets {| ... |} -> <?php ... ?>
+			outputCode = outputCode.replace(/\{\|\s*([\s\S]*?)\s*\|\}/g, (match, block) => {
+				return `<?php\n${block.trim()}\n?>`;
+			});
+			
+			// 4. Parse components
+			for (let item of imports) {
+				const tagRegex = new RegExp(`<${item.name}\\s*([^>]*?)\\s*\\/>`, 'g');
+				outputCode = outputCode.replace(tagRegex, (match, attributes) => {
+					const attrMatches = attributes.matchAll(/(\w+[\w:-]*)(?:=["']([^"']*)["']|=\{([\s\S]*?)\})?/g);
+					
+					let isClient = false;
+					let clientMode = 'load';
+					let phpProps = [];
+					
+					for (let am of attrMatches) {
+						const name = am[1];
+						const staticVal = am[2];
+						const dynamicVal = am[3];
+						
+						if (name === 'client:load') {
+							isClient = true;
+							clientMode = 'load';
+						} else if (name.startsWith('client:')) {
+							isClient = true;
+							clientMode = name.replace('client:', '');
+						} else {
+							if (dynamicVal !== undefined) {
+								phpProps.push(`"${name}" => ${dynamicVal}`);
+							} else {
+								phpProps.push(`"${name}" => "${staticVal || ''}"`);
+							}
+						}
+					}
+					
+					const uniqueId = `pphlx-${item.name.toLowerCase()}-\${uniqid()}`;
+					
+					if (isClient) {
+						return `<div id="<?php echo "${uniqueId}"; ?>" class="pphlx-island" data-component="${item.name}" data-hydrate="${clientMode}"></div>
+<script>
+  window.__PPHLX_DATA__ = window.__PPHLX_DATA__ || {};
+  window.__PPHLX_DATA__["<?php echo "${uniqueId}"; ?>"] = <?php echo json_encode([${phpProps.join(', ')}]); ?>;
+<\/script>`;
+					} else {
+						return `<div class="pphlx-component" data-component="${item.name}"></div>`;
+					}
+				});
+			}
+			
+			const elapsed = (performance.now() - start).toFixed(1);
+			return {
+				php: outputCode.trimStart(),
+				time: elapsed
+			};
+		}
+
+		// Perform compilation of active file and refresh HTML iframe sandbox
+		function doCompile() {
+			if (!inputEditor || !outputEditor) return;
+			
+			const code = inputEditor.getValue();
+			const result = compilePphlx(code);
+			outputEditor.setValue(result.php);
+			document.getElementById('compile-time').textContent = `Compiled in ${result.time}ms`;
+			
+			// Update iframe preview
+			const iframe = document.getElementById('preview-iframe');
+			const doc = iframe.contentDocument || iframe.contentWindow.document;
+			doc.open();
+			
+			const mockCss = `
+				body { margin: 0; padding: 24px; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #080a0d; }
+				.pphlx-island { border: 2px dashed #3a3f50; padding: 12px; border-radius: 8px; text-align: center; color: #858b98; font-family: monospace; background: #111318; margin: 8px 0; font-size: 11px; }
+				
+				/* Custom Scrollbar for Preview Iframe */
+				::-webkit-scrollbar {
+					width: 8px;
+					height: 8px;
+				}
+				::-webkit-scrollbar-track {
+					background: #0c0e12;
+				}
+				::-webkit-scrollbar-thumb {
+					background: #23262d;
+					border-radius: 4px;
+				}
+				::-webkit-scrollbar-thumb:hover {
+					background: #343841;
+				}
+			`;
+			
+			const phpState = {};
+			const varMatches = result.php.matchAll(/\$(\w+)\s*=\s*([^;]+);/g);
+			for (let vm of varMatches) {
+				const name = vm[1];
+				let valStr = vm[2].trim();
+				if ((valStr.startsWith('"') && valStr.endsWith('"')) || (valStr.startsWith("'") && valStr.endsWith("'"))) {
+					valStr = valStr.substring(1, valStr.length - 1);
+				}
+				phpState[name] = valStr;
+			}
+
+			let previewHtml = result.php.replace(/<\?php[\s\S]*?\?>/g, (match) => {
+				if (match.includes('echo "PPHLX-')) {
+					const idMatch = match.match(/echo\s+['"](pphlx-[a-zA-Z0-9_-]+)/);
+					return idMatch ? idMatch[1] : 'pphlx-comp';
+				}
+				if (match.includes('echo json_encode')) {
+					return '{}';
+				}
+				const echoVarMatch = match.match(/echo\s+\$(\w+)/);
+				if (echoVarMatch && phpState[echoVarMatch[1]] !== undefined) {
+					return phpState[echoVarMatch[1]];
+				}
+				if (match.includes('number_format')) {
+					const numMatch = match.match(/number_format\(\$(\w+)/);
+					if (numMatch && phpState[numMatch[1]] !== undefined) {
+						return Number(phpState[numMatch[1]]).toFixed(2);
+					}
+				}
+				return '';
+			});
+
+			// Substitute local file path references with actual virtual base64/SVG sources
+			for (let path in files) {
+				const isDataUrl = typeof files[path] === 'string' && files[path].startsWith('data:image/');
+				const isSvg = path.endsWith('.svg');
+				let replacement = '';
+				
+				if (isSvg) {
+					replacement = `data:image/svg+xml;utf8,${encodeURIComponent(files[path])}`;
+				} else if (isDataUrl) {
+					replacement = files[path];
+				}
+				
+				if (replacement) {
+					const regex = new RegExp(`(['"])${path}(['"])`, 'g');
+					previewHtml = previewHtml.replace(regex, `$1${replacement}$2`);
+				}
+			}
+
+			const hydrationScript = `
+				<script>
+					(function() {
+						document.querySelectorAll('.pphlx-island').forEach(island => {
+							const component = island.getAttribute('data-component');
+							
+							if (component === 'ProductImage') {
+								const data = window.__PPHLX_DATA__[island.id] || {};
+								const url = data.url || '/assets/mac-macbook-pro.webp';
+								const badge = data.badge || 'Pro Choice';
+								island.innerHTML = \`
+									<div style="position: relative; overflow: hidden; border-radius: 24px 24px 0 0; background: linear-gradient(to bottom, #1b202e, #0d0f14); height: 208px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #1f2430;">
+										<img src="\${url}" style="object-fit: cover; width: 80%; height: auto; transition: transform 0.5s;" />
+										<span style="position: absolute; top: 16px; left: 16px; background: rgba(75, 243, 200, 0.15); border: 1px solid rgba(75, 243, 200, 0.3); color: #4bf3c8; backdrop-filter: blur(8px); text-shadow: 0 0 4px rgba(75,243,200,0.2); font-size: 9px; font-weight: bold; padding: 4px 10px; border-radius: 8px; box-shadow: 0 0 15px rgba(75, 243, 200, 0.15); text-transform: uppercase; letter-spacing: 0.05em;">\${badge}</span>
+									</div>
+								\`;
+								island.style.border = 'none';
+								island.style.background = 'transparent';
+								island.style.padding = '0';
+								island.style.margin = '0';
+							}
+							
+							if (component === 'StarRating') {
+								const data = window.__PPHLX_DATA__[island.id] || {};
+								let rating = data.initialRating || 5;
+								const renderStars = () => {
+									let stars = '';
+									for (let i = 1; i <= 5; i++) {
+										stars += \`
+											<button class="star-btn" data-star="\${i}" style="background: none; border: none; cursor: pointer; padding: 0; outline: none; transition: transform 0.2s;">
+												<svg style="width: 16px; height: 16px; fill: \${i <= rating ? '#4bf3c8' : 'none'}; stroke: #4bf3c8; stroke-width: 1.8px; filter: \${i <= rating ? 'drop-shadow(0 0 4px rgba(75, 243, 200, 0.45))' : ''}; transition: all 0.15s;" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.969 0 1.371 1.24.588 1.81l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.883a1 1 0 00-1.18 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118l-3.97-2.883c-.783-.57-.38-1.81.588-1.81h4.906a1 1 0 00.95-.69l1.519-4.674z" />
+												</svg>
+											</button>
+										\`;
+									}
+									island.innerHTML = \`
+										<div style="display: flex; align-items: center; gap: 6px; margin: 12px 0;">
+											\${stars}
+											<span style="color: rgba(75, 243, 200, 0.8); font-size: 10px; font-family: monospace; margin-left: 6px; background: rgba(75, 243, 200, 0.1); border: 1px solid rgba(75, 243, 200, 0.2); padding: 2px 6px; border-radius: 4px;">(\${rating}/5)</span>
+										</div>
+									\`;
+									island.querySelectorAll('.star-btn').forEach(btn => {
+										btn.onclick = (e) => {
+											e.stopPropagation();
+											rating = parseInt(btn.getAttribute('data-star'));
+											renderStars();
+										};
+									});
+								};
+								renderStars();
+								island.style.border = 'none';
+								island.style.background = 'transparent';
+								island.style.padding = '0';
+								island.style.margin = '0';
+							}
+							
+							if (component === 'BuyButton') {
+								const data = window.__PPHLX_DATA__[island.id] || {};
+								const stock = data.stock || 3;
+								let count = 0;
+								const renderButton = () => {
+									island.innerHTML = \`
+										<div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+											<button class="buy-btn" style="background: linear-gradient(135deg, #4bf3c8, #00d2a0); border: none; color: #080a0d; font-size: 11px; font-weight: 800; padding: 8px 16px; border-radius: 12px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 20px rgba(75, 243, 200, 0.35); outline: none;">
+												<svg style="width: 14px; height: 14px; stroke: #080a0d;" fill="none" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+												Add \${count > 0 ? \`(\${count})\` : ''}
+											</button>
+											\${count >= stock ? \`<span style="color: #ef4444; font-size: 9px; font-weight: bold; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 2px 8px; border-radius: 6px; box-shadow: 0 0 8px rgba(239,68,68,0.15);">Max stock reached</span>\` : ''}
+										</div>
+									\`;
+									island.querySelector('.buy-btn').onclick = (e) => {
+										e.stopPropagation();
+										if (count < stock) {
+											count++;
+											renderButton();
+										}
+									};
+								};
+								renderButton();
+								island.style.border = 'none';
+								island.style.background = 'transparent';
+								island.style.padding = '0';
+								island.style.margin = '0';
+							}
+						});
+					})();
+				<\/script>
+			`;
+			
+			doc.write(`
+				<!DOCTYPE html>
+				<html>
+				<` + `head>
+					<style>${mockCss}</style>
+					<script src="https://cdn.tailwindcss.com"><` + `/script>
+				</` + `head>
+				<` + `body>
+					${previewHtml}
+					${hydrationScript}
+				</` + `body>
+				</html>
+			`);
+			doc.close();
+		}
+
+		// Initialize Monaco safely
+		function initMonaco() {
+			if (typeof require === 'undefined') {
+				setTimeout(initMonaco, 100);
+				return;
+			}
+			try {
+				require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
+			} catch (e) {}
+
+			require(['vs/editor/editor.main'], function () {
+			loadVfs();
+			renderExplorer();
+
+			// Themes Setup
+			monaco.editor.defineTheme('pphlxDark', {
+				base: 'vs-dark',
+				inherit: true,
+				rules: [
+					{ token: 'comment', foreground: '545864', fontStyle: 'italic' },
+					{ token: 'keyword', foreground: '54b9ff' },
+					{ token: 'string', foreground: 'ffd493' },
+					{ token: 'variable', foreground: '4bf3c8' },
+					{ token: 'tag', foreground: '54b9ff' },
+					{ token: 'attribute.name', foreground: 'acafff' },
+					{ token: 'attribute.value', foreground: 'ffd493' },
+					{ token: 'type.identifier', foreground: 'ffd493' },
+					{ token: 'identifier', foreground: 'eef0f9' },
+					{ token: 'delimiter.embedded', foreground: '4bf3c8', fontStyle: 'bold' } // Style for pphx brackets
+				],
+				colors: {
+					'editor.background': '#0c0e12',
+					'editor.lineHighlightBackground': '#17191e',
+					'editorLineNumber.foreground': '#545864',
+					'editorLineNumber.activeForeground': '#eef0f9',
+					'scrollbarSlider.background': '#23262d',
+					'scrollbarSlider.hoverBackground': '#343841',
+					'scrollbarSlider.activeBackground': '#54b9ff'
+				}
+			});
+
+			monaco.editor.defineTheme('pphlxPHPTheme', {
+				base: 'vs-dark',
+				inherit: true,
+				rules: [],
+				colors: {
+					'editor.background': '#0f1115',
+					'editor.lineHighlightBackground': '#1c1f26',
+					'editorLineNumber.foreground': '#545864',
+					'editorLineNumber.activeForeground': '#eef0f9'
+				}
+			});
+
+			// Register pphlx language statically so it is always available immediately
+			const isPphlxRegistered = monaco.languages.getLanguages().some(l => l.id === 'pphlx');
+			if (!isPphlxRegistered) {
+				monaco.languages.register({
+					id: 'pphlx',
+					extensions: ['.pphx']
+				});
+			}
+			
+			// Define the Monarch tokens provider statically for 'pphlx' using high-fidelity HTML/PHP hybrid definitions
+			monaco.languages.setMonarchTokensProvider('pphlx', {
+				defaultToken: '',
+				tokenPostfix: '.pphlx',
+				keywords: [
+					'abstract', 'and', 'array', 'as', 'break', 'callable', 'case', 'catch', 
+					'class', 'clone', 'const', 'continue', 'declare', 'default', 'die', 
+					'do', 'echo', 'else', 'elseif', 'empty', 'enddeclare', 'endfor', 
+					'endforeach', 'endif', 'endswitch', 'endwhile', 'eval', 'exit', 
+					'extends', 'final', 'finally', 'for', 'foreach', 'function', 'global', 
+					'goto', 'if', 'implements', 'include', 'include_once', 'instanceof', 
+					'insteadof', 'interface', 'isset', 'list', 'namespace', 'new', 'or', 
+					'print', 'private', 'protected', 'public', 'require', 'require_once', 
+					'return', 'static', 'switch', 'throw', 'trait', 'try', 'unset', 'use', 
+					'var', 'while', 'xor', 'yield', 'import', 'from'
+				],
+				tokenizer: {
+					root: [
+						// Import directives: @import BuyButton from '../components/BuyButton.jsx'
+						[/^\s*@@import\s+[A-Z]\w*\s+from\s+['"][^'"]+['"]/, 'keyword'],
+						
+						// Match embedded PPHLX/PHP code
+						[/\{\|=?/, { token: 'delimiter.embedded', next: '@phpEmbedded' }],
+						[/<\?php/, { token: 'delimiter.embedded', next: '@phpEmbedded' }],
+						
+						// Match HTML comments
+						[/<!--/, 'comment', '@htmlComment'],
+						
+						// Match HTML tag openings & declarations
+						[/<!DOCTYPE/, 'metatag', '@doctype'],
+						[/<\/[a-zA-Z0-9\-:]+>/, 'tag'],
+						[/<[a-zA-Z0-9\-:]+/, 'tag', '@htmlTag'],
+						
+						// Fallback text
+						[/[^<{]+/, ''],
+						[/./, '']
+					],
+					doctype: [
+						[/[^>]+/, 'metatag'],
+						[/>/, 'metatag', '@pop']
+					],
+					htmlComment: [
+						[/-->/, 'comment', '@pop'],
+						[/[^-->]+/, 'comment'],
+						[/./, 'comment']
+					],
+					htmlTag: [
+						[/>/, 'tag', '@pop'],
+						[/\/>/, 'tag', '@pop'],
+						[/[a-zA-Z0-9\-:]+\s*=/, 'attribute.name'],
+						[/"([^"\\]|\\.)*"/, 'string'],
+						[/'([^'\\]|\\.)*'/, 'string'],
+						[/[a-zA-Z0-9\-:]+/, 'attribute.value'],
+						[/[ \t\r\n]+/, '']
+					],
+					phpEmbedded: [
+						[/\|\}/, { token: 'delimiter.embedded', next: '@pop' }],
+						[/\?>/, { token: 'delimiter.embedded', next: '@pop' }],
+						
+						// PHP Variables
+						[/\$[a-zA-Z_]\w*/, 'variable'],
+						
+						// PHP Keywords
+						[/[a-zA-Z_]\w*/, {
+							cases: {
+								'@keywords': 'keyword',
+								'@default': 'identifier'
+							}
+						}],
+						
+						// PHP Strings
+						[/"([^"\\]|\\.)*"/, 'string'],
+						[/'([^'\\]|\\.)*'/, 'string'],
+						
+						// PHP Numbers
+						[/\d+/, 'number'],
+						
+						// PHP Comments
+						[/\/\/(?:(?!\|\})(?!\?>)[^\r\n])*/, 'comment'],
+						[/#(?:(?!\|\})(?!\?>)[^\r\n])*/, 'comment'],
+						[/\/\*/, 'comment', '@phpComment'],
+						
+						// Delimiters & operators
+						[/[{}()\[\],;+\-*\/%=&|^!<>]/, 'delimiter'],
+						[/[ \t\r\n]+/, '']
+					],
+					phpComment: [
+						[/\*\//, 'comment', '@pop'],
+						[/[^*]+/, 'comment'],
+						[/./, 'comment']
+					]
+				}
+			});
+
+			// Re-register any custom extensions cached in local storage
+			let cachedLangs = JSON.parse(localStorage.getItem(CUSTOM_LANGS_KEY) || '[]');
+			
+			// Clear any old cached definitions to force compilation of the updated Monarch grammar
+			cachedLangs = cachedLangs.filter(l => l.id !== 'pphx' && l.id !== 'pphlx');
+			localStorage.setItem(CUSTOM_LANGS_KEY, JSON.stringify(cachedLangs));
+
+			cachedLangs.forEach(lang => {
+				const isRegistered = monaco.languages.getLanguages().some(l => l.id === lang.id);
+				if (!isRegistered) {
+					monaco.languages.register({ id: lang.id, extensions: lang.extensions });
+				}
+				monaco.languages.setMonarchTokensProvider(lang.id, lang.monarch);
+			});
+
+			// Automatically preload/preinstall PPHLX vsix extension if not already present
+			if (!cachedLangs.some(l => l.id === 'pphlx')) {
+				loadExtensionFromVsix('/extensions/pphlx-1.0.0.vsix').then(res => {
+					if (res && res.length > 0) {
+						console.log("PPHLX vsix extension preinstalled successfully.");
+						// Force theme re-render of active file using the actual registered language ID
+						if (activeFile.endsWith('.pphx')) {
+							const matched = res.find(r => r.extensions && r.extensions.includes('.pphx'));
+							const langId = matched ? matched.id : 'pphlx';
+							monaco.editor.setModelLanguage(inputEditor.getModel(), 'plaintext');
+							monaco.editor.setModelLanguage(inputEditor.getModel(), langId);
+						}
+					}
+				});
+			}
+
+			// Left Input Editor
+			inputEditor = monaco.editor.create(document.getElementById('input-editor'), {
+				value: files[activeFile],
+				language: activeFile.endsWith('.pphx') ? 'pphlx' : 'html',
+				theme: 'pphlxDark',
+				fontSize: 14,
+				fontFamily: 'Fira Code, monospace',
+				minimap: { enabled: false },
+				automaticLayout: true,
+				lineHeight: 22,
+				scrollbar: {
+					verticalScrollbarSize: 10,
+					horizontalScrollbarSize: 10
+				}
+			});
+
+			// Right Output Editor
+			outputEditor = monaco.editor.create(document.getElementById('output-editor'), {
+				value: '',
+				language: 'php',
+				theme: 'pphlxPHPTheme',
+				readOnly: true,
+				fontSize: 14,
+				fontFamily: 'Fira Code, monospace',
+				minimap: { enabled: false },
+				automaticLayout: true,
+				lineHeight: 22,
+				scrollbar: {
+					verticalScrollbarSize: 10,
+					horizontalScrollbarSize: 10
+				}
+			});
+
+			// Compile on content change and save to Vfs
+			inputEditor.onDidChangeModelContent(() => {
+				saveVfs();
+				doCompile();
+			});
+
+			doCompile();
+		});
+		}
+		initMonaco();
+
+		// Trigger file picker for user VSIX upload
+		const btnInstallVsix = document.getElementById('btn-install-vsix');
+		const vsixUploader = document.getElementById('vsix-uploader');
+
+		if (btnInstallVsix && vsixUploader) {
+			btnInstallVsix.addEventListener('click', () => {
+				vsixUploader.click();
+			});
+
+			vsixUploader.addEventListener('change', (e) => {
+				const file = e.target.files[0];
+				if (!file) return;
+
+				const reader = new FileReader();
+				reader.onload = async function(evt) {
+					const buffer = evt.target.result;
+					const langs = await loadExtensionFromVsix(buffer);
+					if (langs && langs.length > 0) {
+						showIdeModal({
+							title: 'Extension Installed',
+							message: `Successfully installed extension supporting: ${langs.map(l => l.id).join(', ')}`,
+							confirmText: 'OK',
+							cancelText: 'hidden',
+							onConfirm: () => {
+								const ext = activeFile.split('.').pop();
+								const matchedLang = langs.find(l => l.extensions.some(e => e.endsWith(ext)));
+								if (matchedLang && inputEditor) {
+									monaco.editor.setModelLanguage(inputEditor.getModel(), 'plaintext');
+									monaco.editor.setModelLanguage(inputEditor.getModel(), matchedLang.id);
+								}
+							}
+						});
+					} else {
+						showIdeModal({
+							title: 'Installation Failed',
+							message: 'Failed to install extension. Make sure it is a valid .vsix package containing a TextMate JSON grammar.',
+							confirmText: 'OK',
+							cancelText: 'hidden'
+						});
+					}
+				};
+				reader.readAsArrayBuffer(file);
+			});
+		}
+
+		// Tab Switching Logic
+		const tabPhp = document.getElementById('tab-php');
+		const tabPreview = document.getElementById('tab-preview');
+		const containerPhp = document.getElementById('output-container-php');
+		const containerPreview = document.getElementById('output-container-preview');
+
+		if (tabPhp && tabPreview && containerPhp && containerPreview) {
+			tabPhp.addEventListener('click', () => {
+				tabPhp.className = "px-4 py-2 text-xs font-semibold tracking-wide border-b-2 border-[#54b9ff] text-white bg-[#0f1115] transition-all rounded-t-md";
+				tabPreview.className = "px-4 py-2 text-xs font-semibold tracking-wide border-b-2 border-transparent text-[#858B98] hover:text-white transition-all rounded-t-md";
+				containerPhp.classList.remove('hidden');
+				containerPreview.classList.add('hidden');
+			});
+
+			tabPreview.addEventListener('click', () => {
+				tabPreview.className = "px-4 py-2 text-xs font-semibold tracking-wide border-b-2 border-[#54b9ff] text-white bg-[#0f1115] transition-all rounded-t-md";
+				tabPhp.className = "px-4 py-2 text-xs font-semibold tracking-wide border-b-2 border-transparent text-[#858B98] hover:text-white transition-all rounded-t-md";
+				containerPreview.classList.remove('hidden');
+				containerPhp.classList.add('hidden');
+			});
+		}
+
+		// Reset Code to Default Example Code
+		const btnResetCode = document.getElementById('btn-reset-code');
+		if (btnResetCode) {
+			btnResetCode.addEventListener('click', () => {
+				showIdeModal({
+					title: 'Reset Code Workspace',
+					message: 'Are you sure you want to reset all files to the default example code? This will discard your current edits.',
+					confirmText: 'Reset',
+					onConfirm: () => {
+						localStorage.removeItem(STORAGE_KEY);
+						window.location.reload();
+					}
+				});
+			});
+		}
+
+		// Copy Input Editor to Clipboard
+		const btnCopyInput = document.getElementById('btn-copy-input');
+		const svgCopyInputNormal = document.getElementById('svg-copy-input-normal');
+		const svgCopyInputSuccess = document.getElementById('svg-copy-input-success');
+		if (btnCopyInput && svgCopyInputNormal && svgCopyInputSuccess) {
+			btnCopyInput.addEventListener('click', () => {
+				if (!inputEditor) return;
+				const text = inputEditor.getValue();
+				navigator.clipboard.writeText(text).then(() => {
+					svgCopyInputNormal.classList.add('hidden');
+					svgCopyInputSuccess.classList.remove('hidden');
+					setTimeout(() => {
+						svgCopyInputNormal.classList.remove('hidden');
+						svgCopyInputSuccess.classList.add('hidden');
+					}, 1500);
+				});
+			});
+		}
+
+		// Copy Output Editor or Preview HTML to Clipboard
+		const btnCopyOutput = document.getElementById('btn-copy-output');
+		const svgCopyOutputNormal = document.getElementById('svg-copy-output-normal');
+		const svgCopyOutputSuccess = document.getElementById('svg-copy-output-success');
+		if (btnCopyOutput && svgCopyOutputNormal && svgCopyOutputSuccess && containerPreview) {
+			btnCopyOutput.addEventListener('click', () => {
+				let text = "";
+				const isPreviewActive = !containerPreview.classList.contains('hidden');
+				if (isPreviewActive) {
+					const iframe = document.getElementById('preview-iframe');
+					if (iframe) {
+						const doc = iframe.contentDocument || iframe.contentWindow.document;
+						text = doc.documentElement.outerHTML;
+					}
+				} else {
+					if (outputEditor) {
+						text = outputEditor.getValue();
+					}
+				}
+				
+				navigator.clipboard.writeText(text).then(() => {
+					svgCopyOutputNormal.classList.add('hidden');
+					svgCopyOutputSuccess.classList.remove('hidden');
+					setTimeout(() => {
+						svgCopyOutputNormal.classList.remove('hidden');
+						svgCopyOutputSuccess.classList.add('hidden');
+					}, 1500);
+				});
+			});
+		}
+
+		// Download compiled output as index.php
+		const btnDownloadOutput = document.getElementById('btn-download-output');
+		if (btnDownloadOutput) {
+			btnDownloadOutput.addEventListener('click', async () => {
+				if (!outputEditor) return;
+				
+				try {
+					const zip = new JSZip();
+					
+					// 1. Add compiled index.php
+					const phpCode = outputEditor.getValue();
+					zip.file("index.php", phpCode);
+					
+					// Parse active code to find imported components to exclude from VFS zipping
+					const activeCode = inputEditor ? inputEditor.getValue() : '';
+					const lines = activeCode.split('\n');
+					const excludedPaths = new Set();
+					excludedPaths.add(activeFile);
+					
+					const codeExtensions = ['js', 'jsx', 'ts', 'tsx', 'svelte', 'vue'];
+					
+					for (let line of lines) {
+						const importMatch = line.match(/^\s*@import\s+(\w+)\s+from\s+['"]([^'"]+)['"]/);
+						if (importMatch) {
+							const importPath = importMatch[2];
+							const cleanImportPath = importPath.replace(/^\.\.\//, '').replace(/^\.\//, '');
+							const ext = cleanImportPath.split('.').pop().toLowerCase();
+							if (codeExtensions.includes(ext)) {
+								excludedPaths.add(cleanImportPath);
+							}
+						}
+					}
+					
+					// 2. Add only assets and non-component files to ZIP
+					for (let path in files) {
+						// Skip active source page and imported development code components
+						if (excludedPaths.has(path)) continue;
+						
+						const ext = path.split('.').pop().toLowerCase();
+						if (codeExtensions.includes(ext)) continue;
+						
+						const content = files[path];
+						if (typeof content === 'string' && content.startsWith('data:image/')) {
+							const base64Content = content.split(',')[1];
+							zip.file(path, base64Content, { base64: true });
+						} else {
+							zip.file(path, content);
+						}
+					}
+					
+					// 3. Fetch pre-compiled styling stylesheet and bundle it
+					const tailwindCssResponse = await fetch('/styles/tailwind.css');
+					if (tailwindCssResponse.ok) {
+						const cssContent = await tailwindCssResponse.text();
+						zip.file("assets/css/tailwind.css", cssContent);
+					}
+					
+					// Generate zip blob and trigger download
+					const contentBlob = await zip.generateAsync({ type: "blob" });
+					const url = URL.createObjectURL(contentBlob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = "PPHLX-project.zip";
+					document.body.appendChild(a);
+					a.click();
+					document.body.removeChild(a);
+					URL.revokeObjectURL(url);
+				} catch (err) {
+					console.error("ZIP Generation failed: ", err);
+					const phpCode = outputEditor.getValue();
+					const blob = new Blob([phpCode], { type: 'text/plain' });
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = activeFile.endsWith('.pphx') ? activeFile.replace('.pphx', '.php') : activeFile + '.php';
+					document.body.appendChild(a);
+					a.click();
+					document.body.removeChild(a);
+					URL.revokeObjectURL(url);
+				}
+			});
+		}
+
+		// Toggle Left Sidebar File Explorer Panel
+		const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+		const activityBtnExplorer = document.getElementById('activity-btn-explorer');
+		const explorerSidebar = document.getElementById('explorer-sidebar');
+		
+		function toggleExplorerSidebar() {
+			if (!explorerSidebar) return;
+			const isHidden = explorerSidebar.classList.contains('hidden');
+			if (isHidden) {
+				explorerSidebar.classList.remove('hidden');
+				if (btnToggleSidebar) btnToggleSidebar.classList.remove('text-[#4bf3c8]');
+				if (activityBtnExplorer) {
+					activityBtnExplorer.classList.add('bg-[#111318]', 'text-[#4bf3c8]', 'border-[#1b1f27]');
+					activityBtnExplorer.classList.remove('text-astro-gray-400');
+				}
+			} else {
+				explorerSidebar.classList.add('hidden');
+				if (btnToggleSidebar) btnToggleSidebar.classList.add('text-[#4bf3c8]');
+				if (activityBtnExplorer) {
+					activityBtnExplorer.classList.remove('bg-[#111318]', 'text-[#4bf3c8]', 'border-[#1b1f27]');
+					activityBtnExplorer.classList.add('text-astro-gray-400');
+				}
+			}
+			// Force Monaco editors to redraw/layout to fit new width
+			if (inputEditor) inputEditor.layout();
+			if (outputEditor) outputEditor.layout();
+		}
+
+		if (btnToggleSidebar) {
+			btnToggleSidebar.addEventListener('click', toggleExplorerSidebar);
+		}
+		if (activityBtnExplorer) {
+			activityBtnExplorer.addEventListener('click', toggleExplorerSidebar);
+		}
+
+		// Toggle Collapsible Tree Pane (VS Code Workspace section style)
+		const btnToggleTreePane = document.getElementById('btn-toggle-tree-pane');
+		const fileList = document.getElementById('file-list');
+		const chevronTreePane = document.getElementById('chevron-tree-pane');
+		if (btnToggleTreePane && fileList && chevronTreePane) {
+			btnToggleTreePane.addEventListener('click', () => {
+				if (fileList.classList.contains('hidden')) {
+					fileList.classList.remove('hidden');
+					chevronTreePane.classList.remove('-rotate-90');
+				} else {
+					fileList.classList.add('hidden');
+					chevronTreePane.classList.add('-rotate-90');
+				}
+			});
+		}
+	</script>
+</body>
+</html>
+

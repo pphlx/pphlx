@@ -1,0 +1,133 @@
+---
+title: "Step-by-Step Guide: Integrating PPHLX with WHMCS and WordPress"
+description: "A comprehensive developer guide on setting up a PPHLX workspace, writing template integrations, and enqueuing compiled assets inside WHMCS and WordPress."
+publishDate: "2026-06-12"
+authors:
+  - fred
+lang: "en"
+coverImage: "/src/content/blog/_images/future-of-astro-content-layer/header-astro-content-layer.webp"
+socialImage: "/src/content/blog/_images/future-of-astro-content-layer/og-astro-content-layer.webp"
+---
+
+Embedding modern frontend components (Svelte, Vue, or React) inside existing monolithic PHP systems like WHMCS or WordPress is straightforward with PPHLX. 
+
+This guide walks you through the step-by-step developer workflow to configure your workspace, compile your templates, and register your assets correctly.
+
+---
+
+## Step 1: Initialize Your Workspace
+
+Create a new directory for your project and initialize a PPHLX layout structure:
+
+```bash
+mkdir my-monolith-theme
+cd my-monolith-theme
+PPHLX init
+```
+
+This generates your standard directories:
+*   `src/pages/` for your page templates (`.pphx`).
+*   `src/components/` for Svelte/React/Vue files.
+*   `src/assets/` for local images and styling.
+
+---
+
+## Step 2: Write Your Template Integrations
+
+In your page templates, you can import component islands and map server-side PHP data fields natively.
+
+### WordPress Page Example (`src/pages/custom-page.pphx`):
+```pphx
+@import UserDashboard from '../components/UserDashboard.jsx'
+
+{|
+// Query current WordPress user details
+$current_user = wp_get_current_user();
+|}
+
+<div class="wp-profile-wrapper">
+  <h1>Account Overview</h1>
+  <UserDashboard 
+    username="{|= esc_attr($current_user->user_login) |}" 
+    email="{|= esc_attr($current_user->user_email) |}" 
+    client:load 
+  />
+</div>
+```
+
+### WHMCS Module Example (`src/pages/client-details.pphx`):
+```pphx
+@import SupportTicketList from '../components/SupportTicketList.svelte'
+
+<div class="whmcs-tickets-section">
+  <!-- Map WHMCS Smarty template parameters directly -->
+  <SupportTicketList 
+    clientId="{|= intval($userId) |}" 
+    status="active" 
+    client:visible 
+  />
+</div>
+```
+
+---
+
+## Step 3: Compile Your Project
+
+Compile the layouts and bundle the component assets for production:
+
+```bash
+PPHLX build
+```
+
+This compiles your templates into a `dist/` directory, outputting `.php` files and bundled browser assets.
+
+---
+
+## Step 4: Register Assets Natively
+
+To load the interactive islands, you need to register the compiled JavaScript and CSS files in your parent platform.
+
+### WordPress Theme Integration:
+Add the following hook to your theme's `functions.php` file to register and enqueue the compiled assets:
+
+```php
+function enqueue_PPHLX_theme_assets() {
+    // Enqueue compiled CSS styling
+    wp_enqueue_style(
+        'PPHLX-theme-css', 
+        get_template_directory_uri() . '/dist/assets/theme.css', 
+        array(), 
+        '1.0.0'
+    );
+
+    // Enqueue compiled JavaScript bundle
+    wp_enqueue_script(
+        'PPHLX-theme-js', 
+        get_template_directory_uri() . '/dist/assets/theme.js', 
+        array(), 
+        '1.0.0', 
+        true
+    );
+}
+add_action('wp_enqueue_scripts', 'enqueue_PPHLX_theme_assets');
+```
+
+### WHMCS Template Integration:
+Include the asset stylesheet and bundle script in your active template's `header.tpl` layout file:
+
+```html
+<!-- WHMCS header.tpl -->
+<head>
+    <!-- Standard WHMCS tags -->
+    {$headoutput}
+    
+    <!-- Enqueue PPHLX compiled styles -->
+    <link href="{$WEB_ROOT}/templates/{$template}/dist/assets/theme.css" rel="stylesheet">
+</head>
+<body>
+    ...
+    <!-- Include PPHLX compiled JS bundle before </body> -->
+    <script src="{$WEB_ROOT}/templates/{$template}/dist/assets/theme.js"></script>
+</body>
+```
+

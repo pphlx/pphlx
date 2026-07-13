@@ -1,0 +1,130 @@
+---
+import { Image } from 'astro:assets';
+import astroCap from '../../../_components/landing-page/_assets/pphlx-cap.png';
+---
+
+<div
+	class="pt-10 sm:pt-0 size-full flex items-end justify-center overflow-hidden"
+	aria-hidden="true"
+>
+	<div class="w-2/3 md:max-xl:w-4/5 px-3 pt-3 bg-astro-gray-600 rounded-t-3xl">
+		<div class="p-2 sm:p-4 size-full flex flex-col bg-astro-gray-700 rounded-t-2xl space-y-2">
+			<Image
+				class="w-full h-40 md:h-36 lg:h-40 xl:h-56 rounded-xl object-center object-contain"
+				src={astroCap}
+				alt="Official Astro Cap Swag"
+				width={300}
+			/>
+			<div class="flex items-center justify-between text-sm xl:text-base">
+				<h2 class="text-astro-gray-300 font-medium">Snapback Cap</h2>
+				<p class="text-astro-gray-300 font-medium">$25.00</p>
+			</div>
+			<button
+				type="button"
+				disabled
+				aria-disabled="true"
+				class:list={[
+					'px-4 py-2 inline-flex items-center justify-center gap-2 text-base font-normal rounded-lg text-white',
+				]}
+			>
+				Add to cart
+			</button>
+		</div>
+	</div>
+</div>
+
+<style>
+	:global([aria-labelledby='three.js']) button {
+		background-color: #ffffff;
+		color: #030712;
+	}
+	:global([aria-labelledby='r3f']) button {
+		background-color: #61dafb;
+		color: #030712;
+	}
+	:global([aria-labelledby='threlte']) button {
+		background-color: #ff3e00;
+		color: #ffffff;
+	}
+	:global([aria-labelledby='tresjs']) button {
+		background-color: #41b883;
+		color: #ffffff;
+	}
+	:global([aria-labelledby='react']) button {
+		background-color: #61dafb;
+		color: #030712;
+	}
+	:global([aria-labelledby='vue']) button {
+		background-color: #41b883;
+	}
+	:global([aria-labelledby='preact']) button {
+		background-color: #673ab8;
+	}
+	:global([aria-labelledby='svelte']) button {
+		background-color: #ff3e00;
+	}
+	:global([aria-labelledby='solid']) button {
+		background-color: #76b3e1;
+		color: #030712;
+	}
+	:global([aria-labelledby='angular']) button {
+		background-color: #dd0031;
+		color: #ffffff;
+	}
+	:global([aria-labelledby='alpine']) button {
+		background-color: #77c1d2;
+		color: #030712;
+	}
+	:global([aria-labelledby='qwik']) button {
+		background-color: #18b6f6;
+		color: #030712;
+	}
+	:global([aria-labelledby='lit']) button {
+		background-color: #324fff;
+		color: #ffffff;
+	}
+	:global([aria-labelledby='mithril']) button {
+		background-color: #0f80c1;
+		color: #ffffff;
+	}
+	:global([aria-labelledby='elm']) button {
+		background-color: #60b5cc;
+		color: #030712;
+	}
+	:global([aria-labelledby='ember']) button {
+		background-color: #e04e39;
+		color: #ffffff;
+	}
+	:global([aria-labelledby='ziko']) button {
+		background-color: #ffb800;
+		color: #030712;
+	}
+	:global([aria-labelledby='mdx']) button {
+		background-color: #e00073;
+		color: #ffffff;
+	}
+	:global([aria-labelledby='markdoc']) button {
+		background-color: #635bff;
+		color: #ffffff;
+	}
+	:global([aria-labelledby='bootstrap']) button {
+		background-color: #7952b3;
+		color: #ffffff;
+	}
+	:global([aria-labelledby='tailwind']) button {
+		background-color: #38bdf8;
+		color: #030712;
+	}
+	:global([aria-labelledby='uno']) button {
+		background-color: #a3e635;
+		color: #030712;
+	}
+	:global([aria-labelledby='next.js']) button {
+		background-color: #f1f1f1;
+		color: #030712;
+	}
+	:global([aria-labelledby='nuxt']) button {
+		background-color: #00dc82;
+		color: #030712;
+	}
+</style>

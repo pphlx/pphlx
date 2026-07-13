@@ -1,0 +1,140 @@
+---
+import { type CollectionEntry, getCollection } from 'astro:content';
+import type { GetStaticPathsOptions, Page } from 'astro';
+import Pagination from '~/components/Pagination.astro';
+import MainLayout from '~/layouts/MainLayout.astro';
+import ShowcaseCard from './_components/ShowcaseCard.astro';
+import SubmitSite from './_components/SubmitSite.astro';
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+	const getWeight = (site: CollectionEntry<'showcase'>) =>
+		site.data.featured ?? 1000 + Math.random();
+
+	// fetch all showcase sites and sort featured sites to the front, randomize the rest
+	const sortedShowcase = (await getCollection('showcase')).sort(
+		(a, b) => getWeight(a) - getWeight(b),
+	);
+
+	if (sortedShowcase.length === 0) {
+		return paginate([], { pageSize: 30 });
+	}
+
+	// separate out sites that display with a larger thumbnail
+	const highlighted = sortedShowcase.filter((site) => site.data.highlight);
+
+	// build final showcase array by interleaving 1 highlighted item for every 4 non-highlighted items
+	const showcase = sortedShowcase.filter((site) => !site.data.highlight);
+	for (let i = 2; i < showcase.length; i += 5) {
+		const highlight = highlighted.shift();
+		if (!highlight) break;
+		showcase.splice(i, 0, highlight);
+	}
+
+	return paginate(showcase, { pageSize: 30 });
+}
+
+const { page } = Astro.props as { page: Page<CollectionEntry<'showcase'>> };
+const showcase = page.data;
+
+const allPages = [...Array(page.lastPage || 1).keys()].map((num) => {
+	return `/showcase${num === 0 ? '' : `/${String(num + 1)}`}`;
+});
+
+const title = 'Showcase';
+const description = "Explore what's possible with PPHLX and get inspired for your next project.";
+---
+
+<MainLayout
+	title={title}
+	description={description}
+	image={{ src: '/og/showcase.jpg', alt: 'Explore the possibilities' }}
+>
+	<div class="hero relative">
+		<div class="grid-container">
+			<h1
+				class="heading-3 mx-auto w-full max-w-screen-xl pt-24 text-center text-balance sm:heading-2 lg:heading-1 md:pt-32 lg:pt-40"
+			>
+				Explore the infinite possibilities of PPHLX
+			</h1>
+		</div>
+	</div>
+
+	<div class="backgrounds grid-container relative">
+		{
+			showcase.length === 0 ? (
+				<div class="flex flex-col items-center justify-center text-center py-20 px-4 border border-[#1b1f27] bg-[#0c0e12] rounded-xl max-w-3xl mx-auto gap-4">
+					<svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-astro-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+					</svg>
+					<h3 class="text-lg font-semibold text-white font-mono">No showcase sites submitted yet</h3>
+					<p class="text-sm text-astro-gray-400 max-w-md">Be the first to submit a website built using PPHLX and showcase it to the world!</p>
+					<SubmitSite class="!flex-col !items-center !text-center !gap-4 !px-0 !py-4" />
+				</div>
+			) : (
+				<ul class="grid gap-5 md:grid-flow-row-dense md:grid-cols-2 lg:grid-cols-3">
+					{
+						showcase.map((site, i) => (
+							<>
+								<li class:list={{ 'md:col-span-2 md:row-span-2': site.data.highlight }}>
+									<ShowcaseCard site={site} />
+								</li>
+								{i === 5 && (
+									<li class="md:col-span-2 lg:col-span-3">
+										<SubmitSite />
+									</li>
+								)}
+							</>
+						))
+					}
+				</ul>
+			)
+		}
+
+		{showcase.length > 0 && (
+			<Pagination restRoute allPages={allPages} page={page} class="mx-auto" />
+		)}
+	</div>
+</MainLayout>
+
+<style>
+	:global(main::before) {
+		@apply bg-grid absolute aspect-square w-full pointer-events-none;
+		content: '';
+		mask-image: linear-gradient(to bottom, white, transparent);
+	}
+
+	.hero::before {
+		@apply absolute z-blur pointer-events-none;
+		content: '';
+		height: 50vw;
+		width: 100vw;
+		top: 50%;
+		translate: 0 -30%;
+		left: -60vw;
+		background: linear-gradient(83.21deg, #3245ff 0%, #bc52ee 100%);
+		mask-image: radial-gradient(rgba(0, 0, 0, 0.4), transparent 65%);
+	}
+
+	.hero::after {
+		@apply absolute z-blur pointer-events-none;
+		content: '';
+		height: 50vw;
+		width: 100vw;
+		top: 50%;
+		translate: 0 -30%;
+		right: -60vw;
+		background: linear-gradient(247.23deg, #4af2c8 0%, #2f4cb3 100%);
+		mask-image: radial-gradient(rgba(0, 0, 0, 0.5), transparent 65%);
+	}
+
+	.backgrounds:last-of-type::after {
+		@apply absolute z-blur pointer-events-none;
+		content: '';
+		height: 50vw;
+		width: 100vw;
+		bottom: 0;
+		translate: 0 70%;
+		background: linear-gradient(266.93deg, #f8e42e 0%, #ff7d54 100%);
+		mask-image: radial-gradient(rgba(0, 0, 0, 0.8), transparent 60%);
+	}
+</style>
