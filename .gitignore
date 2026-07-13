@@ -39,3 +39,6 @@ pphlx.vite.config.mjs
 *.wixobj
 *.wixpdb
 *.vsix
+
+# Compiled release tarballs
+releases/*.tar.gz

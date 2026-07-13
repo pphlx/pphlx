@@ -3,16 +3,16 @@
   "displayName": "PPHLX",
   "description": "Syntax highlighting, template syntax, and language support for the PPHLX PHP web engine.",
   "version": "1.0.0",
-  "publisher": "pphlx-labs",
+  "publisher": "pphlx",
   "author": "PPHLX",
   "license": "MIT",
   "homepage": "https://pphlx.org",
   "repository": {
     "type": "git",
-    "url": "https://github.com/KillerTyzon/PPHLX.git"
+    "url": "https://github.com/pphlx/PPHLX.git"
   },
   "bugs": {
-    "url": "https://github.com/KillerTyzon/PPHLX/issues"
+    "url": "https://github.com/pphlx/PPHLX/issues"
   },
   "icon": "logo/logo.png",
   "engines": {
@@ -35,8 +35,13 @@
     "languages": [
       {
         "id": "pphx",
-        "aliases": ["PPHLX", "pphx"],
-        "extensions": [".pphx"],
+        "aliases": [
+          "PPHLX",
+          "pphx"
+        ],
+        "extensions": [
+          ".pphx"
+        ],
         "configuration": "./language-configuration.json",
         "icon": {
           "light": "./logo/file-icon.svg",

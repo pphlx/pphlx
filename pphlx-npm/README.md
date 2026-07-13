@@ -1,20 +1,44 @@
-# PPHLX Compiler (Node.js/npm Package)
+# PPHLX Compiler
 
-Official Node.js CLI compiler wrapper for **PPHLX**, a high-performance web compiler that builds component-based layouts into standard PHP monolith pages.
+![npm](https://img.shields.io/npm/v/pphlx)
+![npm downloads](https://img.shields.io/npm/dm/pphlx)
+![License](https://img.shields.io/npm/l/pphlx)
 
-This package wraps the Go-compiled WebAssembly (WASI) binary, providing cross-platform execution on Windows, macOS, and Linux out of the box without any native compiler dependencies.
+> Modern web components. Zero runtime. Pure PHP output.
+
+Official Node.js CLI for PPHLX — a high-performance compiler for building modern, component-based PHP applications.
+
+Powered by a Go-compiled WebAssembly (WASI) runtime, PPHLX runs consistently on Windows, macOS, and Linux without requiring native compiler installations.
 
 ---
 
-## Installation
+## Features
 
-Install the package locally in your project:
+- **🚀 High-performance compiler**: Powered by Go and compiled natively.
+- **⚡ WebAssembly (WASI) powered**: Run anywhere Node.js runs without native compiler dependencies.
+- **📦 Zero runtime in production**: The generated output is standalone, with no node modules.
+- **🧩 Component-based layout**: Build components using your favorite frontend workflows.
+- **🔥 Hot reload**: Fast development server built-in.
+- **🌍 Cross-platform**: Instant startup on Windows, macOS, and Linux.
+- **🐘 Generates pure PHP**: Easily host your builds on any cheap PHP web hosting server.
+
+---
+
+## Quick Start
+
+Get your project up and running in seconds:
+
 ```bash
+# Install PPHLX locally
 npm install pphlx
-```
 
-Or run it directly using `npx`:
-```bash
+# Initialize your project configuration
+npx pphlx init
+
+# Start the local development server (with hot reload)
+npx pphlx dev
+
+# Build for production deployment
 npx pphlx build
 ```
 
@@ -22,15 +46,17 @@ npx pphlx build
 
 ## Usage
 
-PPHLX uses a configuration file (`pphlx.config.json` or `pphlx.config.mjs`) in the root of your project directory.
+PPHLX compiles your components into dependency-free, production-ready PHP pages. The generated output requires no Node.js, JavaScript runtime, or PPHLX framework in production.
 
-### Scripts
-Add the build trigger script to your `package.json`:
+By default, the compiler looks for a configuration file (`pphlx.config.json` or `pphlx.config.mjs`) in the root of your project directory.
+
+### package.json Scripts
+Add build and development triggers to your project scripts:
 ```json
 {
   "scripts": {
-    "build": "pphlx build",
-    "dev": "pphlx dev"
+    "dev": "pphlx dev",
+    "build": "pphlx build"
   }
 }
 ```
@@ -39,4 +65,12 @@ Then run:
 ```bash
 npm run build
 ```
-This compiles your layout and components into standard `.php` files inside your output directory.
+This compiles your layouts and components into standalone `.php` files inside your output directory.
+
+---
+
+## Project Links
+
+- **Website**: [pphlx.org](https://pphlx.org)
+- **GitHub Repository**: [github.com/pphlx/pphlx](https://github.com/pphlx/pphlx)
+- **Discord Community**: [Discord Server](https://discord.gg/9ApeZhsG7G)
