@@ -7,7 +7,7 @@ import { defineConfig } from 'astro/config';
 import astroExpressiveCode from 'astro-expressive-code';
 import icon from 'astro-icon';
 import fs from 'node:fs';
-import houston from './houston.theme.json';
+import houston from './piplex.theme.json';
 
 const pphlxGrammar = JSON.parse(
 	fs.readFileSync(

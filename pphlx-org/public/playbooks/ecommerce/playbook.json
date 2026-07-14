@@ -1,0 +1,5 @@
+{
+  "name": "E-Commerce Product Card",
+  "description": "Multi-framework hydration (React + Solid + Svelte) with PPHLX slots and layouts",
+  "defaultFile": "index.pphx"
+}

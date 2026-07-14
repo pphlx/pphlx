@@ -19,7 +19,7 @@ switch -regex ($Arch) {
 }
 
 # 2. Get target version tag (Hardcoded for dev phase)
-$Repo = "KillerTyzon/PPHLX"
+$Repo = "pphlx/pphlx"
 $Tag = "v1.0.0"
 
 $ZipName = "pphlx-windows-$Arch.zip"
@@ -36,7 +36,8 @@ $ZipPath = Join-Path $TempDir "pphlx.zip"
 
 try {
     Invoke-WebRequest -Uri $DownloadUrl -OutFile $ZipPath -UseBasicParsing
-} catch {
+}
+catch {
     Write-Error "Failed to download the PPHLX release zip. It might not be uploaded yet."
     exit 1
 }

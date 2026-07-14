@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -37,6 +38,7 @@ type Component struct {
 	JS            string
 	IsLayout      bool
 	IsJsComponent bool
+	Framework     string
 }
 
 //go:embed mcp/*
@@ -47,7 +49,7 @@ var (
 	styleRegex       = regexp.MustCompile(`(?s)<style>(.*?)</style>`)
 	scriptRegex      = regexp.MustCompile(`(?s)<script>(.*?)</script>`)
 	templateRegex    = regexp.MustCompile(`(?s)<template[^>]*>(.*?)</template>`)
-	attrRegex        = regexp.MustCompile(`(\w+[\w:-]*)(?:="([^"]*)")?`)
+	attrRegex        = regexp.MustCompile(`(\w+[\w:-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|\{([^}]+)\}|([^\s>]+)))?`)
 	phpShortTagRegex = regexp.MustCompile(`\{\{\s*(\w+)(?:\s*\?\?\s*'(.*?)')?\s*\}\}`)
 	viteComponents   = make(map[string]string)
 )
@@ -107,18 +109,37 @@ func main() {
 
 	// 1. Read config (looking for pphlx.config.mjs first, then fallback to json)
 	configPath := "./pphlx.config.mjs"
+	if runtime.GOOS == "wasip1" {
+		configPath = "/pphlx.config.mjs"
+	}
 	isMjs := true
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		configPath = "./pphlx.config.json"
+		if runtime.GOOS == "wasip1" {
+			configPath = "/pphlx.config.json"
+		} else {
+			configPath = "./pphlx.config.json"
+		}
 		isMjs = false
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
-			configPath = "./pphlx.json"
+			if runtime.GOOS == "wasip1" {
+				configPath = "/pphlx.json"
+			} else {
+				configPath = "./pphlx.json"
+			}
 			if _, err := os.Stat(configPath); os.IsNotExist(err) {
 				// Fallback to test_project if run from compiler root
-				configPath = "./test_project/pphlx.config.mjs"
+				if runtime.GOOS == "wasip1" {
+					configPath = "/test_project/pphlx.config.mjs"
+				} else {
+					configPath = "./test_project/pphlx.config.mjs"
+				}
 				isMjs = true
 				if _, err := os.Stat(configPath); os.IsNotExist(err) {
-					configPath = "./test_project/pphlx.config.json"
+					if runtime.GOOS == "wasip1" {
+						configPath = "/test_project/pphlx.config.json"
+					} else {
+						configPath = "./test_project/pphlx.config.json"
+					}
 					isMjs = false
 				}
 			}
@@ -249,8 +270,25 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 			cssTag := fmt.Sprintf(`<link rel="stylesheet" href="%s">`, cssRelPath)
 			jsTag := fmt.Sprintf(`<script src="%s"></script>`, jsRelPath)
 
-			compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", cssTag)
-			compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", jsTag)
+			hasCssPlaceholder := strings.Contains(compiledPage, "{{PPHLX_CSS}}")
+			hasJsPlaceholder := strings.Contains(compiledPage, "{{PPHLX_JS}}")
+
+			if hasCssPlaceholder {
+				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", cssTag)
+			}
+			if hasJsPlaceholder {
+				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", jsTag)
+			}
+
+			// Fallback: Inject before </head> if no explicit placeholders were used
+			if strings.Contains(compiledPage, "</head>") {
+				if !hasCssPlaceholder {
+					compiledPage = strings.ReplaceAll(compiledPage, "</head>", cssTag+"\n</head>")
+				}
+				if !hasJsPlaceholder {
+					compiledPage = strings.ReplaceAll(compiledPage, "</head>", jsTag+"\n</head>")
+				}
+			}
 
 			os.MkdirAll(filepath.Dir(phpOutPath), 0755)
 			err = ioutil.WriteFile(phpOutPath, []byte(strings.TrimLeft(compiledPage, " \t\r\n")), 0644)
@@ -272,11 +310,9 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 		return
 	}
 
-	// Write global CSS & JS
-	if globalCSS.Len() > 0 {
-		os.MkdirAll(filepath.Dir(cssOut), 0755)
-		ioutil.WriteFile(cssOut, []byte(globalCSS.String()), 0644)
-	}
+	// Write global CSS & JS (always write CSS to prevent 404)
+	os.MkdirAll(filepath.Dir(cssOut), 0755)
+	ioutil.WriteFile(cssOut, []byte(globalCSS.String()), 0644)
 	
 	// Inject lightweight PPHLX Islands hydration runtime
 	runtimeScript := `
@@ -284,6 +320,7 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".pphlx-island").forEach(island => {
     const compName = island.getAttribute("data-component");
+    const framework = island.getAttribute("data-framework") || "";
     const islandId = island.id;
     const props = window.pphlxProps ? window.pphlxProps[islandId] : {};
     
@@ -291,26 +328,48 @@ document.addEventListener("DOMContentLoaded", () => {
       const ComponentModule = window[compName];
       const Component = ComponentModule.default || ComponentModule;
       
-      if (window.ReactDOM && window.ReactDOM.createRoot) {
+      if (framework === "react" && window.ReactDOM && window.ReactDOM.createRoot) {
         // React 18+ Mount
         const root = window.ReactDOM.createRoot(island);
         root.render(window.React.createElement(Component, props));
-      } else if (window.Vue && window.Vue.createApp) {
+      } else if (framework === "vue" && window.Vue && window.Vue.createApp) {
         // Vue 3 Mount
         window.Vue.createApp(Component, props).mount(island);
-      } else if (typeof Component === "function" && Component.prototype && Component.prototype.$destroy) {
-        // Svelte Mount
-        new Component({ target: island, props: props });
-      } else if (window.SolidJS && window.SolidJS.render) {
+      } else if (framework === "svelte") {
+        // Support Svelte 4 classes and Svelte 5 functions
+        if (Component.prototype && Component.prototype.$destroy) {
+          new Component({ target: island, props: props });
+        } else if (window.Svelte && window.Svelte.mount) {
+          window.Svelte.mount(Component, { target: island, props: props });
+        } else if (typeof Component === "function") {
+          Component(island, props);
+        }
+      } else if (framework === "solid" && window.SolidJS && window.SolidJS.render) {
         // SolidJS Mount
         window.SolidJS.render(() => Component(props), island);
-      } else if (window.preact && window.preact.render) {
+      } else if (framework === "preact" && window.preact && window.preact.render) {
         // Preact Mount
         window.preact.render(window.preact.h(Component, props), island);
       } else if (Component.render) {
         Component.render(island, props);
       } else {
-        console.warn("No runtime renderer found to mount component " + compName);
+        // Backwards compatibility fallback if data-framework not set
+        if (window.ReactDOM && window.ReactDOM.createRoot) {
+          const root = window.ReactDOM.createRoot(island);
+          root.render(window.React.createElement(Component, props));
+        } else if (window.Vue && window.Vue.createApp) {
+          window.Vue.createApp(Component, props).mount(island);
+        } else if (typeof Component === "function") {
+          if (Component.prototype && Component.prototype.$destroy) {
+            new Component({ target: island, props: props });
+          } else if (window.Svelte && window.Svelte.mount) {
+            window.Svelte.mount(Component, { target: island, props: props });
+          } else {
+            Component(island, props);
+          }
+        } else {
+          console.warn("No runtime renderer found for component " + compName);
+        }
       }
     } else {
       console.error("Component " + compName + " not found in window scope.");
@@ -383,7 +442,7 @@ func startWatcher(config Config, projectDir string) {
 	defer watcher.Close()
 
 	srcDir := filepath.Join(projectDir, config.SrcDir)
-	fmt.Printf("Watching source directory recursively: %s\n", srcDir)
+	fmt.Printf("  watching for file changes...\n\n")
 
 	// Watch recursively by adding subfolders
 	err = filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
@@ -477,57 +536,34 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 		ext := filepath.Ext(relPath)
 		isPackage := strings.HasPrefix(relPath, "github.com/") || strings.HasPrefix(relPath, "gitlab.com/")
 
-		if ext == "" {
-			if (isPackage) {
-				compPath = filepath.Clean(filepath.Join(srcDir, "../.pphlx/packages", relPath+".pphx"))
-			} else {
-				compPath = filepath.Clean(filepath.Join(currentDir, relPath+".pphx"))
-				if _, err := os.Stat(compPath); os.IsNotExist(err) {
-					compPath = filepath.Clean(filepath.Join(srcDir, relPath+".pphx"))
-				}
-			}
-			
-			if _, err := os.Stat(compPath); os.IsNotExist(err) {
-				// Fallback to JS/Vue/Svelte/TS/Solid extensions
-				for _, jsExt := range []string{".jsx", ".tsx", ".js", ".vue", ".svelte", ".solid.jsx", ".solid.tsx", ".ts"} {
-					var testPath string
-					if (isPackage) {
-						testPath = filepath.Clean(filepath.Join(srcDir, "../.pphlx/packages", relPath+jsExt))
-					} else {
-						testPath = filepath.Clean(filepath.Join(currentDir, relPath+jsExt))
-					}
-					
-					if _, err := os.Stat(testPath); err == nil {
-						compPath = testPath
-						isJsComponent = true
-						break
-					}
-					if !isPackage {
-						testPath = filepath.Clean(filepath.Join(srcDir, relPath+jsExt))
-						if _, err := os.Stat(testPath); err == nil {
-							compPath = testPath
-							isJsComponent = true
-							break
-						}
-					}
-				}
-			}
+		if isPackage {
+			compPath = filepath.Clean(filepath.Join(srcDir, "../.pphlx/packages", relPath))
 		} else {
-			if isPackage {
-				compPath = filepath.Clean(filepath.Join(srcDir, "../.pphlx/packages", relPath))
-			} else {
-				compPath = filepath.Clean(filepath.Join(currentDir, relPath))
-				if _, err := os.Stat(compPath); os.IsNotExist(err) {
-					compPath = filepath.Clean(filepath.Join(srcDir, relPath))
-				}
+			compPath = filepath.Clean(filepath.Join(currentDir, relPath))
+			if _, err := os.Stat(compPath); os.IsNotExist(err) {
+				compPath = filepath.Clean(filepath.Join(srcDir, relPath))
 			}
-			if ext == ".jsx" || ext == ".tsx" || ext == ".js" || ext == ".vue" || ext == ".svelte" || ext == ".ts" || strings.HasSuffix(relPath, ".solid.jsx") || strings.HasSuffix(relPath, ".solid.tsx") {
-				isJsComponent = true
-			}
+		}
+		if ext == ".jsx" || ext == ".tsx" || ext == ".js" || ext == ".vue" || ext == ".svelte" || ext == ".ts" || strings.HasSuffix(relPath, ".solid.jsx") || strings.HasSuffix(relPath, ".solid.tsx") {
+			isJsComponent = true
 		}
 
 		var compObj Component
 		if isJsComponent {
+			framework := "react"
+			if ext == ".vue" {
+				framework = "vue"
+			} else if ext == ".svelte" {
+				framework = "svelte"
+			} else if strings.Contains(compPath, ".solid.") {
+				framework = "solid"
+			} else {
+				fileBytes, err := ioutil.ReadFile(compPath)
+				if err == nil && (strings.Contains(string(fileBytes), "preact") || strings.Contains(string(fileBytes), "preact.Component")) {
+					framework = "preact"
+				}
+			}
+
 			// Svelte, Vue, SolidJS, TS, and TSX files containing Angular are routed to Vite
 			isVite := ext == ".vue" || ext == ".svelte" || strings.HasSuffix(compPath, ".ts") || strings.HasSuffix(compPath, ".tsx") || strings.HasSuffix(compPath, ".vue") || strings.HasSuffix(compPath, ".svelte") || strings.HasSuffix(compPath, ".solid.jsx") || strings.HasSuffix(compPath, ".solid.tsx")
 			
@@ -537,6 +573,7 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 					Name:          compName,
 					Path:          compPath,
 					IsJsComponent: true,
+					Framework:     framework,
 				}
 			} else {
 				// Compile JS/JSX/TSX component with native esbuild
@@ -549,6 +586,7 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 					Path:          compPath,
 					JS:            jsCode,
 					IsJsComponent: true,
+					Framework:     framework,
 				}
 			}
 		} else {
@@ -595,7 +633,7 @@ func compileJSComponent(compName string, compPath string) (string, error) {
 		GlobalName:  compName,
 		External:    []string{"react", "react-dom", "preact", "preact/hooks", "solid-js"},
 		Loader: map[string]api.Loader{
-			".js":  api.LoaderJS,
+			".js":  api.LoaderJSX,
 			".jsx": api.LoaderJSX,
 			".tsx": api.LoaderTSX,
 			".ts":  api.LoaderTS,
@@ -606,7 +644,11 @@ func compileJSComponent(compName string, compPath string) (string, error) {
 	if len(result.Errors) > 0 {
 		var errs []string
 		for _, err := range result.Errors {
-			errs = append(errs, fmt.Sprintf("%s:%d: %s", err.Location.File, err.Location.Line, err.Text))
+			if err.Location != nil {
+				errs = append(errs, fmt.Sprintf("%s:%d: %s", err.Location.File, err.Location.Line, err.Text))
+			} else {
+				errs = append(errs, err.Text)
+			}
 		}
 		return "", fmt.Errorf("esbuild errors: %s", strings.Join(errs, "; "))
 	}
@@ -708,8 +750,14 @@ func renderJSComponent(comp Component, attrs string, slot string) string {
 	for _, match := range attrMatches {
 		name := match[1]
 		val := ""
-		if len(match) > 2 {
+		if len(match) > 2 && match[2] != "" {
 			val = match[2]
+		} else if len(match) > 3 && match[3] != "" {
+			val = match[3]
+		} else if len(match) > 4 && match[4] != "" {
+			val = match[4]
+		} else if len(match) > 5 && match[5] != "" {
+			val = match[5]
 		}
 		if strings.HasPrefix(name, "client:") {
 			hydrate = strings.TrimPrefix(name, "client:")
@@ -727,7 +775,9 @@ func renderJSComponent(comp Component, attrs string, slot string) string {
 		if i > 0 {
 			propsBuilder.WriteString(",")
 		}
-		if strings.Contains(v, "<?php") {
+		if strings.HasPrefix(v, "$") {
+			propsBuilder.WriteString(fmt.Sprintf("%q: <?php echo json_encode(%s); ?>", k, v))
+		} else if strings.Contains(v, "<?php") {
 			if strings.Contains(v, "json_encode") {
 				propsBuilder.WriteString(fmt.Sprintf("%q: %s", k, v))
 			} else {
@@ -741,7 +791,7 @@ func renderJSComponent(comp Component, attrs string, slot string) string {
 	propsBuilder.WriteString("}")
 
 	var result strings.Builder
-	result.WriteString(fmt.Sprintf(`<div id="%s" class="pphlx-island" data-component="%s" data-hydrate="%s"></div>`, islandId, comp.Name, hydrate))
+	result.WriteString(fmt.Sprintf(`<div id="%s" class="pphlx-island" data-component="%s" data-framework="%s" data-hydrate="%s"></div>`, islandId, comp.Name, comp.Framework, hydrate))
 	result.WriteString("\n<script>\n")
 	result.WriteString(fmt.Sprintf("  window.pphlxProps = window.pphlxProps || {};\n"))
 	result.WriteString(fmt.Sprintf("  window.pphlxProps[%q] = %s;\n", islandId, propsBuilder.String()))
@@ -753,17 +803,27 @@ func renderJSComponent(comp Component, attrs string, slot string) string {
 // renderTemplate interpolates properties and slots into a template string
 func renderTemplate(comp Component, attrs string, slot string) string {
 	result := comp.HTML
-
+	
 	// Extract attributes
 	props := make(map[string]string)
 	attrMatches := attrRegex.FindAllStringSubmatch(attrs, -1)
 	for _, match := range attrMatches {
-		props[match[1]] = match[2]
+		val := ""
+		if len(match) > 2 && match[2] != "" {
+			val = match[2]
+		} else if len(match) > 3 && match[3] != "" {
+			val = match[3]
+		} else if len(match) > 4 && match[4] != "" {
+			val = match[4]
+		} else if len(match) > 5 && match[5] != "" {
+			val = match[5]
+		}
+		props[match[1]] = val
 	}
-
+	
 	// 1. Replace slot
 	result = strings.ReplaceAll(result, "{{slot}}", slot)
-
+	
 	// 2. Replace variables: {{title}} or {{type ?? 'default'}}
 	result = phpShortTagRegex.ReplaceAllStringFunc(result, func(match string) string {
 		submatches := phpShortTagRegex.FindStringSubmatch(match)
@@ -773,18 +833,21 @@ func renderTemplate(comp Component, attrs string, slot string) string {
 		if varName == "PPHLX_CSS" || varName == "PPHLX_JS" {
 			return match
 		}
-
+		
 		defaultVal := ""
 		if len(submatches) > 2 {
 			defaultVal = submatches[2]
 		}
-
+		
 		if val, exists := props[varName]; exists {
+			if strings.HasPrefix(val, "$") {
+				return fmt.Sprintf("<?php echo %s; ?>", val)
+			}
 			return val
 		}
 		return defaultVal
 	})
-
+	
 	return result
 }
 
@@ -841,6 +904,10 @@ func runViteBuild(config Config, projectDir string) error {
 	entryContent.WriteString("import { render as solidRender } from 'solid-js/web';\n")
 	entryContent.WriteString("window.SolidJS = { render: solidRender };\n")
 
+	// Expose Svelte 5 mount helper
+	entryContent.WriteString("import { mount as svelteMount } from 'svelte';\n")
+	entryContent.WriteString("window.Svelte = { mount: svelteMount };\n")
+
 	err := ioutil.WriteFile(entryPath, []byte(entryContent.String()), 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write Vite entry file: %v", err)
@@ -855,6 +922,7 @@ import solidPlugin from 'vite-plugin-solid';
 
 export default defineConfig({
   plugins: [vue(), svelte(), solidPlugin()],
+  publicDir: false,
   build: {
     lib: {
       entry: 'src/.pphlx_entry.js',

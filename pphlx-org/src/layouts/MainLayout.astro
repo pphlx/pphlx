@@ -76,4 +76,67 @@ const { bgClass = 'bg-black', ...head } = Astro.props;
 	:root.disclosure-open #nav {
 		overflow-y: auto;
 	}
+
+	/* Custom Standardized Scrollbar */
+	:global(::-webkit-scrollbar) {
+		width: 15px;
+		height: 15px;
+	}
+	:global(::-webkit-scrollbar-track) {
+		background: #2c2c2c;
+	}
+	:global(::-webkit-scrollbar-thumb) {
+		background: #9f9f9f;
+		border-radius: 9999px;
+		border: 3px solid #2c2c2c;
+	}
+	:global(::-webkit-scrollbar-thumb:hover) {
+		background: #d1d1d1;
+	}
+
+	/* Scrollbar Buttons (Arrows) */
+	:global(::-webkit-scrollbar-button) {
+		display: none; /* Hide by default */
+		background-color: #2c2c2c;
+		background-repeat: no-repeat;
+		background-position: center;
+		background-size: contain;
+		height: 15px;
+		width: 15px;
+		border: none; /* No border needed as SVG handles centering and sizing */
+	}
+
+	/* Show only single buttons at start and end of scrollbar */
+	:global(::-webkit-scrollbar-button:single-button) {
+		display: block;
+	}
+
+	/* Up Arrow (Rounded Triangle - 60% size centered) */
+	:global(::-webkit-scrollbar-button:vertical:decrement) {
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f' stroke='%239f9f9f' stroke-width='14' stroke-linejoin='round'><polygon points='50,20 20,80 80,80'/></svg>");
+	}
+	:global(::-webkit-scrollbar-button:vertical:decrement:hover) {
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1' stroke='%23d1d1d1' stroke-width='14' stroke-linejoin='round'><polygon points='50,20 20,80 80,80'/></svg>");
+	}
+	/* Down Arrow (Rounded Triangle - 60% size centered) */
+	:global(::-webkit-scrollbar-button:vertical:increment) {
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f' stroke='%239f9f9f' stroke-width='14' stroke-linejoin='round'><polygon points='50,80 20,20 80,20'/></svg>");
+	}
+	:global(::-webkit-scrollbar-button:vertical:increment:hover) {
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1' stroke='%23d1d1d1' stroke-width='14' stroke-linejoin='round'><polygon points='50,80 20,20 80,20'/></svg>");
+	}
+	/* Left Arrow (Rounded Triangle - 60% size centered) */
+	:global(::-webkit-scrollbar-button:horizontal:decrement) {
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f' stroke='%239f9f9f' stroke-width='14' stroke-linejoin='round'><polygon points='20,50 80,20 80,80'/></svg>");
+	}
+	:global(::-webkit-scrollbar-button:horizontal:decrement:hover) {
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1' stroke='%23d1d1d1' stroke-width='14' stroke-linejoin='round'><polygon points='20,50 80,20 80,80'/></svg>");
+	}
+	/* Right Arrow (Rounded Triangle - 60% size centered) */
+	:global(::-webkit-scrollbar-button:horizontal:increment) {
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f' stroke='%239f9f9f' stroke-width='14' stroke-linejoin='round'><polygon points='80,50 20,20 20,80'/></svg>");
+	}
+	:global(::-webkit-scrollbar-button:horizontal:increment:hover) {
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1' stroke='%23d1d1d1' stroke-width='14' stroke-linejoin='round'><polygon points='80,50 20,20 20,80'/></svg>");
+	}
 </style>

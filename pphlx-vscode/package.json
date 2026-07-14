@@ -1,18 +1,18 @@
 {
   "name": "pphlx",
   "displayName": "PPHLX",
-  "description": "Syntax highlighting, template syntax, and language support for the PPHLX PHP web engine.",
-  "version": "1.0.0",
+  "description": "Rich editing experience for PPHLX templates, bringing syntax highlighting, component autocomplete, and language support.",
+  "version": "1.0.4",
   "publisher": "pphlx",
   "author": "PPHLX",
   "license": "MIT",
   "homepage": "https://pphlx.org",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pphlx/PPHLX.git"
+    "url": "https://github.com/pphlx/vscode.git"
   },
   "bugs": {
-    "url": "https://github.com/pphlx/PPHLX/issues"
+    "url": "https://github.com/pphlx/vscode/issues"
   },
   "icon": "logo/logo.png",
   "engines": {

@@ -250,8 +250,12 @@ import InterfaceExample from './integrations-tabs/InterfaceExample.astro';
 		nextTab.setAttribute('aria-selected', 'true');
 		nextTab.setAttribute('tabindex', '0');
 
-		// Auto-center active tab
-		nextTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+		// Auto-center active tab within its horizontal scroll container
+		const container = nextTab.parentElement;
+		if (container) {
+			const scrollLeft = nextTab.offsetLeft - (container.clientWidth / 2) + (nextTab.clientWidth / 2);
+			container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+		}
 
 		// Update panel association
 		panel.setAttribute('aria-labelledby', nextTab.id);

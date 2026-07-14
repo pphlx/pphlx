@@ -37,7 +37,7 @@ case "$ARCH" in
 esac
 
 # 3. Resolve Download URL (GitHub Releases CDN)
-REPO="KillerTyzon/PPHLX"
+REPO="pphlx/pphlx"
 VERSION="v1.0.0" # Hardcoded specific release version for dev phase
 
 if [ "$VERSION" = "latest" ]; then

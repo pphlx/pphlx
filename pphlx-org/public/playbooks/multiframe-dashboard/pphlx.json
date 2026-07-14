@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "github.com/octocat/Spoon-Knife": "main",
+    "pphlex-ui-bootstrap": "^1.0.0"
+  },
+  "description": "A PPHLX portal test project",
+  "name": "pphlx-test-portal",
+  "scripts": {
+    "build": "pphlx build",
+    "dev": "pphlx dev",
+    "watch": "pphlx watch"
+  },
+  "version": "1.0.0"
+}

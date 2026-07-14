@@ -1,0 +1,55 @@
+{
+  "playbooks": [
+    {
+      "id": "ecommerce",
+      "name": "E-Commerce Product Card",
+      "description": "Multi-framework hydration (React + Solid + Svelte) with PPHLX slots and layouts",
+      "defaultFile": "index.pphx",
+      "files": [
+        "components/BuyButton.svelte",
+        "components/ProductImage.js",
+        "components/StarRating.solid.jsx",
+        "dist/assets/css/app.css",
+        "dist/assets/js/app.js",
+        "dist/assets/mac-macbook-pro.webp",
+        "dist/index.php",
+        "index.pphx",
+        "layouts/Layout.pphx",
+        "pphlx.config.json",
+        "pphlx.vite.config.mjs",
+        "public/assets/mac-macbook-pro.webp",
+        "src/components/BuyButton.svelte",
+        "src/components/ProductImage.js",
+        "src/components/StarRating.solid.jsx",
+        "src/index.pphx",
+        "src/layouts/Layout.pphx"
+      ]
+    },
+    {
+      "id": "multiframe-dashboard",
+      "name": "Multi-Framework Dashboard",
+      "description": "Enterprise dashboard running React, Vue, Svelte, SolidJS, Preact, Alpine.js, AngularJS, and Vanilla JS",
+      "defaultFile": "index.pphx",
+      "files": [
+        "dist/assets/css/app.css",
+        "dist/assets/js/app.js",
+        "dist/index.php",
+        "index.pphx",
+        "layouts/Layout.pphx",
+        "pphlx.config.json",
+        "pphlx.vite.config.mjs",
+        "src/components/FeedbackCard.jsx",
+        "src/components/InterestCalculator.svelte",
+        "src/components/PreactCart.js",
+        "src/components/R3FLogo.jsx",
+        "src/components/SolidStopwatch.solid.jsx",
+        "src/components/TempConverter.vue",
+        "src/components/ThrelteLogo.svelte",
+        "src/components/TresJSLogo.vue",
+        "src/index.php",
+        "src/index.pphx",
+        "src/layouts/Layout.pphx"
+      ]
+    }
+  ]
+}

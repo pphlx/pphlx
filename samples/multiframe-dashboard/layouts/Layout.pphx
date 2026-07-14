@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PPHLX App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/preact@10/dist/preact.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="https://unpkg.com/alpinejs@3/dist/cdn.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {{PPHLX_CSS}}
+</head>
+<body>
+    <div class="theme-wrapper">
+        <header class="bg-[#0f1115] border-b border-[#1f2430] py-4 px-6 flex justify-between items-center shadow-lg">
+            <h2 class="text-[#4bf3c8] text-lg font-bold tracking-tight">PPHLX Core Portal Dashboard</h2>
+        </header>
+        <div class="content-body bg-[#080a0d] min-h-screen p-0 text-astro-gray-100">
+            {{slot}}
+        </div>
+    </div>
+    {{PPHLX_JS}}
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PPHLX Preview</title>
+    <!-- Load required libraries for hydrated component islands -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/solid-js@1.8.0/dist/solid.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {{PPHLX_CSS}}
+</head>
+<body class="bg-[#080a0d] min-h-screen flex items-center justify-center p-6">
+    {{slot}}
+    {{PPHLX_JS}}
+</body>
+</html>

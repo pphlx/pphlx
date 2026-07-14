@@ -1,0 +1,21 @@
+{
+  "name": "multiframe-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "pphlx": "^1.0.4-1",
+    "preact": "^10.15.0",
+    "solid-js": "^1.7.0",
+    "svelte": "^5.56.5",
+    "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@vitejs/plugin-vue": "^4.2.0",
+    "vite": "^8.1.4",
+    "vite-plugin-solid": "^2.7.0"
+  }
+}
