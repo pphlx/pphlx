@@ -1,0 +1,23 @@
+# Avoid publishing packaged tarballs
+*.tgz
+
+# IDE and Editor directories
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Git configurations
+.git/
+.gitignore
+.github/
+
+# Development / OS metadata files
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

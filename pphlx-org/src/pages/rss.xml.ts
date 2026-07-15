@@ -17,7 +17,7 @@ export const GET: APIRoute = async (context) => {
 
 	return rss({
 		// The RSS Feed title, description, and custom metadata.
-		title: 'The Astro Blog',
+		title: 'The PPHLX Blog',
 		// See "Styling" section below
 		description: 'News and updates about Astro.',
 		site: (context.site as URL).href,

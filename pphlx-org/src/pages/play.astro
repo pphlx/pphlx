@@ -3,7 +3,7 @@ import PlayLayout from '~/layouts/PlayLayout.astro';
 import PPHLXLogo from '~/components/PPHLXLogo.astro';
 ---
 
-<PlayLayout title="PPHLX Playground">
+<PlayLayout title="Playground">
 	<Fragment slot="head">
 		<!-- Google Fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com">
@@ -105,11 +105,33 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			.monaco-editor .scrollbar .arrow-right:hover {
 				background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1' stroke='%23d1d1d1' stroke-width='14' stroke-linejoin='round'><polygon points='80,50 20,20 20,80'/></svg>") !important;
 			}
+
+			/* Styles when live preview is detached/popout */
+			.is-detached-preview #ide-header,
+			.is-detached-preview #activity-bar-parent,
+			.is-detached-preview #explorer-sidebar,
+			.is-detached-preview #sidebar-resizer,
+			.is-detached-preview #editor-workspace,
+			.is-detached-preview #workspace-resizer,
+			.is-detached-preview #preview-pane > div:first-child {
+				display: none !important;
+			}
+			.is-detached-preview #preview-pane {
+				width: 100% !important;
+				height: 100% !important;
+				max-width: none !important;
+				flex: 1 !important;
+			}
+			.is-detached-preview #output-container-preview {
+				position: relative !important;
+				width: 100% !important;
+				height: 100% !important;
+			}
 		</style>
 	</Fragment>
 
 	<!-- Header Bar (Integrated Minimal IDE Title Bar) -->
-	<header class="flex items-center justify-between px-6 py-2 border-b border-[#1b1f27] bg-[#0c0e12] select-none h-12">
+	<header id="ide-header" class="flex items-center justify-between px-6 py-2 border-b border-[#1b1f27] bg-[#0c0e12] select-none h-12">
 		<div class="flex items-center gap-3">
 			<a href="/" class="flex items-center hover:opacity-85 transition-opacity text-white">
 				<PPHLXLogo class="h-8 w-auto" />
@@ -118,12 +140,14 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 		</div>
 		<div class="flex items-center gap-4">
 			<!-- Reset Example Code -->
-			<button id="btn-reset-code" class="text-xs font-semibold px-3 py-1 rounded bg-[#1b1f27] hover:bg-[#de4343] border border-[#2e3440] text-astro-gray-200 hover:text-white transition-all flex items-center gap-1.5" title="Reset all files to default example code">
-				<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
-				</svg>
-				Reset Code
-			</button>
+			<div class="flex items-center gap-2">
+				<button id="btn-reset-code" class="text-xs font-semibold px-3 py-1 rounded bg-[#1b1f27] hover:bg-[#de4343] border border-[#2e3440] text-astro-gray-200 hover:text-white transition-all flex items-center gap-1.5" title="Reset all files to default example code">
+					<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+					</svg>
+					Reset Code
+				</button>
+			</div>
 
 			<!-- VSIX Installation Trigger -->
 			<button id="btn-install-vsix" class="text-xs font-semibold px-3 py-1 rounded bg-[#1b1f27] hover:bg-[#282d38] border border-[#2e3440] text-astro-gray-200 hover:text-white transition-all flex items-center gap-1.5">
@@ -143,7 +167,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 	<!-- Main Workspace -->
 	<div class="w-full flex-1 min-h-0 flex flex-row overflow-hidden bg-[#0c0e12]">
 		<!-- VS Code Activity Bar (Leftmost) -->
-		<div class="w-12 bg-[#090b0e] border-r border-[#1b1f27] flex flex-col items-center py-3 gap-4 flex-shrink-0 select-none">
+		<div id="activity-bar-parent" class="w-12 bg-[#090b0e] border-r border-[#1b1f27] flex flex-col items-center py-3 gap-4 flex-shrink-0 select-none">
 			<!-- Explorer Icon Button -->
 			<button id="activity-btn-explorer" class="p-2 rounded-lg text-[#4bf3c8] hover:text-white transition-colors bg-[#111318] border border-[#1b1f27]" title="Toggle Explorer Sidebar">
 				<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -177,12 +201,20 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			
 			<!-- Playbook Selector Pane -->
 			<div class="px-4 py-2.5 border-b border-[#1b1f27] bg-[#090b0e] flex flex-col gap-1.5 select-none">
-				<label class="text-[9px] font-bold text-astro-gray-400 uppercase tracking-wider">Playbook Project</label>
+				<div class="flex justify-between items-center">
+					<label class="text-[9px] font-bold text-astro-gray-400 uppercase tracking-wider">Playbook Project</label>
+					<button id="btn-playbook-menu" title="More Actions..." class="p-1 hover:bg-[#1b1f27] rounded text-astro-gray-300 hover:text-white transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+						</svg>
+					</button>
+				</div>
 				<div class="relative">
 					<select id="playbook-select" class="w-full bg-[#111318] border border-[#1b1f27] text-white text-xs rounded px-2.5 py-1.5 focus:outline-none focus:border-[#4bf3c8] appearance-none font-sans font-medium cursor-pointer transition-colors hover:border-gray-700">
 						<!-- Dynamically populated from VFS manifest.json -->
 					</select>
-					<div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-astro-gray-400">
+					<input id="playbook-select-input" type="text" class="hidden w-full bg-[#111318] border border-[#4bf3c8] text-white text-xs rounded px-2.5 py-1.5 focus:outline-none font-sans font-medium font-mono" placeholder="workspace-name..." />
+					<div id="playbook-select-arrow" class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-astro-gray-400">
 						<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
 					</div>
 				</div>
@@ -202,10 +234,13 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			</div>
 		</div>
 
+		<!-- Sidebar Resizer (Vertical Drag Handle) -->
+		<div id="sidebar-resizer" class="w-[3px] hover:w-[6px] bg-[#1b1f27] hover:bg-[#54b9ff]/40 active:bg-[#54b9ff] transition-all cursor-col-resize h-full select-none z-50 flex-shrink-0"></div>
+
 		<!-- Editor & Preview Available Workspace (Subtracts left sidebar Explorer width) -->
-		<div class="flex-1 flex flex-row min-h-0 h-full">
+		<div class="flex-1 flex flex-row min-h-0 h-full relative" id="workspace-splitter-parent">
 			<!-- Editor Workspace (Left) -->
-			<div class="w-1/2 flex flex-col border-r border-[#1b1f27] h-full">
+			<div id="editor-workspace" class="flex flex-col border-r border-[#1b1f27] h-full" style="width: 50%;">
 				<div class="flex items-center justify-between px-4 py-2 bg-[#0c0e12] border-b border-[#1b1f27] h-10">
 					<div class="flex items-center gap-2">
 						<button id="btn-toggle-sidebar" class="p-1 hover:bg-[#1b1f27] rounded text-astro-gray-400 hover:text-white transition-colors" title="Toggle Explorer Sidebar">
@@ -242,8 +277,11 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 				</div>
 			</div>
 
+			<!-- Col Resize Splitter Bar -->
+			<div id="workspace-resizer" class="w-1 bg-[#1b1f27] hover:bg-[#54b9ff] cursor-col-resize transition-colors h-full select-none z-[100]" title="Drag to resize editor and preview pane"></div>
+
 			<!-- Preview Pane (Right) -->
-			<div class="w-1/2 flex flex-col h-full bg-[#0f1115]">
+			<div id="preview-pane" class="flex flex-col h-full bg-[#0f1115]" style="width: 50%;">
 				<!-- Output Tabs -->
 				<div class="flex items-center justify-between px-2 bg-[#0c0e12] border-b border-[#1b1f27] h-10">
 					<div class="flex gap-1">
@@ -300,7 +338,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 							<div class="flex items-center gap-3">
 								<div class="flex items-center gap-2">
 									<span class="text-[10px] text-astro-gray-400 font-mono" id="sim-width-val">100%</span>
-									<input type="range" id="sim-slider-width" min="320" max="1200" step="10" class="w-24 h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#4bf3c8]" />
+									<input type="range" id="sim-slider-width" min="320" max="1200" step="10" value="1200" class="w-24 h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#4bf3c8]" />
 								</div>
 								<div class="h-4 w-[1px] bg-[#1b1f27]"></div>
 								<a id="sim-btn-popout" href="#" target="_blank" class="hover:text-white transition-colors flex items-center gap-1" title="Open preview in full standalone window">
@@ -310,7 +348,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 							</div>
 						</div>
 						<!-- Centered responsive device workspace -->
-						<div class="flex-1 overflow-auto flex justify-center items-center p-4" id="preview-viewport-container">
+						<div class="flex-1 overflow-hidden flex justify-center items-center p-0" id="preview-viewport-container">
 							<div class="w-full h-full bg-white transition-all duration-300 rounded shadow-2xl relative" id="preview-iframe-wrapper">
 								<iframe id="preview-iframe" class="w-full h-full border-0 bg-white"></iframe>
 							</div>
@@ -408,6 +446,28 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 		</button>
 	</div>
 
+	<!-- Custom Playbook/Workspace Context Menu -->
+	<div id="playbook-context-menu" class="fixed bg-[#111318] border border-[#232731] rounded-lg shadow-2xl py-1 z-[10000] hidden min-w-[175px] select-none text-astro-gray-300 font-sans text-xs">
+		<button id="pb-ctx-new" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-white flex items-center gap-1.5 transition-colors">
+			<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-astro-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+			</svg>
+			New Local Workspace...
+		</button>
+		<button id="pb-ctx-delete" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-red-400 text-red-500 font-semibold flex items-center gap-1.5 transition-colors hidden">
+			<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+			</svg>
+			Delete Local Workspace
+		</button>
+		<button id="pb-ctx-delete-all" class="w-full text-left px-3.5 py-2 hover:bg-[#1b1f27] hover:text-red-400 text-red-500 font-semibold flex items-center gap-1.5 transition-colors hidden">
+			<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+			</svg>
+			Delete All Local Workspaces
+		</button>
+	</div>
+
 	<!-- Hidden input file uploader element -->
 	<input type="file" id="file-uploader" multiple class="hidden" accept="image/*,.svg" />
 
@@ -419,6 +479,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 		}
 
 		// State Variables
+		const isDetached = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('detached');
 		const STORAGE_KEY = 'pphlx_playground_vfs';
 		const CUSTOM_LANGS_KEY = 'pphlx_playground_custom_langs';
 
@@ -435,6 +496,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 		const modalBtnConfirm = document.getElementById('ide-modal-btn-confirm');
 
 		let activeModalCallback = null;
+		let lastCompiledHtml = '';
 
 		function showIdeModal({ title, message, showInput, placeholder, confirmText, cancelText, onConfirm }) {
 			modalTitle.textContent = title;
@@ -513,6 +575,226 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 		let activePlaybookId = localStorage.getItem('pphlx_active_playbook_id') || 'ecommerce';
 		let playbooks = [];
 
+		// Local client-side workspaces manifest
+		let localWorkspaces = [];
+		try {
+			const storedLocal = localStorage.getItem('pphlx_local_workspaces');
+			if (storedLocal) {
+				localWorkspaces = JSON.parse(storedLocal);
+			}
+		} catch (e) {
+			console.error("Failed to parse local workspaces manifest:", e);
+		}
+
+		function saveLocalWorkspaces() {
+			localStorage.setItem('pphlx_local_workspaces', JSON.stringify(localWorkspaces));
+		}
+
+		function updateWorkspaceDeleteButton() {
+			const btnDelete = document.getElementById('pb-ctx-delete');
+			if (btnDelete) {
+				const isLocal = localWorkspaces.some(ws => ws.id === activePlaybookId);
+				if (isLocal) {
+					btnDelete.classList.remove('hidden');
+				} else {
+					btnDelete.classList.add('hidden');
+				}
+			}
+			const btnDeleteAll = document.getElementById('pb-ctx-delete-all');
+			if (btnDeleteAll) {
+				if (localWorkspaces.length > 0) {
+					btnDeleteAll.classList.remove('hidden');
+				} else {
+					btnDeleteAll.classList.add('hidden');
+				}
+			}
+		}
+
+		function createLocalWorkspace(name) {
+			const id = 'custom_ws_' + Date.now();
+			const newWs = {
+				id: id,
+				name: name,
+				files: ['index.pphx', 'Layout.pphx'],
+				defaultFile: 'index.pphx'
+			};
+
+			const defaultLayoutContent = `[!DOCTYPE html]
+[html]
+[head]
+    [title]PPHLX Preview[/title]
+    <!-- Load required libraries for hydrated component islands -->
+    [script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin][/script]
+    [script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin][/script]
+    [script src="https://unpkg.com/solid-js@1.8.0/dist/solid.js"][/script]
+    [script src="https://cdn.tailwindcss.com"][/script]
+    {{PPHLX_CSS}}
+[/head]
+[body class="bg-[#080a0d] min-h-screen flex flex-col items-center p-0"]
+    [div class="w-full my-auto flex flex-col items-center py-8"]
+        {{slot}}
+    [/div]
+    {{PPHLX_JS}}
+[/body]
+[/html]
+`.replace(/\[/g, '<').replace(/\]/g, '>');
+
+			const defaultIndexContent = `@import Layout from './Layout.pphx'
+
+[Layout]
+  [div class="w-full max-w-md bg-[#0f1115] border border-[#1b1f27] rounded-3xl p-8 text-center shadow-2xl"]
+    [h1 class="text-2xl font-bold text-[#4bf3c8] mb-2">\${name}[/h1]
+    [p class="text-sm text-gray-400 mb-6 font-sans">Your client-side local workspace is ready![/p]
+    
+    <!-- Try adding component imports or custom logic here -->
+    [div class="text-[10px] text-gray-500 font-mono"]
+      Edit index.pphx to get started.
+    [/div]
+  [/div]
+[/Layout]
+`.replace(/\[/g, '<').replace(/\]/g, '>');
+
+			const workspaceVfs = {
+				'index.pphx': defaultIndexContent,
+				'Layout.pphx': defaultLayoutContent
+			};
+
+			localStorage.setItem(STORAGE_KEY + '_' + id, JSON.stringify(workspaceVfs));
+			localWorkspaces.push(newWs);
+			saveLocalWorkspaces();
+
+			activePlaybookId = id;
+			localStorage.setItem('pphlx_active_playbook_id', id);
+			
+			initPlaybooks();
+		}
+
+		function deleteLocalWorkspace(id) {
+			showIdeModal({
+				title: 'Delete Local Workspace',
+				message: 'Are you sure you want to delete this local workspace? This action is permanent and cannot be undone.',
+				confirmText: 'Delete',
+				onConfirm: () => {
+					localStorage.removeItem(STORAGE_KEY + '_' + id);
+					localWorkspaces = localWorkspaces.filter(ws => ws.id !== id);
+					saveLocalWorkspaces();
+
+					activePlaybookId = 'ecommerce';
+					localStorage.setItem('pphlx_active_playbook_id', activePlaybookId);
+					initPlaybooks();
+				}
+			});
+		}
+
+		function deleteAllLocalWorkspaces() {
+			showIdeModal({
+				title: 'Delete All Local Workspaces',
+				message: 'Are you sure you want to delete ALL local workspaces? This action is permanent and cannot be undone.',
+				confirmText: 'Delete',
+				onConfirm: () => {
+					localWorkspaces.forEach(ws => {
+						localStorage.removeItem(STORAGE_KEY + '_' + ws.id);
+					});
+					localWorkspaces = [];
+					saveLocalWorkspaces();
+
+					activePlaybookId = 'ecommerce';
+					localStorage.setItem('pphlx_active_playbook_id', activePlaybookId);
+					initPlaybooks();
+				}
+			});
+		}
+
+		// Wire playbook menu and context menu items
+		const playbookCtxMenu = document.getElementById('playbook-context-menu');
+		const playbookSelect = document.getElementById('playbook-select');
+		const playbookSelectInput = document.getElementById('playbook-select-input');
+		const playbookSelectArrow = document.getElementById('playbook-select-arrow');
+
+		function showPlaybookContextMenu(x, y) {
+			if (playbookCtxMenu) {
+				playbookCtxMenu.style.left = `${x}px`;
+				playbookCtxMenu.style.top = `${y}px`;
+				playbookCtxMenu.classList.remove('hidden');
+			}
+		}
+		function hidePlaybookContextMenu() {
+			if (playbookCtxMenu) {
+				playbookCtxMenu.classList.add('hidden');
+			}
+		}
+
+		function showInlineWorkspaceInput() {
+			if (playbookSelect && playbookSelectInput && playbookSelectArrow) {
+				playbookSelect.classList.add('hidden');
+				playbookSelectArrow.classList.add('hidden');
+				playbookSelectInput.classList.remove('hidden');
+				playbookSelectInput.value = '';
+				playbookSelectInput.focus();
+			}
+		}
+
+		function hideInlineWorkspaceInput() {
+			if (playbookSelect && playbookSelectInput && playbookSelectArrow) {
+				playbookSelect.classList.remove('hidden');
+				playbookSelectArrow.classList.remove('hidden');
+				playbookSelectInput.classList.add('hidden');
+			}
+		}
+
+		if (playbookSelectInput) {
+			playbookSelectInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					const name = playbookSelectInput.value.trim();
+					if (name) {
+						createLocalWorkspace(name);
+					}
+					hideInlineWorkspaceInput();
+				} else if (e.key === 'Escape') {
+					hideInlineWorkspaceInput();
+				}
+			});
+			playbookSelectInput.addEventListener('blur', () => {
+				setTimeout(() => {
+					hideInlineWorkspaceInput();
+				}, 150);
+			});
+		}
+
+		// Bind Playbook Context Menu Items
+		const pbCtxNew = document.getElementById('pb-ctx-new');
+		if (pbCtxNew) {
+			pbCtxNew.onclick = () => {
+				hidePlaybookContextMenu();
+				showInlineWorkspaceInput();
+			};
+		}
+
+		const pbCtxDelete = document.getElementById('pb-ctx-delete');
+		if (pbCtxDelete) {
+			pbCtxDelete.onclick = () => {
+				hidePlaybookContextMenu();
+				deleteLocalWorkspace(activePlaybookId);
+			};
+		}
+
+		const pbCtxDeleteAll = document.getElementById('pb-ctx-delete-all');
+		if (pbCtxDeleteAll) {
+			pbCtxDeleteAll.onclick = () => {
+				hidePlaybookContextMenu();
+				deleteAllLocalWorkspaces();
+			};
+		}
+
+		const btnPlaybookMenu = document.getElementById('btn-playbook-menu');
+		if (btnPlaybookMenu) {
+			btnPlaybookMenu.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const rect = btnPlaybookMenu.getBoundingClientRect();
+				showPlaybookContextMenu(rect.left, rect.bottom + window.scrollY);
+			});
+		}
+
 		async function initPlaybooks() {
 			try {
 				const response = await fetch('/playbooks/manifest.json?t=' + Date.now());
@@ -538,6 +820,10 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			const select = document.getElementById('playbook-select');
 			if (select) {
 				select.innerHTML = '';
+				
+				// 1. Group built-in playbooks
+				const defaultGroup = document.createElement('optgroup');
+				defaultGroup.label = 'Default Playbooks';
 				playbooks.forEach(pb => {
 					const opt = document.createElement('option');
 					opt.value = pb.id;
@@ -545,14 +831,44 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 					if (pb.id === activePlaybookId) {
 						opt.selected = true;
 					}
-					select.appendChild(opt);
+					defaultGroup.appendChild(opt);
 				});
+				select.appendChild(defaultGroup);
 
-				select.addEventListener('change', async (e) => {
+				// 2. Group local workspaces
+				if (localWorkspaces.length > 0) {
+					const localGroup = document.createElement('optgroup');
+					localGroup.label = 'Local Workspaces';
+					localWorkspaces.forEach(ws => {
+						const opt = document.createElement('option');
+						opt.value = ws.id;
+						opt.textContent = ws.name;
+						if (ws.id === activePlaybookId) {
+							opt.selected = true;
+						}
+						localGroup.appendChild(opt);
+					});
+					select.appendChild(localGroup);
+				}
+
+				// Make sure activePlaybookId exists in either default or local list, fallback if deleted
+				const isValidPlaybook = playbooks.some(p => p.id === activePlaybookId) || localWorkspaces.some(w => w.id === activePlaybookId);
+				if (!isValidPlaybook) {
+					activePlaybookId = playbooks[0].id;
+					localStorage.setItem('pphlx_active_playbook_id', activePlaybookId);
+					// Re-select option
+					select.value = activePlaybookId;
+				}
+
+				updateWorkspaceDeleteButton();
+
+				// Reconnect change listener only once
+				select.onchange = async (e) => {
 					activePlaybookId = e.target.value;
 					localStorage.setItem('pphlx_active_playbook_id', activePlaybookId);
+					updateWorkspaceDeleteButton();
 					await loadPlaybookVfs(activePlaybookId);
-				});
+				};
 			}
 
 			await loadPlaybookVfs(activePlaybookId);
@@ -569,6 +885,53 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 				} catch (e) {
 					files = null;
 				}
+			}
+
+			const isLocal = localWorkspaces.some(ws => ws.id === playbookId);
+
+			if (isLocal) {
+				const ws = localWorkspaces.find(w => w.id === playbookId);
+				if (!files || Object.keys(files).length === 0) {
+					files = {
+						'index.pphx': `@import Layout from './Layout.pphx'\n\n[Layout]\n  [div class="w-full max-w-md bg-[#0f1115] border border-[#1b1f27] rounded-3xl p-8 text-center shadow-2xl"]\n    [h1 class="text-2xl font-bold text-[#4bf3c8] mb-2">${ws ? ws.name : 'Local App'}[/h1]\n    [p class="text-sm text-gray-400 mb-6 font-sans"]Your client-side local workspace is ready![/p]\n    [div class="text-[10px] text-gray-500 font-mono"]\n      Edit index.pphx to get started.\n    [/div]\n  [/div]\n[/Layout]`.replace(/\[/g, '<').replace(/\]/g, '>'),
+						'Layout.pphx': [
+							"<!DOCTYPE html>",
+							"<html>",
+							"<head>",
+							"    <title>PPHLX Preview</title>",
+							'    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></s' + 'cript>',
+							'    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></s' + 'cript>',
+							'    <script src="https://unpkg.com/solid-js@1.8.0/dist/solid.js"></s' + 'cript>',
+							'    <script src="https://cdn.tailwindcss.com"></s' + 'cript>',
+							"    {{PPHLX_CSS}}",
+							"</head>",
+							'<body class="bg-[#080a0d] min-h-screen flex flex-col items-center p-0">',
+							'    <div class="w-full my-auto flex flex-col items-center py-8">',
+							"        {{slot}}",
+							"    </div>",
+							"    {{PPHLX_JS}}",
+							"</body>",
+							"</html>"
+						].join('\n')
+					};
+					localStorage.setItem(storageKey, JSON.stringify(files));
+				}
+				activeFile = ws ? ws.defaultFile || 'index.pphx' : 'index.pphx';
+				selectedPath = activeFile;
+				document.getElementById('active-file-title').textContent = activeFile;
+				
+				if (inputEditor) {
+					inputEditor.setValue(files[activeFile] || '');
+					const ext = activeFile.split('.').pop();
+					monaco.editor.setModelLanguage(inputEditor.getModel(), ext === 'pphx' ? 'pphlx' : (ext === 'js' ? 'javascript' : ext));
+				}
+				
+				renderExplorer();
+				triggerCompile();
+				setTimeout(() => {
+					isSwitchingPlaybook = false;
+				}, 50);
+				return;
 			}
 
 			const pb = playbooks.find(p => p.id === playbookId) || playbooks[0];
@@ -612,7 +975,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			}
 
 			renderExplorer();
-			doCompile();
+			triggerCompile();
 			
 			// Small timeout to allow Monaco input/value events to fire completely before allowing edits to save
 			setTimeout(() => {
@@ -1045,7 +1408,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			}
 			
 			renderExplorer();
-			doCompile();
+			triggerCompile();
 		}
 
 		// Sidebar Header Action Buttons (Root level creation)
@@ -1080,7 +1443,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 							files[targetPath] = event.target.result;
 							saveVfs();
 							renderExplorer();
-							doCompile();
+							triggerCompile();
 						};
 						reader.readAsText(file);
 					} else {
@@ -1088,7 +1451,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 							files[targetPath] = event.target.result;
 							saveVfs();
 							renderExplorer();
-							doCompile();
+							triggerCompile();
 						};
 						reader.readAsDataURL(file);
 					}
@@ -1176,7 +1539,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			}
 			saveVfs();
 			renderExplorer();
-			doCompile();
+			triggerCompile();
 		}
 
 		// Helper to duplicate a file in the virtual file system
@@ -1196,7 +1559,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			files[newPath] = files[path];
 			saveVfs();
 			renderExplorer();
-			doCompile();
+			triggerCompile();
 		}
 
 		// Show Context Menu at coordinates
@@ -1222,6 +1585,10 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 		document.addEventListener('click', (e) => {
 			if (ctxMenu && !ctxMenu.contains(e.target)) {
 				hideContextMenu();
+			}
+			const btnPbMenu = document.getElementById('btn-playbook-menu');
+			if (playbookCtxMenu && !playbookCtxMenu.contains(e.target) && (!btnPbMenu || !btnPbMenu.contains(e.target))) {
+				hidePlaybookContextMenu();
 			}
 		});
 
@@ -1272,7 +1639,16 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 		};
 		document.getElementById('ctx-copy-path').onclick = () => {
 			hideContextMenu();
-			const absPath = `F:/VS CODE/Rust/PPHLX/test_project/src/${selectedPath}`;
+			const isLocal = localWorkspaces.some(ws => ws.id === activePlaybookId);
+			let absPath = '';
+			if (isLocal) {
+				const ws = localWorkspaces.find(w => w.id === activePlaybookId);
+				const wsName = ws ? ws.name : 'local_ws';
+				absPath = `browser/local_workspaces/${wsName}/${selectedPath}`;
+			} else {
+				absPath = `f:/VS CODE/GO/PPHLX/samples/${activePlaybookId}/${selectedPath}`;
+			}
+			absPath = absPath.replace(/\//g, '\\');
 			navigator.clipboard.writeText(absPath);
 		};
 		document.getElementById('ctx-copy-rel-path').onclick = () => {
@@ -1312,7 +1688,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 						inputEditor.setValue(files[activeFile]);
 					}
 					renderExplorer();
-					doCompile();
+					triggerCompile();
 				}
 			});
 		}
@@ -1627,13 +2003,23 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			for (let item of imports) {
 				let vfsPath = item.path;
 				if (!files[vfsPath]) {
-					vfsPath = vfsPath.replace(/^\.\//, '').replace(/^\.\.\//, '');
+					const cleanPath = vfsPath.replace(/^\.\//, '').replace(/^\.\.\//, '');
+					if (files[cleanPath]) {
+						vfsPath = cleanPath;
+					} else if (files['src/' + cleanPath]) {
+						vfsPath = 'src/' + cleanPath;
+					} else if (files['src/components/' + cleanPath]) {
+						vfsPath = 'src/components/' + cleanPath;
+					} else {
+						vfsPath = cleanPath;
+					}
 				}
 
 				const compContent = files[vfsPath] || '';
 
-				const selfClosingRegex = new RegExp(`<${item.name}\\s*([^>]*?)\\s*\\/>`, 'g');
-				const pairedRegex = new RegExp(`<${item.name}\\s*([^>]*?)>([\\s\\S]*?)<\\/${item.name}>`, 'g');
+				const attrPattern = '(?:[^>"]|"[^"]*"|\'[^\']*\'|<\\?php[\\s\\S]*?\\?>)*';
+				const selfClosingRegex = new RegExp(`<${item.name}\\s*(${attrPattern})\\s*\\/>`, 'g');
+				const pairedRegex = new RegExp(`<${item.name}\\s*(${attrPattern})>([\\s\\S]*?)<\\/${item.name}>`, 'g');
 
 				const ext = vfsPath.split('.').pop();
 				let framework = 'react';
@@ -1641,7 +2027,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 				else if (ext === 'svelte') framework = 'svelte';
 				else if (vfsPath.includes('.solid.')) framework = 'solid';
 				else {
-					if (compContent.includes('preact')) {
+					if (compContent.toLowerCase().includes('preact')) {
 						framework = 'preact';
 					}
 				}
@@ -1667,7 +2053,12 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 							if (dynamicVal !== undefined) {
 								phpProps.push(`"${name}" => ${dynamicVal}`);
 							} else {
-								phpProps.push(`"${name}" => "${staticVal || ''}"`);
+								const phpMatch = staticVal ? staticVal.match(/<\?php\s+echo\s+([\s\S]*?);\s*\?>/) : null;
+								if (phpMatch) {
+									phpProps.push(`"${name}" => ${phpMatch[1].trim()}`);
+								} else {
+									phpProps.push(`"${name}" => "${staticVal || ''}"`);
+								}
 							}
 						}
 					}
@@ -1731,22 +2122,45 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			};
 		}
 
+		// Helper to safely write HTML to dynamic iframe
+		function writeToIframe(iframe, html) {
+			if (!iframe) return;
+			try {
+				const doc = iframe.contentDocument || iframe.contentWindow.document;
+				doc.open();
+				doc.write(html);
+				doc.close();
+			} catch (e) {
+				console.error("Iframe write error:", e);
+			}
+		}
+
 		// Perform compilation of active file and refresh HTML iframe sandbox
 		function doCompile() {
-			if (!inputEditor || !outputEditor) return;
+			const code = (typeof inputEditor !== 'undefined' && inputEditor) ? inputEditor.getValue() : (typeof files !== 'undefined' && files && typeof activeFile !== 'undefined' && activeFile ? files[activeFile] : '');
+			if (!code) return;
 			
-			const code = inputEditor.getValue();
 			const result = compilePphlx(code);
-			outputEditor.setValue(result.php);
+			if (typeof outputEditor !== 'undefined' && outputEditor) {
+				outputEditor.setValue(result.php);
+			}
 			document.getElementById('compile-time').textContent = `Compiled in ${result.time}ms`;
 			
 			// Update iframe preview
-			const iframe = document.getElementById('preview-iframe');
-			const doc = iframe.contentDocument || iframe.contentWindow.document;
-			doc.open();
-			
 			const mockCss = `
-				html { color-scheme: dark; }
+				html {
+					color-scheme: dark;
+					height: auto !important;
+					min-height: 100% !important;
+					overflow-y: auto !important;
+				}
+				body {
+					justify-content: safe center !important;
+					align-items: safe center !important;
+					height: auto !important;
+					min-height: 100% !important;
+					overflow-y: auto !important;
+				}
 			`;
 			
 			const phpState = {};
@@ -1760,10 +2174,18 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 				phpState[name] = valStr;
 			}
 
+			const uniqCounter = {};
+			const idMap = {};
+
 			let previewHtml = result.php.replace(/<\?php[\s\S]*?\?>/g, (match) => {
-				if (match.includes('echo "PPHLX-') || match.includes('echo "pphlx-')) {
-					const idMatch = match.match(/echo\s+['"](pphlx-[a-zA-Z0-9_-]+)/i);
-					return idMatch ? idMatch[1] : 'pphlx-comp';
+				if (match.includes('echo "PPHLX-') || match.includes('echo "pphlx-') || match.includes('uniqid()')) {
+					if (idMap[match]) return idMap[match];
+					const compMatch = match.match(/pphlx-([a-zA-Z0-9_-]+)/i);
+					const compName = compMatch ? compMatch[1] : 'comp';
+					uniqCounter[compName] = (uniqCounter[compName] || 0) + 1;
+					const generatedId = `pphlx-${compName}-${uniqCounter[compName]}`;
+					idMap[match] = generatedId;
+					return generatedId;
 				}
 				if (match.includes('echo json_encode')) {
 					// Check if it's the array format: json_encode(["url" => $imageUrl, ...])
@@ -1830,8 +2252,25 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			// Rewrite relative/absolute assets paths to map to the playbook's dist folder
 			const playbookAssetBase = `/playbooks/${activePlaybookId}/dist/assets/`;
 			previewHtml = previewHtml.replace(/(['"])\/?assets\//g, `$1${playbookAssetBase}`);
-
 			const hydrationScript = "";
+			const overrideScript = `
+				<script>
+					(function() {
+						const originalAddEventListener = document.addEventListener;
+						document.addEventListener = function(type, listener, options) {
+							if (type === 'DOMContentLoaded') {
+								if (document.readyState === 'loading') {
+									originalAddEventListener.call(this, type, listener, options);
+								} else {
+									setTimeout(listener, 0);
+								}
+							} else {
+								originalAddEventListener.call(this, type, listener, options);
+							}
+						};
+					})();
+				<\/script>
+			`;
 			
 			const htmlOpen = '<' + 'html>';
 			const htmlClose = '</' + 'html>';
@@ -1843,12 +2282,12 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			let iframeDocContent = '';
 			if (previewHtml.includes('<' + 'html') || previewHtml.includes('<!' + 'DOCTYPE')) {
 				let withCss = previewHtml;
-				if (previewHtml.includes('</head>')) {
-					withCss = previewHtml.replace('</head>', `<style>${mockCss}</style>\n</head>`);
-				} else if (previewHtml.includes('<head>')) {
-					withCss = previewHtml.replace('<head>', `<head>\n<style>${mockCss}</style>`);
+				if (previewHtml.includes('<head>')) {
+					withCss = previewHtml.replace('<head>', `<head>\n${overrideScript}\n<style>${mockCss}</style>`);
+				} else if (previewHtml.includes('</head>')) {
+					withCss = previewHtml.replace('</head>', `${overrideScript}\n<style>${mockCss}</style>\n</head>`);
 				} else {
-					withCss = `<style>${mockCss}</style>\n` + previewHtml;
+					withCss = `${overrideScript}\n<style>${mockCss}</style>\n` + previewHtml;
 				}
 
 				if (withCss.includes('</' + 'body>')) {
@@ -1861,6 +2300,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 					<!DOCTYPE html>
 					${htmlOpen}
 					${headOpen}
+						${overrideScript}
 						<style>${mockCss}</style>
 						<script src="https://cdn.tailwindcss.com"><\/script>
 					${headClose}
@@ -1871,8 +2311,35 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 					${htmlClose}
 				`;
 			}
-			doc.write(iframeDocContent);
-			doc.close();
+			// Clean up pre-rendered DOM trees inside islands to avoid duplicate mounts and lost event listeners
+			const parser = new DOMParser();
+			const cleanDoc = parser.parseFromString(iframeDocContent, 'text/html');
+			cleanDoc.querySelectorAll('.pphlx-island, #threejs-container').forEach(el => {
+				el.innerHTML = '';
+			});
+			iframeDocContent = cleanDoc.documentElement.outerHTML;
+			lastCompiledHtml = iframeDocContent;
+
+			// Re-create the iframe from scratch to ensure a 100% clean global window and script context
+			const oldIframe = document.getElementById('preview-iframe');
+			const wrapper = document.getElementById('preview-iframe-wrapper');
+			if (oldIframe && wrapper) {
+				oldIframe.remove();
+				const newIframe = document.createElement('iframe');
+				newIframe.id = 'preview-iframe';
+				newIframe.className = 'w-full h-full border-0 bg-white';
+				wrapper.appendChild(newIframe);
+				writeToIframe(newIframe, iframeDocContent);
+			}
+
+			// Sync with detached preview window in real-time
+			broadcastIframeContent();
+		}
+
+		let compileTimeout = null;
+		function triggerCompile() {
+			if (compileTimeout) clearTimeout(compileTimeout);
+			compileTimeout = setTimeout(doCompile, 10);
 		}
 
 		// Initialize Monaco safely
@@ -2099,14 +2566,20 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			inputEditor.onDidChangeModelContent(() => {
 				if (isSwitchingPlaybook) return;
 				saveVfs();
-				doCompile();
+				triggerCompile();
 			});
 
-			doCompile();
-			initPlaybooks();
+			// Populate editor with initial VFS contents
+			if (typeof files !== 'undefined' && files && typeof activeFile !== 'undefined' && activeFile) {
+				inputEditor.setValue(files[activeFile]);
+			}
+			triggerCompile();
 		});
 		}
-		initMonaco();
+		if (!isDetached) {
+			initMonaco();
+			initPlaybooks();
+		}
 
 		// Trigger file picker for user VSIX upload
 		const btnInstallVsix = document.getElementById('btn-install-vsix');
@@ -2172,6 +2645,8 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 				tabPhp.className = "px-4 py-2 text-xs font-semibold tracking-wide border-b-2 border-transparent text-[#858B98] hover:text-white transition-all rounded-t-md";
 				containerPreview.classList.remove('hidden');
 				containerPhp.classList.add('hidden');
+				// Compile and load into the visible iframe
+				triggerCompile();
 			});
 		}
 
@@ -2192,7 +2667,10 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			if (mode === 'desktop') {
 				if (simBtnDesktop) simBtnDesktop.classList.add('text-white', 'font-semibold');
 				if (previewIframeWrapper) {
+					previewIframeWrapper.style.transform = '';
+					previewIframeWrapper.style.transformOrigin = '';
 					previewIframeWrapper.style.width = '100%';
+					previewIframeWrapper.style.height = '100%';
 					previewIframeWrapper.style.maxWidth = 'none';
 					previewIframeWrapper.classList.remove('border', 'border-[#1b1f27]', 'rounded-lg');
 				}
@@ -2203,7 +2681,10 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 				if (mode === 'mobile' && simBtnMobile) simBtnMobile.classList.add('text-white', 'font-semibold');
 
 				if (previewIframeWrapper) {
+					previewIframeWrapper.style.transform = '';
+					previewIframeWrapper.style.transformOrigin = '';
 					previewIframeWrapper.style.width = `${width}px`;
+					previewIframeWrapper.style.height = '100%';
 					previewIframeWrapper.style.maxWidth = '100%';
 					previewIframeWrapper.classList.add('border', 'border-[#1b1f27]', 'rounded-lg');
 				}
@@ -2236,28 +2717,75 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			});
 		}
 
-		function updatePopoutUrl() {
-			if (simBtnPopout) {
-				simBtnPopout.href = "http://localhost:8000/";
-			}
+		if (simBtnPopout) {
+			simBtnPopout.addEventListener('click', (e) => {
+				e.preventDefault();
+				window.open(window.location.origin + window.location.pathname + '?detached=true', '_blank');
+			});
 		}
-
-		updatePopoutUrl();
 
 
 		// Reset Code to Default Example Code
 		const btnResetCode = document.getElementById('btn-reset-code');
 		if (btnResetCode) {
 			btnResetCode.addEventListener('click', () => {
-				showIdeModal({
-					title: 'Reset Code Workspace',
-					message: 'Are you sure you want to reset all files to the default example code? This will discard your current edits.',
-					confirmText: 'Reset',
-					onConfirm: () => {
-						localStorage.removeItem(STORAGE_KEY + '_' + activePlaybookId);
-						window.location.reload();
-					}
-				});
+				const isLocal = localWorkspaces.some(ws => ws.id === activePlaybookId);
+				if (isLocal) {
+					showIdeModal({
+						title: 'Wipe Local Workspace',
+						message: 'Are you sure you want to wipe all local files and reset this workspace to a blank template? This action cannot be undone.',
+						confirmText: 'Wipe',
+						onConfirm: () => {
+							const ws = localWorkspaces.find(w => w.id === activePlaybookId);
+							const blankFiles = {
+								'index.pphx': [
+									"@import Layout from './Layout.pphx'",
+									"",
+									"<Layout>",
+									'  <div class="w-full max-w-md bg-[#0f1115] border border-[#1b1f27] rounded-3xl p-8 text-center shadow-2xl">',
+									`    <h1 class="text-2xl font-bold text-[#4bf3c8] mb-2">${ws ? ws.name : 'Local App'}</h1>`,
+									'    <p class="text-sm text-gray-400 mb-6 font-sans">Your client-side local workspace is ready!</p>',
+									'    <div class="text-[10px] text-gray-500 font-mono">',
+									'      Edit index.pphx to get started.',
+									'    </div>',
+									'  </div>',
+									"</Layout>"
+								].join('\n'),
+								'Layout.pphx': [
+									"<!DOCTYPE html>",
+									"<html>",
+									"<head>",
+									"    <title>PPHLX Preview</title>",
+									'    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></s' + 'cript>',
+									'    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></s' + 'cript>',
+									'    <script src="https://unpkg.com/solid-js@1.8.0/dist/solid.js"></s' + 'cript>',
+									'    <script src="https://cdn.tailwindcss.com"></s' + 'cript>',
+									"    {{PPHLX_CSS}}",
+									"</head>",
+									'<body class="bg-[#080a0d] min-h-screen flex flex-col items-center p-0">',
+									'    <div class="w-full my-auto flex flex-col items-center py-8">',
+									"        {{slot}}",
+									"    </div>",
+									"    {{PPHLX_JS}}",
+									"</body>",
+									"</html>"
+								].join('\n')
+							};
+							localStorage.setItem(STORAGE_KEY + '_' + activePlaybookId, JSON.stringify(blankFiles));
+							window.location.reload();
+						}
+					});
+				} else {
+					showIdeModal({
+						title: 'Reset Code Workspace',
+						message: 'Are you sure you want to reset all files to the default example code? This will discard your current edits.',
+						confirmText: 'Reset',
+						onConfirm: () => {
+							localStorage.removeItem(STORAGE_KEY + '_' + activePlaybookId);
+							window.location.reload();
+						}
+					});
+				}
 			});
 		}
 
@@ -2464,6 +2992,149 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 					chevronTreePane.classList.add('-rotate-90');
 				}
 			});
+		}
+
+		// Workspace split screen resizer drag logic
+		const resizer = document.getElementById('workspace-resizer');
+		const leftPanel = document.getElementById('editor-workspace');
+		const rightPanel = document.getElementById('preview-pane');
+		const parentContainer = document.getElementById('workspace-splitter-parent');
+
+		if (resizer && leftPanel && rightPanel && parentContainer) {
+			let isDragging = false;
+
+			resizer.addEventListener('mousedown', (e) => {
+				isDragging = true;
+				document.body.style.cursor = 'col-resize';
+				document.body.style.userSelect = 'none';
+				// Prevent iframe from capturing mouse events during drag
+				const iframe = document.getElementById('preview-iframe');
+				if (iframe) iframe.style.pointerEvents = 'none';
+			});
+
+			document.addEventListener('mousemove', (e) => {
+				if (!isDragging) return;
+				const containerRect = parentContainer.getBoundingClientRect();
+				const relativeX = e.clientX - containerRect.left;
+				// Constrain width between 20% and 80%
+				let percentage = (relativeX / containerRect.width) * 100;
+				if (percentage < 20) percentage = 20;
+				if (percentage > 80) percentage = 80;
+
+				leftPanel.style.width = `${percentage}%`;
+				rightPanel.style.width = `${100 - percentage}%`;
+
+				// Trigger editor layout recalculation
+				if (typeof inputEditor !== 'undefined' && inputEditor) inputEditor.layout();
+				if (typeof outputEditor !== 'undefined' && outputEditor) outputEditor.layout();
+				
+				// Trigger resize inside iframe
+				const iframe = document.getElementById('preview-iframe');
+				if (iframe && iframe.contentWindow) {
+					iframe.contentWindow.dispatchEvent(new Event('resize'));
+				}
+			});
+
+			document.addEventListener('mouseup', () => {
+				if (!isDragging) return;
+				isDragging = false;
+				document.body.style.cursor = '';
+				document.body.style.userSelect = '';
+				const iframe = document.getElementById('preview-iframe');
+				if (iframe) iframe.style.pointerEvents = 'auto';
+			});
+		}
+
+		// Sidebar resizer drag logic
+		const sidebarResizer = document.getElementById('sidebar-resizer');
+		const sidebarPanel = document.getElementById('explorer-sidebar');
+		if (sidebarResizer && sidebarPanel) {
+			let isDraggingSidebar = false;
+
+			sidebarResizer.addEventListener('mousedown', (e) => {
+				isDraggingSidebar = true;
+				document.body.style.cursor = 'col-resize';
+				document.body.style.userSelect = 'none';
+				const iframe = document.getElementById('preview-iframe');
+				if (iframe) iframe.style.pointerEvents = 'none';
+			});
+
+			document.addEventListener('mousemove', (e) => {
+				if (!isDraggingSidebar) return;
+				// Constraint sidebar width between 160px and 450px
+				let newWidth = e.clientX - sidebarPanel.getBoundingClientRect().left;
+				if (newWidth < 160) newWidth = 160;
+				if (newWidth > 450) newWidth = 450;
+
+				sidebarPanel.style.width = `${newWidth}px`;
+
+				// Trigger editor layout recalculation
+				if (typeof inputEditor !== 'undefined' && inputEditor) inputEditor.layout();
+				if (typeof outputEditor !== 'undefined' && outputEditor) outputEditor.layout();
+			});
+
+			document.addEventListener('mouseup', () => {
+				if (!isDraggingSidebar) return;
+				isDraggingSidebar = false;
+				document.body.style.cursor = '';
+				document.body.style.userSelect = '';
+				const iframe = document.getElementById('preview-iframe');
+				if (iframe) iframe.style.pointerEvents = 'auto';
+			});
+		}
+
+		// BroadcastChannel Real-time Preview Sync
+		const previewChannel = new BroadcastChannel('pphlx_preview_sync');
+
+		if (isDetached) {
+			document.documentElement.classList.add('is-detached-preview');
+			
+			// Setup interface elements for full screen preview
+			const tabPhp = document.getElementById('tab-php');
+			const tabPreview = document.getElementById('tab-preview');
+			const phpContainer = document.getElementById('output-container-php');
+			const previewContainer = document.getElementById('output-container-preview');
+			
+			if (tabPhp && tabPreview && phpContainer && previewContainer) {
+				tabPhp.classList.add('hidden');
+				tabPreview.className = "px-4 py-2 text-xs font-semibold tracking-wide border-b-2 border-[#54b9ff] text-white bg-[#0f1115] transition-all rounded-t-md cursor-default";
+				phpContainer.classList.add('hidden');
+				previewContainer.classList.remove('hidden');
+			}
+
+			// Listen to sync messages
+			previewChannel.onmessage = (e) => {
+				if (e.data && e.data.html) {
+					const oldIframe = document.getElementById('preview-iframe');
+					const wrapper = document.getElementById('preview-iframe-wrapper');
+					if (oldIframe && wrapper) {
+						oldIframe.remove();
+						const newIframe = document.createElement('iframe');
+						newIframe.id = 'preview-iframe';
+						newIframe.className = 'w-full h-full border-0 bg-white';
+						wrapper.appendChild(newIframe);
+						writeToIframe(newIframe, e.data.html);
+					}
+				}
+			};
+
+			// Request initial sync once loaded
+			window.addEventListener('DOMContentLoaded', () => {
+				previewChannel.postMessage({ requestSync: true });
+			});
+		} else {
+			// Main window: listen for synchronization requests
+			previewChannel.onmessage = (e) => {
+				if (e.data && e.data.requestSync) {
+					broadcastIframeContent();
+				}
+			};
+		}
+
+		function broadcastIframeContent() {
+			if (lastCompiledHtml) {
+				previewChannel.postMessage({ html: lastCompiledHtml });
+			}
 		}
 	</script>
 </PlayLayout>

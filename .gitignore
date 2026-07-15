@@ -42,3 +42,7 @@ pphlx.vite.config.mjs
 
 # Compiled release tarballs
 releases/*.tar.gz
+
+# Playwright test results and reports
+pphlx-org/playwright-report/
+pphlx-org/test-results/

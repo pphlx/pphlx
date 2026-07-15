@@ -1,5 +1,5 @@
 export type SocialLink = {
-	/** Longer descriptive label, e.g. `"Join the Astro community on Discord"` */
+	/** Longer descriptive label, e.g. `"Join the PPHLX community on Discord"` */
 	text: string;
 	/** Short label with the name of the platform, e.g. `"Discord"`*/
 	label: string;
@@ -7,7 +7,7 @@ export type SocialLink = {
 	icon: string;
 	/** URL for our profile on the external platform. */
 	href: string;
-	/** Platform ID, e.g. `"discord"`. Used for `astro.build/on/PLATFORM` redirects. */
+	/** Platform ID, e.g. `"discord"`. Used for `pphlx.org/on/PLATFORM` redirects. */
 	platform: string;
 	/** Whether this platform should be linked in the site header */
 	showInHeader?: boolean;
@@ -25,10 +25,10 @@ type SiteInfo = {
 };
 
 const siteInfo: SiteInfo = {
-	name: 'Astro',
-	title: 'Build the web you want',
+	name: 'PPHLX',
+	title: 'Fast, Zero-Dependency Multi-Framework PHP Template Compiler',
 	description:
-		'Astro builds fast content sites, powerful web applications, dynamic server APIs, and everything in-between.',
+		'PPHLX compiles modern, component-based PHP templates (.pphx) into standard, standalone, production-ready .php files.',
 	image: {
 		src: '/og/social.jpg',
 		alt: 'Build the web you want',
@@ -38,7 +38,7 @@ const siteInfo: SiteInfo = {
 			platform: 'bluesky',
 			icon: 'social/bluesky',
 			label: 'Bluesky',
-			text: 'Follow Astro on Bluesky',
+			text: 'Follow PPHLX on Bluesky',
 			href: 'https://bsky.app/profile/pphlx.org',
 		},
 		{
@@ -46,13 +46,13 @@ const siteInfo: SiteInfo = {
 			href: '/chat',
 			icon: 'social/discord',
 			label: 'Discord',
-			text: 'Join the Astro community on Discord',
+			text: 'Join the PPHLX community on Discord',
 		},
 		{
 			platform: 'github',
 			icon: 'social/github',
 			label: 'GitHub',
-			text: "Go to Astro's GitHub repo",
+			text: "Go to PPHLX's GitHub repo",
 			href: 'https://github.com/pphlx/pphlx',
 			showInHeader: true,
 		},
@@ -60,21 +60,21 @@ const siteInfo: SiteInfo = {
 			platform: 'linkedin',
 			icon: 'social/linkedin',
 			label: 'LinkedIn',
-			text: 'Follow Astro on LinkedIn',
+			text: 'Follow PPHLX on LinkedIn',
 			href: 'https://www.linkedin.com/company/pphlx',
 		},
 		{
 			platform: 'mastodon',
 			icon: 'social/mastodon',
 			label: 'Mastodon',
-			text: 'Follow Astro on Mastodon',
+			text: 'Follow PPHLX on Mastodon',
 			href: 'https://m.webtoo.ls/@pphlx',
 		},
 		{
 			platform: 'reddit',
 			icon: 'social/reddit',
 			label: 'Reddit',
-			text: 'Join the official Astro community on Reddit',
+			text: 'Join the official PPHLX community on Reddit',
 			href: 'https://www.reddit.com/r/PPHLX/',
 		},
 		{
@@ -82,14 +82,14 @@ const siteInfo: SiteInfo = {
 			icon: 'social/twitter',
 			href: 'https://x.com/pphlxlabs',
 			label: 'X.com',
-			text: 'Follow Astro on x.com (formerly Twitter)',
+			text: 'Follow PPHLX on x.com (formerly Twitter)',
 		},
 		{
 			platform: 'youtube',
 			icon: 'social/youtube',
 			href: 'https://www.youtube.com/@pphlxlabs',
 			label: 'YouTube',
-			text: 'Follow Astro on YouTube',
+			text: 'Follow PPHLX on YouTube',
 		},
 	],
 };

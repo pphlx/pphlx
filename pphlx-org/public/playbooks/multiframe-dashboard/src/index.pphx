@@ -181,13 +181,28 @@ $vanillaStartBg = "#1e293b";
                 <TresJSLogo client:load />
             </div>
 
-            <!-- 14. Next.js Card -->
+            <!-- 14. Three.js Card -->
+            <div class="masonry-item" draggable="true">
+                <div class="p-6 border border-teal-500/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
+                    <div class="w-12 h-12 mb-3 flex items-center justify-center text-teal-400">
+                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-teal-400 mb-2 w-full text-center select-none">14. Three.js: Vanilla 3D</h3>
+                    <p class="text-xs text-gray-400 mb-3 text-center">Raw WebGL 3D render loop using vanilla Three.js library.</p>
+                    <div class="w-full bg-gray-950 p-1 rounded-lg border border-gray-800 flex items-center justify-center mb-3">
+                        <div id="threejs-container" class="w-full h-64 rounded overflow-hidden bg-black"></div>
+                    </div>
+                    <button class="w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded text-xs transition" onclick="showModal('Three.js Engine', 'Vanilla Three.js WebGL renderer initialized successfully!')">Inspect WebGL</button>
+                </div>
+            </div>
+
+            <!-- 15. Next.js Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-white/20 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center bg-black rounded-full border border-gray-700">
                         <svg class="w-8 h-8 text-white" viewBox="0 0 180 180" fill="none"><path d="M141.137 141.137c-33.774 33.774-88.536 33.774-122.31 0-33.774-33.774-33.774-88.536 0-122.31 33.774-33.774 88.536-33.774 122.31 0 33.774 33.774 33.774 88.536 0 122.31z" fill="#000"/><path d="M121 55v70h-9.5V70.5L66 125h-8V55h9.5v54.5L112.5 55H121z" fill="#fff"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-white mb-2 w-full text-center select-none">14. Next.js App Router</h3>
+                    <h3 class="text-xl font-bold text-white mb-2 w-full text-center select-none">15. Next.js App Router</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">React Server Component rendering simulator with file-system routing.</p>
                     
                     <!-- Interactive router simulation -->
@@ -208,13 +223,13 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 15. Nuxt Card -->
+            <!-- 16. Nuxt Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#00DC82]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center">
                         <svg class="w-10 h-10 text-[#00DC82]" viewBox="0 0 256 180" fill="none"><path d="M128 0L256 180H0L128 0Z" fill="#00DC82"/><path d="M174.5 65.5L256 180H93L174.5 65.5Z" fill="#002E3B"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-[#00DC82] mb-2 w-full text-center select-none">15. Nuxt Page Module</h3>
+                    <h3 class="text-xl font-bold text-[#00DC82] mb-2 w-full text-center select-none">16. Nuxt Page Module</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">Vue 3 SSR layouts & component hydration transitions.</p>
                     
                     <!-- Interactive transitions -->
@@ -236,19 +251,19 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 16. Qwik Card -->
+            <!-- 17. Qwik Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#18B6F6]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center">
                         <svg class="w-10 h-10 text-[#18B6F6]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm2.5 17.5h-5v-1.5h1.5v-3.5h-1.5V11h3.5v5h1.5v1.5zM12 9.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-[#18B6F6] mb-2 w-full text-center select-none">16. Qwik Optimizer</h3>
+                    <h3 class="text-xl font-bold text-[#18B6F6] mb-2 w-full text-center select-none">17. Qwik Optimizer</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">Island resumability engine with zero startup JavaScript delay.</p>
                     
                     <!-- Resumability status widget -->
                     <div class="w-full bg-gray-950 p-3 rounded-lg border border-gray-800 text-xs font-mono mb-3">
                         <div class="flex justify-between items-center mb-2">
-                            <span>Hydration: <strong id="qwik-status" class="text-yellow-400">Paused</strong></span>
+                            <span class="text-[10px] text-gray-400 font-mono">Hydration: <strong id="qwik-status" class="text-yellow-400">Paused</strong></span>
                             <span id="qwik-time" class="text-gray-500">TTI: --</span>
                         </div>
                         <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
@@ -259,13 +274,13 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 17. Lit Card -->
+            <!-- 18. Lit Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#324FFF]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center">
                         <svg class="w-10 h-10 text-[#324FFF]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13H5.5L12 6.5z"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-[#324FFF] mb-2 w-full text-center select-none">17. Lit Web Component</h3>
+                    <h3 class="text-xl font-bold text-[#324FFF] mb-2 w-full text-center select-none">18. Lit Web Component</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">Reactive Web Components with shadow-DOM styling scope.</p>
                     
                     <!-- Custom web component mockup -->
@@ -278,13 +293,13 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 18. Mithril Card -->
+            <!-- 19. Mithril Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#00E5FF]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center">
                         <svg class="w-10 h-10 text-[#00E5FF]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2zm0 6l5 10H7l5-10z"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-white mb-2 w-full text-center select-none">18. Mithril VDOM List</h3>
+                    <h3 class="text-xl font-bold text-white mb-2 w-full text-center select-none">19. Mithril VDOM List</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">High-performance hyperscript virtual DOM array rendering.</p>
                     
                     <!-- Dynamic Virtual List -->
@@ -302,13 +317,13 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 19. Elm Card -->
+            <!-- 20. Elm Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#60B5CC]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center">
                         <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none"><path d="M0 0h12v12H0V0zm12 12h12v12H12V12zm0-12h12v12H12V0zm-12 12h12v12H0V12z" fill="#60B5CC"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-[#60B5CC] mb-2 w-full text-center select-none">19. Elm MVU Sandbox</h3>
+                    <h3 class="text-xl font-bold text-[#60B5CC] mb-2 w-full text-center select-none">20. Elm MVU Sandbox</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">Functional Model-View-Update pattern with strict state control.</p>
                     
                     <!-- Elm state sandbox -->
@@ -323,13 +338,13 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 20. Ember Card -->
+            <!-- 21. Ember Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#E04E39]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center text-[#E04E39]">
                         <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 14.5h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-[#E04E39] mb-2 w-full text-center select-none">20. Ember Router</h3>
+                    <h3 class="text-xl font-bold text-[#E04E39] mb-2 w-full text-center select-none">21. Ember Router</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">Glimmer template rendering & controller hierarchy mapping.</p>
                     
                     <!-- Route node mapper -->
@@ -347,13 +362,13 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 21. Ziko Card -->
+            <!-- 22. Ziko Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#FFD54F]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center text-[#FFD54F]">
                         <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8m-4-4v8"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-[#FFD54F] mb-2 w-full text-center select-none">21. Ziko.js Graphics</h3>
+                    <h3 class="text-xl font-bold text-[#FFD54F] mb-2 w-full text-center select-none">22. Ziko.js Graphics</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">Reactive DOM UI builder with custom drawing canvas element.</p>
                     
                     <!-- Dynamic Ziko drawing pad -->
@@ -372,13 +387,13 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 22. MDX Card -->
+            <!-- 23. MDX Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#FCB900]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center text-[#FCB900]">
                         <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-[#FCB900] mb-2 w-full text-center select-none">22. MDX Compiler</h3>
+                    <h3 class="text-xl font-bold text-[#FCB900] mb-2 w-full text-center select-none">23. MDX Compiler</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">Markdown documents compiles with active UI components.</p>
                     
                     <!-- Split interactive view -->
@@ -388,8 +403,8 @@ $vanillaStartBg = "#1e293b";
                             <button onclick="toggleMDXView()" class="text-[9px] bg-[#FCB900] text-black px-2 py-0.5 rounded font-bold">Toggle Preview</button>
                         </div>
                         <div id="mdx-code" class="font-mono text-[9px] text-yellow-500/80 leading-normal">
-                            # Hello World<br/>
-                            &lt;BuyButton price={34.99} /&gt;
+                             # Hello World<br/>
+                             &lt;BuyButton price={34.99} /&gt;
                         </div>
                         <div id="mdx-preview" class="hidden text-gray-300 leading-relaxed text-[11px]">
                             <h4 class="text-white font-bold text-sm">Hello World</h4>
@@ -400,13 +415,13 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 23. Markdoc Card -->
+            <!-- 24. Markdoc Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#635BFF]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center text-[#635BFF]">
                         <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-[#635BFF] mb-2 w-full text-center select-none">23. Markdoc Parser</h3>
+                    <h3 class="text-xl font-bold text-[#635BFF] mb-2 w-full text-center select-none">24. Markdoc Parser</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">Stripe's robust structured document schema validator.</p>
                     
                     <!-- Interactive tag compiler selector -->
@@ -423,13 +438,13 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 24. Bootstrap Card -->
+            <!-- 25. Bootstrap Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#7952B3]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center text-[#7952B3]">
                         <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M4 2h16a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm5.5 5v10h3c1.3 0 2.2-.4 2.8-1.2.5-.7.7-1.6.7-2.6 0-1-.2-1.9-.7-2.5-.5-.7-1.4-1.2-2.8-1.2H9.5z"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-[#7952B3] mb-2 w-full text-center select-none">24. Bootstrap Theme</h3>
+                    <h3 class="text-xl font-bold text-[#7952B3] mb-2 w-full text-center select-none">25. Bootstrap Theme</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">Responsive components styling classes sandbox.</p>
                     
                     <!-- Bootstrap styled button preview -->
@@ -445,13 +460,13 @@ $vanillaStartBg = "#1e293b";
                 </div>
             </div>
 
-            <!-- 25. UnoCSS Card -->
+            <!-- 26. UnoCSS Card -->
             <div class="masonry-item" draggable="true">
                 <div class="p-6 border border-[#FFB300]/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
                     <div class="w-12 h-12 mb-3 flex items-center justify-center text-[#FFB300]">
                         <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-[#FFB300] mb-2 w-full text-center select-none">25. UnoCSS Compiler</h3>
+                    <h3 class="text-xl font-bold text-[#FFB300] mb-2 w-full text-center select-none">26. UnoCSS Compiler</h3>
                     <p class="text-xs text-gray-400 mb-3 text-center">High performance, custom-optimized atomic styling compiler.</p>
                     
                     <!-- Dynamic compiler output -->
@@ -461,21 +476,6 @@ $vanillaStartBg = "#1e293b";
                         <div class="text-[9px] text-gray-500 mt-2">Compiled in: <span class="text-green-400 font-bold">&lt; 0.8ms</span></div>
                     </div>
                     <button class="w-full py-1.5 bg-[#FFB300] hover:bg-[#e09e00] text-black font-bold rounded text-xs transition" onclick="showModal('UnoCSS Compiler', 'UnoCSS utility scanner successfully compiled styles in 0.74ms!')">Inspect Compiler</button>
-                </div>
-            </div>
-
-            <!-- 26. Three.js Card -->
-            <div class="masonry-item" draggable="true">
-                <div class="p-6 border border-teal-500/30 rounded-lg bg-gray-900 shadow-md text-left flex flex-col items-center">
-                    <div class="w-12 h-12 mb-3 flex items-center justify-center text-teal-400">
-                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-teal-400 mb-2 w-full text-center select-none">26. Three.js: Vanilla 3D</h3>
-                    <p class="text-xs text-gray-400 mb-3 text-center">Raw WebGL 3D render loop using vanilla Three.js library.</p>
-                    <div class="w-full bg-gray-950 p-1 rounded-lg border border-gray-800 flex items-center justify-center mb-3">
-                        <div id="threejs-container" class="w-full h-64 rounded overflow-hidden bg-black"></div>
-                    </div>
-                    <button class="w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded text-xs transition" onclick="showModal('Three.js Engine', 'Vanilla Three.js WebGL renderer initialized successfully!')">Inspect WebGL</button>
                 </div>
             </div>
 
@@ -503,7 +503,7 @@ $vanillaStartBg = "#1e293b";
                 const scrollX = window.scrollX;
                 const scrollY = window.scrollY;
 
-                const isMobile = window.innerWidth < 769;
+                const isMobile = window.matchMedia('(max-width: 767px)').matches;
                 if (isMobile) {
                     // On mobile, append elements directly back to parent grid to keep serial order
                     itemsArray.forEach(item => {

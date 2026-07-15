@@ -1,6 +1,6 @@
 import { createSignal, For } from 'solid-js';
 export default function StarRating({ initialRating }) {
-    const [rating, setRating] = createSignal(initialRating);
+    const [rating, setRating] = createSignal(Number(initialRating));
     return (
         <div class="flex items-center gap-1.5 my-3 select-none">
             <For each={[1, 2, 3, 4, 5]}>
