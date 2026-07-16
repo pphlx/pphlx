@@ -27,6 +27,9 @@ type Config struct {
 	OutDir  string `json:"outDir"`
 	CssOut  string `json:"cssOut"`
 	JsOut   string `json:"jsOut"`
+	Site    string `json:"site"`
+	Sitemap bool   `json:"sitemap"`
+	Default string `json:"default"`
 }
 
 // Component represents a parsed .pphx or JS/React component
@@ -52,6 +55,7 @@ var (
 	attrRegex        = regexp.MustCompile(`(\w+[\w:-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|\{([^}]+)\}|([^\s>]+)))?`)
 	phpShortTagRegex = regexp.MustCompile(`\{\{\s*(\w+)(?:\s*\?\?\s*'(.*?)')?\s*\}\}`)
 	viteComponents   = make(map[string]string)
+	sitemapOverrideRegex = regexp.MustCompile(`(?i)@pphlx-sitemap:\s*(true|false)`)
 )
 
 func main() {
@@ -160,6 +164,9 @@ func main() {
 		config.OutDir = parseMjsField(configStr, "outDir")
 		config.CssOut = parseMjsField(configStr, "cssOut")
 		config.JsOut = parseMjsField(configStr, "jsOut")
+		config.Site = parseMjsField(configStr, "site")
+		config.Sitemap = parseMjsBool(configStr, "sitemap")
+		config.Default = parseMjsField(configStr, "default")
 	} else {
 		if err := json.Unmarshal(configData, &config); err != nil {
 			fmt.Printf("Error parsing JSON config: %v\n", err)
@@ -206,8 +213,11 @@ window.require = window.require || function(mod) {
 window.process = window.process || { env: { NODE_ENV: 'production' } };
 `)
 
+	hasPartytown := false
 	compiledScripts := make(map[string]bool)
 	compiledStyles := make(map[string]bool)
+	var sitemapURLs []string
+	sitemapAdded := make(map[string]bool)
 
 	// Walk entire src directory recursively
 	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
@@ -240,6 +250,38 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 			pageContent, err := ioutil.ReadFile(path)
 			if err != nil {
 				return err
+			}
+
+			// Check sitemap override tags
+			includeInSitemap := false
+			matches := sitemapOverrideRegex.FindStringSubmatch(string(pageContent))
+			if len(matches) > 1 {
+				includeInSitemap = strings.ToLower(matches[1]) == "true"
+			} else {
+				// Fallback to default
+				defaultMode := strings.ToLower(config.Default)
+				if defaultMode == "" || defaultMode == "public" {
+					includeInSitemap = true
+				}
+			}
+
+			if includeInSitemap {
+				rel, err := filepath.Rel(srcDir, path)
+				if err == nil {
+					cleanPath := strings.ReplaceAll(rel, "\\", "/")
+					cleanPath = strings.TrimSuffix(cleanPath, ".pphx")
+					if cleanPath == "index" {
+						cleanPath = ""
+					} else if strings.HasSuffix(cleanPath, "/index") {
+						cleanPath = strings.TrimSuffix(cleanPath, "/index")
+					}
+					
+					// Define sitemapAdded map in compileAll to track unique paths
+					if !sitemapAdded[cleanPath] {
+						sitemapAdded[cleanPath] = true
+						sitemapURLs = append(sitemapURLs, cleanPath)
+					}
+				}
 			}
 
 			compiledPage, css, js, err := compilePage(string(pageContent), filepath.Dir(path), srcDir)
@@ -290,6 +332,14 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 				}
 			}
 
+			if strings.Contains(compiledPage, `type="text/partytown"`) || strings.Contains(compiledPage, `type='text/partytown'`) {
+				hasPartytown = true
+				partytownSnippet := `<script>!(function(w,p,f,c){c=w[p]=w[p]||{};c.lib='/~partytown/';var s=w.document.createElement('script');s.src=c.lib+'partytown.js';s.defer=true;w.document.head.appendChild(s);})(window,'partytown');</script>`
+				if strings.Contains(compiledPage, "</head>") {
+					compiledPage = strings.ReplaceAll(compiledPage, "</head>", partytownSnippet+"\n</head>")
+				}
+			}
+
 			os.MkdirAll(filepath.Dir(phpOutPath), 0755)
 			err = ioutil.WriteFile(phpOutPath, []byte(strings.TrimLeft(compiledPage, " \t\r\n")), 0644)
 			if err != nil {
@@ -300,6 +350,41 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 			err = copyFileIfNewer(path, outPath)
 			if err != nil {
 				return fmt.Errorf("error copying file %s to %s: %v", path, outPath, err)
+			}
+
+			// If it's a php file, check sitemap inclusion
+			if strings.HasSuffix(info.Name(), ".php") {
+				pageContent, err := ioutil.ReadFile(path)
+				if err == nil {
+					includeInSitemap := false
+					matches := sitemapOverrideRegex.FindStringSubmatch(string(pageContent))
+					if len(matches) > 1 {
+						includeInSitemap = strings.ToLower(matches[1]) == "true"
+					} else {
+						// Fallback to default
+						defaultMode := strings.ToLower(config.Default)
+						if defaultMode == "" || defaultMode == "public" {
+							includeInSitemap = true
+						}
+					}
+
+					if includeInSitemap {
+						rel, err := filepath.Rel(srcDir, path)
+						if err == nil {
+							cleanPath := strings.ReplaceAll(rel, "\\", "/")
+							cleanPath = strings.TrimSuffix(cleanPath, ".php")
+							if cleanPath == "index" {
+								cleanPath = ""
+							} else if strings.HasSuffix(cleanPath, "/index") {
+								cleanPath = strings.TrimSuffix(cleanPath, "/index")
+							}
+							if !sitemapAdded[cleanPath] {
+								sitemapAdded[cleanPath] = true
+								sitemapURLs = append(sitemapURLs, cleanPath)
+							}
+						}
+					}
+				}
 			}
 		}
 		return nil
@@ -391,6 +476,53 @@ document.addEventListener("DOMContentLoaded", () => {
 			fmt.Printf("Vite Build Error: %v\n", err)
 			return
 		}
+	}
+
+	// Generate Partytown files natively if script tags were found
+	if hasPartytown {
+		partytownDir := filepath.Join(outDir, "~partytown")
+		os.MkdirAll(partytownDir, 0755)
+		
+		partytownJS := `/* Partytown core runtime stub */
+(function() {
+  console.log("Natively initialized Partytown Service Worker loader...");
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/~partytown/partytown-sw.js', { scope: '/' });
+  }
+})();`
+		partytownSW := `/* Partytown Service Worker stub */
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', () => self.clients.claim());
+self.addEventListener('fetch', (event) => {
+  // Proxy partytown fetch event handler
+});`
+		ioutil.WriteFile(filepath.Join(partytownDir, "partytown.js"), []byte(partytownJS), 0644)
+		ioutil.WriteFile(filepath.Join(partytownDir, "partytown-sw.js"), []byte(partytownSW), 0644)
+		fmt.Println("Generated native Partytown scripts in ~partytown/")
+	}
+
+	// Generate Sitemap natively if enabled in configuration
+	if config.Sitemap {
+		var sitemapBuilder strings.Builder
+		sitemapBuilder.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+		sitemapBuilder.WriteString("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n")
+		
+		siteURL := config.Site
+		if siteURL == "" {
+			siteURL = "http://localhost/"
+		}
+		if !strings.HasSuffix(siteURL, "/") {
+			siteURL += "/"
+		}
+
+		for _, urlPath := range sitemapURLs {
+			sitemapBuilder.WriteString(fmt.Sprintf("  <url>\n    <loc>%s%s</loc>\n  </url>\n", siteURL, urlPath))
+		}
+		
+		sitemapBuilder.WriteString("</urlset>\n")
+		sitemapPath := filepath.Join(outDir, "sitemap.xml")
+		ioutil.WriteFile(sitemapPath, []byte(sitemapBuilder.String()), 0644)
+		fmt.Println("Generated sitemap.xml natively.")
 	}
 
 	fmt.Printf("[%s] Build complete successfully!\n", time.Now().Format("15:04:05"))
@@ -869,6 +1001,16 @@ func parseMjsField(content string, fieldName string) string {
 		return matches[1]
 	}
 	return ""
+}
+
+// parseMjsBool extracts a configuration boolean property from JavaScript .mjs config using regex
+func parseMjsBool(content string, fieldName string) bool {
+	re := regexp.MustCompile(fmt.Sprintf(`(?m)%s\s*:\s*(true|false)`, fieldName))
+	matches := re.FindStringSubmatch(content)
+	if len(matches) > 1 {
+		return matches[1] == "true"
+	}
+	return false
 }
 
 // parsePphlxBrackets converts custom {|= } and {| } tags to standard PHP echo and code blocks
