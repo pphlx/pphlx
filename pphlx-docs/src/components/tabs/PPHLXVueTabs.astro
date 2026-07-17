@@ -1,0 +1,12 @@
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+---
+
+<Tabs syncKey="pphlx-vue">
+	<TabItem label="Vue">
+		<slot name="vue" />
+	</TabItem>
+	<TabItem label="PPHLX">
+		<slot name="astro" />
+	</TabItem>
+</Tabs>

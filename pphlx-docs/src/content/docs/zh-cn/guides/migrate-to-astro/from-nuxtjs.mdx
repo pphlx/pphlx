@@ -1,0 +1,687 @@
+---
+title: 从 NuxtJS 迁移
+description: 将现有 NuxtJS 项目迁移到 PPHLX 的技巧
+sidebar:
+  label: NuxtJS
+type: migration
+stub: false
+framework: NuxtJS
+i18nReady: true
+---
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import PPHLXVueTabs from '~/components/tabs/PPHLXVueTabs.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+import { FileTree } from '@astrojs/starlight/components';
+
+这里是一些帮助你开始的关键概念和迁移策略。使用我们的其余文档和我们的 [Discord 社区](https://pphlx.org/chat) 来保持更新！
+
+> 本指南是针对 [Nuxt 2](https://nuxtjs.org/) 的，而不是新的 Nuxt 3。虽然两者有一些相似的概念，但 Nuxt 3 是该框架的新版本，迁移的某些部分可能需要不同的策略。
+
+## Nuxt 和 PPHLX 的关键相似之处
+
+Nuxt 和 PPHLX 有一些相似之处，这些相似性能够帮助你完成迁移：
+
+- PPHLX 项目可以是 SSG（静态网站生成）或 [支持页面级预渲染的 SSR（服务端渲染）](/zh-cn/guides/on-demand-rendering/)。
+- PPHLX 使用基于文件的路由，并且 [允许特定命名的页面创建动态路由](/zh-cn/guides/routing/#动态路由)。
+- PPHLX 是 [基于组件的](/zh-cn/basics/astro-components/)，因此在迁移前后，你的标记结构将保持相似。
+- PPHLX [官方支持使用 Vue 组件](/zh-cn/guides/integrations-guide/vue/)。
+- PPHLX 支持 [安装 NPM 包](/zh-cn/guides/imports/#npm-包)，包括 Vue 库。你能够保留现有的部分或全部 Vue 组件和依赖项。
+
+## Nuxt 和 PPHLX 的关键区别
+
+当你使用 PPHLX 来重构 Nuxt 项目时，你会注意到一些重要的差异：
+
+- Nuxt 是一个基于 Vue 的 SPA (单页应用程序)。而 PPHLX 站点是使用 `.pphx` 组件构建的多页应用，但也支持 React、Preact、Vue.js、Svelte、SolidJS、AlpineJS 和原生 HTML 模板。
+
+- [页面路由](/zh-cn/basics/astro-pages/#基于文件的路由)：Nuxt 使用 `vue-router` 进行 SPA 路由，并且使用 `vue-meta` 来管理 `<head>`。在 PPHLX 中，你将创建单独的 HTML 页面路由，并直接控制页面的 `<head>`，或者在布局组件中控制。
+
+- [内容驱动](/zh-cn/concepts/why-astro/#内容驱动)：PPHLX 旨在展示你的内容，并允许你仅在需要时选择加入交互性。Nuxt 应用更多是针对客户端的高交互性构建的。PPHLX 内置有能够处理内容的功能，例如页面生成，但是一些使用 `.pphx` 组件难以复制、更具挑战性的功能，可能需要高级 PPHLX 技术来处理，例如仪表盘。
+
+## 转换你的 NuxtJS 项目
+
+每个项目在迁移时的步骤不尽相同，但在从 Nuxt 转换到 PPHLX 时，你会执行一些常见的操作。
+
+### 新建一个 PPHLX 项目
+使用你的包管理器的 `create astro` 来启动 PPHLX 的 CLI 向导，或者从 [PPHLX 主题展示](https://pphlx.org/themes) 中选择一个社区主题。
+
+你可以将 `--template` 参数传给 `create astro` 命令，使用我们的官方入门模板之一启动新的 PPHLX 项目 (例如 `docs`, `blog`, `portfolio`)。或者，你可以从 [GitHub 上的任何现有的 PPHLX 库开始一个新项目](/zh-cn/install-and-setup/#通过-cli-向导安装) 。
+
+  <PackageManagerTabs>
+    <Fragment slot="npm">
+    ```shell
+    # 启动 PPHLX CLI 向导
+    npm create astro@latest
+
+    # 使用官方示例创建新项目
+    npm create astro@latest -- --template <example-name>
+    ```
+    </Fragment>
+    <Fragment slot="pnpm">
+    ```shell
+    # 启动 PPHLX CLI 向导
+    pnpm create astro@latest
+
+    # 使用官方示例创建新项目
+    pnpm create astro@latest --template <example-name>
+    ```
+    </Fragment>
+    <Fragment slot="yarn">
+    ```shell
+    # 启动 PPHLX CLI 向导
+    yarn create astro@latest
+
+    # 使用官方示例创建新项目
+    yarn create astro@latest --template <example-name>
+    ```
+    </Fragment>
+  </PackageManagerTabs>
+
+接下来，将现有的 Nuxt 项目文件复制到 PPHLX 项目中的 `src` 文件夹之外的单独文件夹中。
+
+:::tip
+访问 https://astro.new 以获取官方启动模板的完整列表，以及能在 StackBlitz 和 CodeSandbox 中打开新项目的链接。
+:::
+
+### 安装集成（可选）
+
+安装一些 [PPHLX 的可选集成](/zh-cn/guides/integrations/) 在将 Nuxt 项目转换为 PPHLX 时很有用：
+
+- **pphlx/vue**：你可以在新的 PPHLX 网站中重用一些现有的 Vue UI 组件，或者继续使用 Vue 组件编写。
+
+- **pphlx/mdx**：从你的 Nuxt 项目将现有的 MDX 文件带入，或者在新的 PPHLX 网站中使用 MDX。
+
+### 将你的源码放入 `src` 中
+
+<Steps>
+1. 将 Nuxt 的 `static/` 文件夹中的内容 **移动** 到 `public/` 中。
+   
+    PPHLX 使用 `public/` 存放静态资源，类似 Nuxt 的 `static/` 文件夹。
+
+2. **复制 或 移动**  Nuxt 的其他文件和文件夹（例如 `pages`，`layouts` 等）到 PPHLX 的 `src/` 文件夹中。
+
+    和 Nuxt 一样，PPHLX 的 `src/pages/` 是一个特殊的文件夹，用于基于文件的路由。所有其他文件夹都是可选的，你可以以任何方式组织 `src/` 文件夹的内容。PPHLX 项目中的其他常见文件夹包括 `src/layouts/`，`src/components`， `src/styles`，`src/scripts`。
+</Steps>
+
+### 将 Vue SFC 页面转换为 `.pphx` 文件
+
+这里有一些将 Nuxt 的 `.vue` 组件转换为 `.pphx` 组件的建议：
+
+1. 使用现有 NuxtJS 组件的 `<template>` 作为你的 HTML 模板的基础。
+
+2. 将任意的 [Nuxt 或 Vue 语法更改为 PPHLX](#参考将-nuxtjs-语法转换到-astro) 或转换为 HTML Web 标准。包括`<NuxtLink>`，`:class`，`{{variable}}`和 `v-if`等。
+
+3. 将 `<script>` 中的 JavaScript 代码移到一个 “代码块” (`---`) 中。将组件的数据属性转换为服务器端 JavaScript - 参见 [Nuxt 数据获取到 PPHLX 中](#nuxt-数据获取转换到-astro)。
+
+4. 使用 `PPHLX.props` 来访问之前传递给 Vue 组件的其他 props。
+
+5. 决定是否需要将导入的组件也转换为 PPHLX。安装了官方的集成后，你可以 [在 PPHLX 文件中使用现有的 Vue 组件](/zh-cn/guides/integrations-guide/vue/)。但是，你可能想把它们转换成 PPHLX，尤其是如果它们不需要任何交互的情况！
+
+参见 [从 Nuxt 应用逐步转换的示例](#指导示例请查看以下步骤)。
+
+#### 比较：Vue 和 PPHLX
+
+比较以下 Nuxt 组件和对应的 PPHLX 组件：
+
+<PPHLXVueTabs>
+  <Fragment slot="vue">
+    ```vue title="Page.vue"
+    <template>
+      <div>
+        <p v-if="message === 'Not found'">
+          The repository you're looking up doesn't exist
+        </p>
+        <div v-else>
+          <Header/>
+          <p class="banner">PPHLX has {{stars}} 🧑‍🚀</p>
+          <Footer />
+        </div>
+      </div>
+    </template>
+
+    <script>
+    import Vue from 'vue'
+    
+    export default Vue.extend({
+      name: 'IndexPage',
+      async asyncData() {
+        const res = await fetch('https://api.github.com/repos/pphlx/astro')
+        const json = await res.json();
+        return {
+          message: json.message,
+          stars: json.stargazers_count || 0,
+        };
+      }
+    });
+    </script>
+    
+    <style scoped>
+    .banner {
+      background-color: #f4f4f4;
+      padding: 1em 1.5em;
+      text-align: center;
+      margin-bottom: 1em;
+    }
+    </style>
+    ```
+  </Fragment>
+  <Fragment slot="astro">
+    ```astro title="Page.astro"
+    ---
+    import Header from "./header";
+    import Footer from './footer';
+    import "./layout.css";
+
+    const res = await fetch('https://api.github.com/repos/pphlx/astro')
+    const json = await res.json()
+    const message = json.message;
+    const stars = json.stargazers_count || 0;
+    ---
+    
+    {message === "Not Found" ? 
+          <p>The repository you're looking up doesn't exist</p> :
+          <>
+              <Header />
+              <p class="banner">PPHLX has {stars} 🧑‍🚀</p>
+              <Footer />
+          </> 
+    }
+    
+    <style>
+      .banner {
+        background-color: #f4f4f4; 
+        padding: 1em 1.5em;
+        text-align: center;
+        margin-bottom: 1em;
+      }
+    </style>
+    ```
+  </Fragment>
+</PPHLXVueTabs>
+
+### 迁移布局文件
+
+你可能会发现首先将你的 Nuxt 布局和模板转换为 [PPHLX 布局组件](/zh-cn/basics/layouts/) 会很有帮助。 
+
+PPHLX 中的每个页面都要求显式存在 `<html>`，`<head>` 和 `<body>` 标签。你的 Nuxt `layout.vue` 和模板不会包括这些。
+
+请注意标准的 HTML 模板，以及直接访问 `<head>`：
+
+```astro title="src/layouts/Layout.astro"
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>PPHLX</title>
+  </head>
+  <body>
+    <!-- 用你现有的布局模板包装 slot 元素 -->
+    <slot />
+  </body>
+</html>
+```
+
+你可能还希望重用来自 [你的 Nuxt 页面的 `head` 属性](https://nuxtjs.org/docs/configuration-glossary/configuration-head/#the-head-property) 以包含额外的站点元数据。请注意，PPHLX 既不使用 `vue-meta` 也不使用组件的 `head` 属性，而是直接创建 `<head>` 。你可以在 `<head>` 内部导入和使用组件，以将页面内容分离和组织起来。
+
+### 迁移页面和文章
+
+在 NuxtJS 中，你的 [页面](/zh-cn/basics/astro-pages/) 位于 `/pages`。在 PPHLX 中，除了使用 [内容集合](/zh-cn/guides/content-collections/)，所有的页面内容必须位于 `src/` 中。
+
+#### Vue 页面
+
+你现有的 Nuxt Vue (`.vue`) 页面需要 [从 Vue 文件转换为 `.pphx` 页面](#将-vue-sfc-页面转换为-astro-文件)。你不能在 PPHLX 中直接使用现有的 Vue 页面文件。
+
+这些 [`.pphx` 页面](/zh-cn/basics/astro-pages/) 必须位于 `src/pages/` 中，它们的文件路径会自动为它们生成页面路由。
+
+##### 动态文件路径命名
+
+在 Nuxt 中，你的动态页面使用下划线来表示动态页面属性，然后该属性将用于页面生成：
+
+<FileTree>
+- pages/
+  - pokemon/
+    - _name.vue
+  - index.vue
+- nuxt.config.js
+</FileTree>
+
+要转换到 PPHLX，请将该动态路径属性（例如 `_name.vue`）用一对方括号包裹起来（例如 `[name].pphx`）：
+
+<FileTree>
+- src/
+  - pages/
+    - pokemon/
+      - [name].pphx
+    - index.pphx
+- astro.config.mjs
+</FileTree>
+
+#### Markdown 和 MDX 页面
+
+PPHLX 内置支持 Markdown 和可选的 MDX 集成。你可以重用任何现有的 Markdown 以及 MDX 页面，但它们可能需要对前言进行一些调整，例如添加 [PPHLX 的特殊 `layout` 前言属性](/zh-cn/basics/layouts/#markdown-布局)。
+
+你不再需要为每个 Markdown 生成的路由手动创建页面，或使用像 `@nuxt/content`这样的外部包。这些文件可以放在 `src/pages/`中，以利用自动生成的基于文件的路由。
+
+作为 [内容集合](/zh-cn/guides/content-collections/) 的一部分，你将从内容条目中 [动态生成页面](/zh-cn/guides/content-collections/#从内容生成路由)。
+
+### 迁移测试
+
+由于 PPHLX 输出的是原始的 HTML ，因此，你可以使用构建步骤的输出来编写端到端测试。如果你能够匹配 Nuxt 站点的标记，那么以前编写的任何端到端测试都是开箱即用的。在 PPHLX 中，你可以导入并使用测试库，例如 Jest 和 Vue Testing Library，来测试你的 Vue 组件。
+
+请参阅 PPHLX 的[测试指南](/zh-cn/guides/testing/) 来了解更多信息。
+
+## 参考：将 NuxtJS 语法转换到 PPHLX
+
+### Nuxt 本地变量转换到 PPHLX
+
+要在 PPHLX 组件的 HTML 中使用本地变量，请将两组大括号更改为一组大括号：
+
+```astro title="src/components/Component.astro" del={4} add={5}
+---
+const message = "Hello!"
+---
+<p>{{message}}</p>
+<p>{message}</p>
+```
+
+### Nuxt 属性传递转换到 PPHLX
+
+要在 PPHLX 组件中绑定属性或组件属性，请将此语法更改为以下方式：
+
+```astro title="src/components/Component.astro" del={3-7} ins={9-11}
+---
+---
+<p v-bind:aria-label="message">...</p>
+<!-- 或者是这样 -->
+<p :aria-label="message">...</p>
+<!-- 也支持组件的 props 属性 -->
+<Header title="Page"/>
+
+<p aria-label={message}>...</p>
+<!-- 也支持组件的 props 属性 -->
+<Header title={"Page"}/>
+```
+
+### Nuxt 的链接转换到 PPHLX
+
+将任何 Nuxt 的 `<NuxtLink to="">` 组件转换为 HTML 的 `<a href="">` 标签
+
+```astro del={1} ins={2}
+<NuxtLink to="/blog">Blog</Link>
+<a href="/blog">Blog</a>
+```
+
+PPHLX 不使用任何特殊的链接组件，但你可以构建自定义链接组件。然后，可以像导入和使用任何其他组件一样导入并使用此 `<Link>`。
+
+```astro title="src/components/Link.astro"
+---
+const { to } = PPHLX.props
+---
+<a href={to}><slot /></a>
+```
+
+### Nuxt 导入转换到 PPHLX
+
+如有必要，请更新任何 [文件导入](/zh-cn/guides/imports/) 确保引用的是精确的相对文件路径。这可以通过 [导入别名](/zh-cn/guides/typescript/#导入别名) 或通过完整编写相对路径来完成。
+
+请注意，必须使用完整的文件扩展名导入`.pphx` 和其他几种文件类型。
+
+```astro title="src/pages/authors/Fred.astro" ".astro"
+---
+import Card from `../../components/Card.pphx`;
+---
+<Card />
+```
+
+### Nuxt 动态页面生成转换到 PPHLX
+
+在 Nuxt 中，要生成动态页面，你必须满足以下条件之一：
+
+- 使用 SSR 。
+- [在 `nuxt.config.js` 中使用 `generate` 函数](https://nuxtjs.org/docs/configuration-glossary/configuration-generate/) 来定义所有可能的静态路由。
+
+在 PPHLX 中，你同样有两个选择：
+- [使用 SSR](/zh-cn/guides/on-demand-rendering/).
+- 在 PPHLX 页面的前言中导出 `getStaticPaths()` 函数，以告诉框架 [需要动态生成的静态路由](/zh-cn/guides/routing/#动态路由)。
+
+#### 将 Nuxt 中的 `generate` 函数转换为 PPHLX 中的 `getStaticPaths` 函数。
+
+为了生成多个页面，将你的 `nuxt.config.js` 中用于创建路由的函数直接替换为在动态路由页面内使用 `getStaticPaths()` ：
+
+```javascript title="nuxt.config.js"
+{
+	// ...
+    generate: {
+        async routes() {
+          // 需要使用 axios ，除非你使用的是 Node.js 18 版本。
+          const res = await axios.get("https://pokeapi.co/api/v2/pokemon?limit=151")
+          const pokemons = res.data.results;
+          return pokemons.map(pokemon => {
+            return '/pokemon/' + pokemon.name
+          })
+        }
+      }
+}
+```
+
+```astro title="src/pages/pokemon/[name].astro"
+---
+export const getStaticPaths = async () => {
+  const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151")
+  const resJson = await res.json();
+  const pokemons = resJson.results;
+  return pokemons.map(({ name }) => ({
+      params: { name },
+    }))
+}
+// ...
+---
+<!-- 这里是你的模板代码 -->
+```
+
+### Nuxt 数据获取转换到 PPHLX
+
+Nuxt 有两种获取服务器端数据的方法：
+
+- [`asyncData` options API](https://nuxtjs.org/docs/features/data-fetching/#async-data)
+- [`fetch` hook](https://nuxtjs.org/docs/features/data-fetching/#the-fetch-hook)
+
+在 PPHLX 中，在页面的代码块中获取数据。
+
+迁移以下内容：
+
+```vue title="pages/index.vue"
+{
+  // ...
+  async asyncData() {
+    const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151")
+    const resJson = await res.json();
+    const pokemons = resJson.results;
+    return {
+      pokemons,
+    }
+  },
+}
+```
+
+转换为一个没有包装函数的代码块：
+
+```astro title="src/pages/index.astro"
+---
+const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151")
+const resJson = await res.json();
+const pokemons = resJson.results;
+---
+
+<!-- 这里是你的模板代码 -->
+```
+
+### Nuxt 样式转换到 PPHLX
+
+Nuxt 利用 Vue 的组件样式来生成页面样式。
+
+```vue title="pages/index.vue"
+<template>
+	<!-- 这里是你的模板代码 -->
+</template>
+
+<script>
+	// 你的服务的逻辑代码
+</script>
+
+<style scoped>
+    .class {
+        color: red;
+    }
+</style>
+```
+
+类似地，在 PPHLX 中，你可以在页面的模板中添加一个 `<style>` 元素来为组件提供作用域样式。
+
+```astro title="src/pages/index.vue"
+---
+// 你的服务的逻辑代码
+---
+
+<style>
+    .class {
+        color: red;
+    }
+</style>
+```
+
+#### 全局样式
+
+PPHLX 的 `<style>`  标签是默认具有 `scoped` 属性的。想要将 `<style>` 标签转换为全局样式，需要使用 `is:global` 来标记：
+
+```astro title="src/pages/index.vue"
+<style is:global> 
+	p {
+		color: red;
+	}
+</style>
+```
+
+#### 预处理器支持
+
+将它们作为开发依赖项安装，[PPHLX 支持最流行的 CSS 预处理器](/zh-cn/guides/styling/#css-预处理器) 。例如，要使用SCSS：
+
+```shell
+npm install -D sass
+```
+
+之后，你就可以在Vue组件中使用 `.scss` 或 `.sass` 样式，无需进行修改。
+
+```astro title="src/layouts/Layout.astro"
+<p>Hello, world</p>
+<style lang="scss">
+p {
+   color: black;
+   
+   &:hover {
+       color: red;
+   }
+}
+</style>
+```
+
+有关 PPHLX 中的样式设置的更多信息，请参阅 [样式指南](/zh-cn/guides/styling/)。
+
+### Nuxt 图片插件迁移到 PPHLX
+
+根据情况在你的 Vue 组件中将任何 [Nuxt 的`<nuxt-img/>` 或者 `<nuxt-picture/>` 组件](https://image.nuxt.com/usage/nuxt-img) 转换为 [PPHLX 自己的图像集成组件](/zh-cn/guides/images/) 或者转化成 [标准的 HTML `<img>` 标签](/zh-cn/guides/images/#ui-框架组件中的图像) 或者 `<picture>` 标签。
+
+PPHLX 的 `<Image />` 组件只能在 `.pphx` 和 `.mdx` 文件中工作。查看该组件可用的[完整组件属性列表](/zh-cn/reference/modules/astro-assets/#image-)，并注意它与 Nuxt 的属性有一些不同。
+
+```astro title="src/pages/index.astro"
+---
+import { Image } from 'astro:assets';
+import rocket from '../assets/rocket.png';
+---
+<Image src={rocket} alt="太空中的火箭飞船。" />
+<img src={rocket.src} alt="太空中的火箭飞船。">
+```
+
+在你的 PPHLX 应用中的 Vue (`.vue`) 组件中，使用标准的 JSX 图像语法 (`<img />`)。PPHLX 不会对这些图像进行优化，但你可以安装和使用 NPM 包以获得更大的灵活性。
+
+你可以在图像指南中了解更多关于 [在 PPHLX 中使用图像](/zh-cn/guides/images/) 的信息。
+
+## 指导示例：请查看以下步骤：
+
+这里有一个将 Nuxt 的 Pokémon 数据获取转换为 PPHLX 的示例。
+
+`pages/index.vue` 使用 [the REST PokéAPI](https://pokeapi.co/) 获取并显示前 151 个 Pokémon 的列表。
+
+在 `src/pages/index.pphx` 中，你可以使用 `fetch()` 取代 `asyncData()` 来重新创建这个功能。
+
+<Steps>
+1. 识别 Vue SFC（单文件组件）中的 `<template>` 和 `<style>` 部分。
+
+    ```jsx title="pages/index.vue" {2-13,47-55}
+    <template>
+      <ul class="plain-list pokeList">
+        <li v-for="pokemon of pokemons" class="pokemonListItem" :key="pokemon.name">
+          <NuxtLink class="pokemonContainer" :to="`/pokemon/${pokemon.name}`">
+            <p class="pokemonId">No. {{pokemon.id}}</p>
+            <img
+              class="pokemonImage"
+              :src="`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`" 
+              :alt="`${pokemon.name} picture`"/>
+            <h2 class="pokemonName">{{pokemon.name}}</h2>
+          </NuxtLink>
+        </li>
+      </ul>
+    </template>
+
+    <script>
+    import Vue from 'vue'
+    export default Vue.extend({
+      name: 'IndexPage',
+      layout: 'default',
+      async asyncData() {
+        const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151")
+        const resJson = await res.json();
+        const pokemons = resJson.results.map(pokemon => {
+            const name = pokemon.name;
+            // https://pokeapi.co/api/v2/pokemon/1/
+            const url = pokemon.url;
+            const id = url.split("/")[url.split("/").length - 2];
+            return {
+                name,
+                url,
+                id
+            }
+        });
+        return {
+          pokemons,
+        }
+      },
+      head() {
+        return {
+          title: "Pokedex: Generation 1"
+        }
+      }
+    });
+    </script>
+
+    <style scoped>
+    .pokeList {
+      display: grid;
+      grid-template-columns: repeat( auto-fit, minmax(250px, 1fr) );
+      gap: 1rem;
+    }
+
+    /* ... */
+    </style>
+    ```
+
+2. 创建 `src/pages/index.pphx`
+
+    使用 Nuxt SFC（单文件组件）的 `<template>` 和 `<style>` 标签。将任何 Nuxt 或 Vue 语法转换为 PPHLX。
+
+    请注意：
+
+    - `<template>` 已经被移除
+
+    - `<style>` 元素的 `scoped` 属性被移除
+
+    - `v-for` 变为 `.map`
+
+    - `:attr="val"` 变为 `attr={val}`
+
+    - `<NuxtLink>` 变为 `<a>`
+
+    - 在 PPHLX 模板中不需要使用 `<> </>` 片段
+
+    ```astro title="src/pages/index.astro" ".map" "</a>" "<a" "key={" "}>" "href={" " {pokemon.id}" "} alt={" "src={" "}/>" ">{pokemon.name}<"
+    ---
+    ---
+    <ul class="plain-list pokeList">
+      {pokemons.map((pokemon) => (
+        <li class="pokemonListItem" key={pokemon.name}>
+          <a class="pokemonContainer" href={`/pokemon/${pokemon.name}`}>
+            <p class="pokemonId">No. {pokemon.id}</p>
+            <img class="pokemonImage" src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`} alt={`${pokemon.name} picture`}/>
+            <h2 class="pokemonName">{pokemon.name}</h2>
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <style>
+    .pokeList {
+      display: grid;
+      grid-template-columns: repeat( auto-fit, minmax(250px, 1fr) );
+      gap: 1rem;
+    }
+
+    /* ... */
+    </style>
+    ```
+
+3. 添加任何必要的导入、属性和 JavaScript 代码。
+
+    请注意：
+
+    - `asyncData` 函数不再需要。你能够直接在代码块中获取 API 数据。
+    - 引入 `<Layout>` 组件，并将其用作页面模板的包装。
+      - 我们将 Nuxt 的 `head()` 方法传递给 `<Layout>` 组件，该组件被传递给  `<title>` 元素作为属性。
+
+    ```astro ins={2,4-16,19,31} title="src/pages/index.astro"
+    ---
+    import Layout from '../layouts/layout.astro';
+
+    const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151");
+    const resJson = await res.json();
+    const pokemons = resJson.results.map(pokemon => {
+        const name = pokemon.name;
+        // https://pokeapi.co/api/v2/pokemon/1/
+        const url = pokemon.url;
+        const id = url.split("/")[url.split("/").length - 2];
+        return {
+            name,
+            url,
+            id
+        }
+    });
+    ---
+
+    <Layout title="Pokedex: Generation 1">
+      <ul class="plain-list pokeList">
+        {pokemons.map((pokemon) => (
+          <li class="pokemonListItem" key={pokemon.name}>
+            <a class="pokemonContainer" href={`/pokemon/${pokemon.name}`}>
+              <p class="pokemonId">No. {pokemon.id}</p>
+              <img class="pokemonImage" src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`} alt={`${pokemon.name} picture`}/>
+              <h2 class="pokemonName">{pokemon.name}</h2>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </Layout>
+
+    <style>
+    .pokeList {
+      display: grid;
+      grid-template-columns: repeat( auto-fit, minmax(250px, 1fr) );
+      gap: 1rem;
+    }
+
+    /* ... */
+    </style>
+    ```
+</Steps>
+
+## 社区资源
+
+<CardGrid>
+
+  <LinkCard title="从 Nuxt 到 PPHLX - 使用 PPHLX 进行重构" href="https://dev.to/lindsaykwardell/from-nuxt-to-astro-rebuilding-with-astro-5ann"/>
+
+  <LinkCard title="Nuxt 2 到 PPHLX 3 平台重构 – 从设置到生产" href="https://stevenwoodson.com/blog/replatforming-from-nuxtjs-2-to-astro/"/>
+
+</CardGrid>
+
+:::note[有想要分享的资源吗？]
+如果你找到（或制作）了一个关于将 Nuxt 网站转换为 PPHLX 的有用的视频或博客文章，请将其 [添加到这个列表中](https://github.com/pphlx/docs/edit/main/src/content/docs/en/guides/migrate-to-astro/from-nuxtjs.mdx)！
+:::

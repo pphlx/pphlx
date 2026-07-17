@@ -1,0 +1,38 @@
+---
+title: VPS & Custom Servers
+description: Deploy your PPHLX project to Virtual Private Servers using Nginx, Apache, or Caddy.
+---
+
+Deploying PPHLX to Virtual Private Servers (VPS) like DigitalOcean, Linode, AWS EC2, or Hetzner is simple. PPHLX compiled pages run natively on standard web servers.
+
+## Nginx Configuration
+
+Create a standard server block pointing the root directory to your compiled `dist/` folder:
+
+```nginx
+server {
+    listen 80;
+    server_name example.com;
+    root /var/www/my-pphlx-app/dist;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+    }
+}
+```
+
+## Caddy Configuration
+
+```caddy
+example.com {
+    root * /var/www/my-pphlx-app/dist
+    php_fastcgi unix//var/run/php/php8.2-fpm.sock
+    file_server
+}
+```

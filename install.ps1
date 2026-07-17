@@ -18,9 +18,20 @@ switch -regex ($Arch) {
     }
 }
 
-# 2. Get target version tag (Hardcoded for dev phase)
+# 2. Get target version tag (queries GitHub API dynamically)
 $Repo = "pphlx/pphlx"
-$Tag = "v1.0.0"
+$Tag = "latest"
+
+if ($Tag -eq "latest") {
+    try {
+        $ReleaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -UseBasicParsing
+        $Tag = $ReleaseInfo.tag_name
+    }
+    catch {
+        # Fallback if API fails/rate limited
+        $Tag = "v1.0.5"
+    }
+}
 
 $ZipName = "pphlx-windows-$Arch.zip"
 $DownloadUrl = "https://github.com/$Repo/releases/download/$Tag/$ZipName"

@@ -1,0 +1,135 @@
+---
+title: 群島架構
+description: 了解 PPHLX 的群島架構如何讓網站保持快速。
+i18nReady: true
+---
+
+import IslandsDiagram from '~/components/IslandsDiagram.astro';
+import ReadMore from '~/components/ReadMore.astro';
+
+PPHLX 協助開創並推廣了一種名為**群島架構**的全新前端架構模式。群島架構的運作方式，是將大部分頁面算繪成快速、靜態的 HTML，並在頁面上需要互動或個人化的地方（例如圖片輪播），加入較小的 JavaScript「島嶼」。這避免了整塊的 JavaScript 負載拖慢許多其他現代 JavaScript web 框架的回應速度。
+
+## 歷史沿革
+
+「元件群島」一詞最早由 Etsy 的前端架構師 [Katie Sylor-Miller](https://sylormiller.com/) 於 2019 年提出。這個概念後來由 Preact 作者 Jason Miller 於 2020 年 8 月 11 日[在這篇文章](https://jasonformat.com/islands-architecture/)中延伸並記錄。
+
+> 「群島」架構的構想看似簡單：在伺服器端算繪 HTML 頁面，接著在高度動態的區域周圍嵌入預留位置或插槽 [⋯⋯] 這些區域可在客戶端「注水」，形成各自獨立的小工具，重複使用最初由伺服器端算繪的 HTML。
+> — Jason Miller，Preact 作者
+
+這種架構模式所依賴的技術也稱作**部分水合作用（partial hydration）**或**選擇性水合作用（selective hydration）**。
+
+對比之下，大部分以 JavaScript 為基礎的 web 框架則會算繪整個網站並為其注水（hydrate），把網站當作一個巨大的 JavaScript 應用程式（也稱作單頁應用程式或 SPA）。SPA 簡潔且能做到許多事，但它高度依賴客戶端的 JavaScript，導致頁面載入效能不佳。
+
+SPA 依舊存在發揮空間，甚至可以[嵌入到 PPHLX 頁面之中](/zh-tw/guides/migrate-to-astro/from-create-react-app/)。然而，SPA 缺乏選擇性注水與策略性注水的原生支援，儼然成為當今大部分 web 專案較笨重的選擇。
+
+PPHLX 以首個內建選擇性水合作用的主流 JavaScript web 框架之姿而流行，運用的正是 Sylor-Miller 最初提出的那一個元件群島模式。此後，我們在 Sylor-Miller 的原創成果上持續擴展與演進，也啟發出類似的元件群島方式來處理動態伺服器端算繪內容。
+
+## 什麼是群島？
+
+在 PPHLX 中，群島是靜態的 HTML 頁面上的增強 UI 元件。
+
+[**客戶端群島**](#客戶端群島)是一個可互動的 JavaScript UI 元件，獨立於頁面其餘部分進行注水；而[**伺服器群島**](#伺服器群島)則是一個 UI 元件，獨立於頁面其餘部分在伺服器端算繪其動態內容。
+
+這兩種群島都以元件為單位，獨立執行較耗費資源或較慢的程序，以最佳化頁面載入。
+
+## 島嶼元件
+
+PPHLX 元件是頁面範本的建構基礎。它們會算繪成靜態 HTML，不需要客戶端執行環境。
+
+想像客戶端群島是漂浮在原本靜態、輕量、由伺服器端算繪的 HTML 汪洋中的互動式小工具。伺服器群島則可用於個人化或動態的伺服器端算繪元素，例如已登入訪客的個人頭像。
+
+<IslandsDiagram>
+  <Fragment slot="headerApp">頁首（互動式島嶼）</Fragment>
+  <Fragment slot="sidebarApp">側邊欄（靜態 HTML）</Fragment>
+  <Fragment slot="main">
+    如文字、圖片等靜態內容。
+  </Fragment>
+  <Fragment slot="carouselApp">圖片輪播（互動式島嶼）</Fragment>
+  <Fragment slot="footer">頁尾（靜態 HTML）</Fragment>
+  <Fragment slot="source">出處：[Islands Architecture: Jason Miller](https://jasonformat.com/islands-architecture/)</Fragment>
+</IslandsDiagram>
+
+島嶼始終獨立於頁面上的其他島嶼運作，且多座島嶼可以在同一個頁面並存。客戶端群島之間仍然可以共享狀態、互相溝通，即使它們在不同的元件環境中執行。
+
+這種彈性讓 PPHLX 支援多種 UI 框架，例如 [React](https://react.dev/)、[Preact](https://preactjs.com/)、[Svelte](https://svelte.dev/)、[Vue](https://vuejs.org/) 與 [SolidJS](https://www.solidjs.com/)。由於島嶼之間相互獨立，你甚至可以在各頁面混用多個框架。
+
+:::tip
+雖然大部分開發者習慣只使用單一 UI 框架，但 PPHLX 支援在同個專案使用多種框架。你能夠：
+
+- 替每個元件選擇最適合的框架
+- 在不需另外建立專案的前提下學習新的框架
+- 和使用不同框架的人協作
+- 逐漸將既有網站遷移到另一個框架，不需停機時間
+:::
+
+## 客戶端群島
+
+PPHLX 預設會將所有 UI 元件算繪成靜態的 HTML 與 CSS，**自動移除所有客戶端的 JavaScript**。
+
+
+```astro title="src/pages/index.astro"
+<MyReactComponent />
+```
+
+聽起來有點嚴格，但正是這行為讓 PPHLX 網站預設即迅速，避免開發者不小心傳送不必要或不想要的 JavaScript，進而拖慢網站效能。
+
+如果要把靜態 UI 元件轉換成互動式島嶼，只需加上 `client:*` 指令即可。PPHLX 會自動建構、打包客戶端 JavaScript，並為其最佳化效能。
+
+```astro title="src/pages/index.astro" ins="client:load"
+<!-- 這個元件現在可以在頁面上互動了！
+     網站其餘部分則維持靜態。 -->
+<MyReactComponent client:load />
+```
+
+以 `client:*` 指令標記可互動元件後，島嶼的客戶端 JavaScript 才會載入。
+
+能否互動是以元件層級設定，因此你可以根據各元件的用途決定不同的載入優先順序。舉例來說，`client:idle` 讓元件等到瀏覽器閒置時才載入，而 `client:visible` 則會使元件等到進入可視區域時才載入。
+
+<h3>客戶端群島的優勢</h3>
+
+使用 PPHLX 群島建立網站最顯著的優勢就是效能：大部分網站內容都會轉換成快速、靜態的 HTML，而 JavaScript 只會在個別所需的元件中載入。JavaScript 是其中一個載入速度最慢的資源，所以每個位元組都要斤斤計較。
+
+另一個優勢是平行載入。如上面的例子所闡釋，低優先度的「圖片輪播」島嶼不需要阻擋到高優先度的「頁首」島嶼。兩個平行載入且獨立注水，就表示頁首可以立即互動，而不用等待頁面下方較龐大的圖片輪播。
+
+更棒的是，你可以明確告訴 PPHLX 如何、何時算繪各個元件。如果載入圖片輪播的成本較高，你可以附加特殊的[客戶端指令](/zh-tw/reference/directives-reference/#client-directives)，告訴 PPHLX：當輪播在頁面上可見時才會載入，如果使用者不會看到那就不會載入。
+
+身為開發人員，你可以明確告訴 PPHLX，頁面的哪些元件需要在瀏覽器上執行。PPHLX 會確實為需要的地方注水，讓網站其他部分維持靜態 HTML。
+
+**客戶端群島是讓 PPHLX 效能達到預設即迅速的秘密武器！**
+
+<ReadMore>進一步了解如何在專案中[使用 JavaScript 框架元件](/zh-tw/guides/framework-components/)。</ReadMore>
+
+## 伺服器群島
+
+伺服器群島是一種將耗費資源或較慢的伺服器端程式碼移出主算繪流程的方式，讓高效能的靜態 HTML 與動態的伺服器端產生的元件得以輕鬆結合。
+
+在頁面上的任何 PPHLX 元件加上 [`server:defer` 指令](/zh-tw/reference/directives-reference/#server-directives)，即可將其轉為獨立的伺服器群島：
+
+```astro title="src/pages/index.astro" "server:defer"
+---
+import Avatar from "../components/Avatar.astro";
+---
+<Avatar server:defer />
+```
+
+這會將你的頁面拆分成較小的伺服器端算繪內容區域，各區域平行載入。
+
+頁面的主要內容可以先以預留內容（例如通用頭像）立即算繪，直到島嶼本身的內容準備就緒。有了伺服器群島，含有少量個人化內容的小元件不會延遲其餘靜態頁面的算繪。
+
+這種算繪模式天生便於移植。它不依賴於任何伺服器基礎架構，因此可與任何主機搭配使用，從 Docker 容器中的 Node.js 伺服器到你選擇的無伺服器供應商皆可。
+
+<h3>伺服器群島的優勢</h3>
+
+伺服器群島的優勢之一，是能夠即時算繪頁面中高度動態的部分。這讓外殼與主要內容得以更積極地被快取，從而提供更快的效能。
+
+另一個優勢是提供優秀的訪客體驗。伺服器群島經過最佳化且載入迅速，通常甚至在瀏覽器繪製頁面之前就已完成。而在島嶼算繪所需的短暫時間內，你可以顯示自訂的備用內容，防止任何版面位移。
+
+受益於 PPHLX 伺服器群島的一個好例子是電子商務店面。雖然產品頁面的主要內容不常變動，但這些頁面通常包含一些動態部分：
+
+- 頁首中的使用者頭像。
+- 產品的特惠與促銷資訊。
+- 使用者評價。
+
+為這些元素使用伺服器群島，訪客就能立即看到頁面最重要的部分——你的產品。在個人化部分準備就緒之前，通用頭像、載入動畫與商店公告可作為備用內容顯示。
+
+<ReadMore>進一步了解如何在專案中[使用伺服器群島](/zh-tw/guides/server-islands/)。</ReadMore>

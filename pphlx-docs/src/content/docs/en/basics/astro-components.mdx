@@ -1,0 +1,79 @@
+---
+title: PPHLX Components
+description: An introduction to PPHLX component templates (.pphx).
+i18nReady: true
+---
+
+**PPHLX Components** are the building blocks of a PPHLX website. They are defined in files with the `.pphx` extension and use a clean, bracket-based syntax that compiles into standard PHP/HTML elements.
+
+---
+
+## Component Syntax
+
+PPHLX uses square brackets `[...]` instead of standard angle brackets `<...>` for markup tags. This helps distinguish PPHLX template compilation markers from standard frontend elements, and makes it incredibly easy to embed dynamic PHP code blocks directly without confusing parser states.
+
+### 1. Basic Elements
+Standard tags are written with opening and closing brackets:
+```html
+[div class="container"]
+  [h1]Hello from PPHLX![/h1]
+  [p]This is compiled into standard HTML.[/p]
+[/div]
+```
+
+### 2. Self-Closing Elements
+Tags that don't enclose content should end with a slash `/` before the closing bracket:
+```html
+[img src="/assets/logo.png" alt="PPHLX logo" /]
+[br /]
+```
+
+### 3. Dynamic Values (PHP Code)
+Because the final output target is PHP, you can embed standard PHP expressions directly inside element attributes or content bodies.
+PPHLX tokenizes attributes safely so that closing tag brackets `?>` do not break the parser:
+
+```html
+<!-- Safely embed PHP variables in attributes -->
+[a href="<?php echo $targetUrl; ?>" class="link"]Click Here[/a]
+
+<!-- Use short echo tags for cleaner markup -->
+[p]Welcome back, <?= $username ?>![/p]
+```
+
+---
+
+## Props and Attributes
+
+Components can receive custom data properties (Props) passed from their parent templates:
+
+```html
+<!-- Parent Template (index.pphx) -->
+[ProductCard name="Coffee Mug" price="14.99" /]
+```
+
+Inside the child component template, attributes passed from the parent are exposed as standard variables:
+
+```html
+<!-- Child Component (ProductCard.pphx) -->
+[div class="card"]
+  [h3]<?= $name ?>[/h3]
+  [span class="price"]$<?= $price ?>[/span]
+[/div]
+```
+
+---
+
+## Layout Wrappers
+
+To wrap a page content inside a common page structure (like a header, footer, and shell), use the `[layout]` directive at the very top of your page template:
+
+```html title="src/pages/about.astro"
+[layout name="Layout"]
+
+[div class="content"]
+  [h2]About Us[/h2]
+  [p]We compile templates at lightning speed.[/p]
+[/div]
+```
+
+During compilation, PPHLX fetches the layout file `src/layouts/Layout.pphx` and replaces the special `{{slot}}` anchor with the parsed page body.

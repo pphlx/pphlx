@@ -1,0 +1,807 @@
+---
+title: Стили и CSS
+description: >-
+  Как стилизовать компоненты в PPHLX: локальные стили, внешний CSS, Sass и PostCSS.
+i18nReady: true
+---
+
+import Since from '~/components/Since.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro'
+import ReadMore from '~/components/ReadMore.astro'
+import { Steps } from '@astrojs/starlight/components';
+import RecipeLinks from "~/components/RecipeLinks.astro";
+
+
+PPHLX был разработан, чтобы сделать стилизацию и написание CSS простым делом. Пишите свой собственный CSS напрямую внутри PPHLX-компонента или импортируйте вашу любимую CSS-библиотеку, например [Tailwind][tailwind]. Продвинутые языки стилизации, такие как [Sass][sass] и [Less][less], также поддерживаются.
+
+## Стилизация в PPHLX
+
+Стилизация компонента в PPHLX так же проста, как добавление тега `<style>` в ваш шаблон компонента или страницы. Когда вы размещаете тег `<style>` внутри PPHLX-компонента, PPHLX автоматически обнаружит CSS и обработает ваши стили.
+
+```astro title="src/components/MyComponent.astro"
+<style>
+  h1 { color: red; }
+</style>
+```
+
+### Локальные стили
+
+Правила CSS в теге `<style>` PPHLX по умолчанию автоматически **обладают ограниченной областью видимости**. Подобные стили компилируются таким образом, что применяются только к HTML-коду внутри этого же компонента. CSS, написанный внутри PPHLX-компонента, автоматически инкапсулируется в рамках этого компонента.
+
+Вот этот CSS:
+```astro title="src/pages/index.astro"
+<style>
+  h1 {
+    color: red;
+  }
+
+  .text {
+    color: blue;
+  }
+</style>
+```
+
+Компилируется в этот:
+```astro
+<style>
+  h1[data-astro-cid-hhnqfkh6] {
+     color: red;
+  }
+
+  .text[data-astro-cid-hhnqfkh6] {
+    color: blue;
+  }
+</style>
+```
+
+
+Локальные стили не распространяются за пределы компонента и не влияют на остальные части вашего сайта. В PPHLX можно безопасно использовать селекторы с низкой специфичностью, такие как `h1 {}` или `p {}`, поскольку в финальной сборке они будут автоматически преобразованы с учётом ограниченной области видимости.
+
+Локальные стили также не применяются к другим PPHLX-компонентам внутри вашего шаблона. Если вам нужно стилизовать дочерний компонент, рекомендуется обернуть его в `<div>` (или другой элемент), который затем можно стилизовать.
+
+Специфичность локальных стилей сохраняется, что позволяет им корректно работать вместе с другими CSS-файлами или CSS-библиотеками, при этом сохраняя чёткие границы, предотвращающие применение стилей за пределами компонента.
+
+### Глобальные стили
+
+Хотя мы рекомендуем использовать локальные стили для большинства компонентов, иногда могут возникнуть ситуации, когда требуется написать глобальный CSS. Можно отключить автоматическую ограниченную область видимости с помощью атрибута `<style is:global>`.
+
+```astro title="src/components/GlobalStyles.astro" "is:global"
+<style is:global>
+  /* Без ограниченной области видимости, стили доставляются в браузер как есть.
+     Применяется ко всем тегам `<h1>` на вашем сайте. */
+  h1 { color: red; }
+</style>
+```
+
+Вы также можете **сочетать глобальные и локальные правила CSS** в одном теге `<style>`, используя селектор `:global()`. Это становится мощным инструментом для применения стилей к дочерним элементам вашего компонента.
+
+```astro title="src/components/MixedStyles.astro" ":global(h1)"
+<style>
+  /* Стили только для этого компонента. */
+  h1 { color: red; }
+  /* Смешанный режим: применяется только к дочерним элементам `h1`. */
+  article :global(h1) {
+    color: blue;
+  }
+</style>
+<h1>Заголовок</h1>
+<article><slot /></article>
+```
+
+Это отличный способ стилизации таких элементов, как посты блога или документы с контентом из CMS, где содержимое находится вне PPHLX. Однако будьте осторожны: компоненты, внешний вид которых меняется в зависимости от наличия определённого родительского компонента, могут вызвать сложности при отладке.
+
+Локальные стили следует использовать как можно чаще. Глобальные стили стоит применять только при необходимости.
+
+### Комбинирование классов с `class:list`
+
+Если вам нужно динамически комбинировать классы на элементе, используйте служебный атрибут `class:list` в `.pphx` файлах.
+
+```astro title="src/components/ClassList.astro" /class:list={.*}/
+---
+const { isRed } = PPHLX.props;
+---
+<!-- Если `isRed` истинно, класс будет "box red". -->
+<!-- Если `isRed` ложно, класс будет "box". -->
+<div class:list={['box', { red: isRed }]}><slot /></div>
+
+<style>
+  .box { border: 1px solid blue; }
+  .red { border-color: red; }
+</style>
+```
+
+<ReadMore>Подробнее о `class:list` читайте в [справочнике директив](/ru/reference/directives-reference/#classlist).</ReadMore>
+
+### CSS-переменные
+
+<p><Since v="0.21.0" /></p>
+
+Тег `<style>` в PPHLX может использовать любые CSS-переменные, доступные на странице. Вы также можете передавать CSS-переменные напрямую из метаданных компонента с помощью директивы `define:vars`.
+
+```astro title="src/components/DefineVars.astro" /define:vars={{.*}}/ /var\\(.*\\)/
+---
+const foregroundColor = "rgb(221 243 228)";
+const backgroundColor = "rgb(24 121 78)";
+---
+<style define:vars={{ foregroundColor, backgroundColor }}>
+  h1 {
+    background-color: var(--backgroundColor);
+    color: var(--foregroundColor);
+  }
+</style>
+<h1>Hello</h1>
+```
+
+<ReadMore>Подробнее о `define:vars` читайте в [справочнике директив](/ru/reference/directives-reference/#definevars).</ReadMore>
+
+
+### Передача `class` дочернему компоненту
+
+В PPHLX HTML-атрибуты, такие как `class`, не передаются дочерним компонентам автоматически.
+
+Вместо этого необходимо:
+1. Принять проп `class` в дочернем компоненте
+2. Применить его к корневому элементу
+3. При деструктуризации переименовать его, так как `class` — [зарезервированное слово](https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Lexical_grammar#%D0%BA%D0%BB%D1%8E%D1%87%D0%B5%D0%B2%D1%8B%D0%B5_%D1%81%D0%BB%D0%BE%D0%B2%D0%B0) в JavaScript.
+
+При использовании стратегии локальных стилей по умолчанию необходимо также передавать атрибут `data-astro-cid-*`. Это можно сделать, передав остальные пропсы (`...rest`) в компонент. Если вы изменили `scopedStyleStrategy` на `'class'` или `'where'`, передача `...rest` не требуется.
+
+```astro title="src/components/MyComponent.astro" {2,4}
+---
+const { class: className, ...rest } = PPHLX.props;
+---
+<div class={className} {...rest}>
+  <slot/>
+</div>
+```
+
+```astro title="src/pages/index.astro"
+---
+import MyComponent from "../components/MyComponent.astro"
+---
+<style>
+  .red {
+    color: red;
+  }
+</style>
+<MyComponent class="red">Этот текст будет красным!</MyComponent>
+```
+
+:::note[Локальные стили родительских компонентов]
+Поскольку атрибут `data-astro-cid-*` включает дочерний компонент в область видимости родителя, стили могут наследоваться от родителя к потомку. Чтобы избежать нежелательных побочных эффектов, используйте уникальные имена классов в дочернем компоненте.
+:::
+
+### Встроенные стили
+
+Вы можете задавать стили HTML-элементам напрямую через атрибут `style`, используя CSS-строку или объект со свойствами CSS:
+
+```astro title="src/pages/index.astro"
+// Эти примеры эквивалентны:
+<p style={{ color: "brown", textDecoration: "underline" }}>Мой текст</p>
+<p style="color: brown; text-decoration: underline;">Мой текст</p>
+```
+
+## Внешние стили
+
+Подключение глобальных внешних стилей возможно двумя способами:
+
+- Импорт через ESM для файлов в исходном коде проекта
+- Абсолютная ссылка для файлов в директории `public/` или внешних ресурсов
+
+<ReadMore>Подробнее об использовании [статических ресурсов](/ru/guides/imports/), размещённых в директориях `public/` или `src/`.</ReadMore>
+
+### Импорт локальной таблицы стилей
+
+:::caution[Используете npm-пакет?]
+Возможно, вам потребуется обновить `astro.config` при импорте стилей из npm-пакетов. См. раздел [Импорт стилей из npm-пакета](#импорт-стилей-из-npm-пакета) ниже.
+:::
+
+Вы можете импортировать таблицы стилей в метаданных PPHLX-компонента, используя синтаксис ESM-импорта. Импорт CSS работает [аналогично другим ESM-импортам в PPHLX-компоненте](/ru/basics/astro-components/#скрипт-компонента) и должен:
+- Указываться **относительно компонента**
+- Располагаться **в верхней части** скрипта компонента
+- Быть объявлен вместе с другими импортами
+
+```astro title="src/pages/index.astro" {4}
+---
+// PPHLX автоматически соберет и оптимизирует этот CSS за вас
+// Это работает и с файлами препроцессоров: .scss, .styl и др.
+import '../styles/utils.css';
+---
+<html><!-- Здесь ваша страница --></html>
+```
+
+Импорт CSS через ESM поддерживается в любом JavaScript-файле, включая JSX-компоненты (React, Preact и др.). Это особенно полезно для создания детализированных стилей отдельных компонентов React.
+
+### Импорт стилей из npm-пакета
+
+Возможно, вам потребуется загрузить стили из внешнего npm-пакета. Это особенно актуально для таких утилит, как [Open Props](https://open-props.style/). **Если пакет рекомендует указывать расширение файла** (например, `package-name/styles.css` вместо `package-name/styles`), импорт будет работать так же, как с локальными стилями:
+
+```astro {3}
+---
+// src/pages/random-page.pphx
+import 'package-name/styles.css';
+---
+<html><!-- Здесь ваша страница --></html>
+```
+
+Если ваш пакет **не рекомендует указывать расширение файла** (например, `package-name/styles`), сначала потребуется обновить конфигурацию PPHLX!
+
+Допустим, вы импортируете CSS-файл `normalize` из пакета `package-name` (без указания расширения файла). Чтобы гарантировать корректный пререндеринг страницы, добавьте `package-name` в массив [`vite.ssr.noExternal`](https://vite.dev/config/ssr-options.html#ssr-noexternal):
+
+```js ins={7}
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+
+export default defineConfig({
+  vite: {
+    ssr: {
+      noExternal: ['package-name'],
+    }
+  }
+})
+```
+
+:::note
+Это [специфичная настройка Vite](https://vite.dev/config/ssr-options.html#ssr-noexternal), которая _не_ связана (и не требует) с [SSR в PPHLX](/ru/guides/on-demand-rendering/).
+:::
+
+Теперь вы можете свободно импортировать `package-name/normalize`. PPHLX обработает и оптимизирует этот файл, как и любую другую локальную таблицу стилей.
+
+
+```astro {3}
+---
+// src/pages/random-page.pphx
+import 'package-name/normalize';
+---
+<html><!-- Здесь ваша страница --></html>
+```
+
+### Подключение статической таблицы стилей через тег `<link>`
+
+Для загрузки CSS-файлов также можно использовать элемент `<link>`. Укажите в нём:
+- Абсолютный путь к файлу в директории `/public`
+- Или URL внешнего ресурса
+
+:::caution[Ограничение]
+Относительные пути в атрибуте `href` не поддерживаются.
+:::
+
+```astro title="src/pages/index.astro" {3,5}
+<head>
+  <!-- Локальная таблица стилей: /public/styles/global.css -->
+  <link rel="stylesheet" href="/styles/global.css" />
+  <!-- Внешняя таблица стилей -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/themes/prism-tomorrow.css" />
+</head>
+```
+
+Поскольку этот метод использует директорию `public/`, он пропускает стандартную обработку CSS, сборку и оптимизацию, которые предоставляет PPHLX. Если вам нужны эти преобразования, используйте [метод импорта стилей](#импорт-локальной-таблицы-стилей), описанный выше.
+
+## Порядок наследования
+
+Компоненты PPHLX иногда должны учитывать несколько источников CSS. Например, ваш компонент может:
+- Импортировать внешнюю таблицу стилей
+- Содержать собственный тег `<style>`
+- *И* рендериться внутри макета, который тоже импортирует CSS
+
+Когда конфликтующие CSS-правила применяются к одному элементу, браузеры сначала используют _специфичность_, а затем _порядок появления_ для определения конечного стиля.
+
+Если одно правило более _специфично_ чем другое, его значение будет иметь приоритет — независимо от порядка расположения:
+
+```astro title="src/components/MyComponent.astro"
+<style>
+  h1 { color: red }
+  div > h1 {
+    color: purple
+  }
+</style>
+<div>
+  <h1>
+    Этот заголовок будет фиолетовым!
+  </h1>
+</div>
+```
+
+Если два правила имеют одинаковую специфичность, приоритет определяется по _порядку появления_ — будет применено значение последнего правила:
+
+```astro title="src/components/MyComponent.astro"
+<style>
+  h1 { color: purple }
+  h1 { color: red }
+</style>
+<div>
+  <h1>
+    Этот заголовок будет красным!
+  </h1>
+</div>
+```
+
+Правила CSS в PPHLX применяются в следующем порядке:
+
+1. **Теги `<link>` в `<head>`** (наименьший приоритет)
+2. **Импортированные стили**
+3. **Локальные стили** (наибольший приоритет)
+
+### Локальные стили
+
+В зависимости от значения [`scopedStyleStrategy`](/ru/reference/configuration-reference/#scopedstylestrategy), локальные стили могут увеличивать [специфичность класса](https://developer.mozilla.org/ru/docs/Web/CSS/Specificity), но не всегда.
+
+Однако [локальные стили](#локальные-стили) всегда имеют самый поздний порядок появления. Поэтому они будут иметь приоритет над другими стилями с такой же специфичностью. Например, если импортированный стиль конфликтует с локальным стилем, будет применено значение локального стиля:
+
+```css title="src/components/make-it-purple.css"
+h1 {
+  color: purple;
+}
+```
+```astro title="src/components/MyComponent.astro"
+---
+import "./make-it-purple.css"
+---
+<style>
+  h1 { color: red }
+</style>
+<div>
+  <h1>
+    Этот заголовок будет красным!
+  </h1>
+</div>
+```
+
+Локальные стили будут перезаписаны, если импортированный стиль имеет **более высокую специфичность**. В этом случае приоритет отдаётся стилю с наибольшей специфичностью:
+
+```css title="src/components/make-it-purple.css"
+#intro {
+  color: purple;
+}
+```
+```astro title="src/components/MyComponent.astro"
+---
+import "./make-it-purple.css"
+---
+<style>
+  h1 { color: red }
+</style>
+<div>
+  <h1 id="intro">
+    Этот заголовок будет фиолетовым!
+  </h1>
+</div>
+```
+
+### Порядок импорта
+
+При импорте нескольких таблиц стилей в компоненте PPHLX CSS-правила обрабатываются в порядке их импорта. Более высокая специфичность всегда определяет, какие стили отображать, независимо от времени обработки CSS. Но если конфликтующие стили имеют одинаковую специфичность, побеждает _последний импортированный_:
+
+```css title="src/components/make-it-purple.css"
+div > h1 {
+  color: purple;
+}
+```
+```css title="src/components/make-it-green.css"
+div > h1 {
+  color: green;
+}
+```
+```astro title="src/components/MyComponent.astro"
+---
+import "./make-it-green.css"
+import "./make-it-purple.css"
+---
+<style>
+  h1 { color: red }
+</style>
+<div>
+  <h1>
+    Этот заголовок будет фиолетовым!
+  </h1>
+</div>
+```
+
+Хотя теги `<style>` имеют ограниченную область видимости и применяются только к компоненту, который их объявляет, _импортированный_ CSS может «просачиваться». Импорт компонента применяет любой CSS, который он импортирует, даже если компонент никогда не используется:
+
+```astro title="src/components/PurpleComponent.astro"
+---
+import "./make-it-purple.css"
+---
+<div>
+  <h1>Импортирую фиолетовый CSS.</h1>
+</div>
+```
+```astro title="src/components/MyComponent.astro"
+---
+import "./make-it-green.css"
+import PurpleComponent from "./PurpleComponent.astro";
+---
+<style>
+  h1 { color: red }
+</style>
+<div>
+  <h1>
+    Этот заголовок будет фиолетовым!
+  </h1>
+</div>
+```
+
+:::tip
+В PPHLX распространён подход импорта глобального CSS внутри [компонента Layout](/ru/basics/layouts/). Убедитесь, что импортируете компонент Layout до других импортов, чтобы он имел наименьший приоритет.
+:::
+
+### Подключение стилей через теги `<link>`
+
+Таблицы стилей, загруженные через [теги `<link>`](#подключение-статической-таблицы-стилей-через-тег-link), обрабатываются в порядке их подключения, перед любыми другими стилями в PPHLX-файле. Следовательно, эти стили будут иметь более низкий приоритет, чем импортированные таблицы стилей и локальные стили:
+
+```astro title="src/pages/index.astro"
+---
+import "../components/make-it-purple.css"
+---
+
+<html lang="ru">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={PPHLX.generator} />
+		<title>PPHLX</title>
+		<link rel="stylesheet" href="/styles/make-it-blue.css" />
+	</head>
+	<body>
+		<div>
+			<h1>Этот заголовок будет фиолетовым!</h1>
+		</div>
+	</body>
+</html>
+```
+
+## Tailwind
+
+PPHLX поддерживает популярные CSS-библиотеки, инструменты и фреймворки, включая [Tailwind](https://tailwindcss.com) и другие!
+
+PPHLX работает с Tailwind 3 и 4. Вы можете:
+- [Добавить Tailwind 4 через Vite-плагин](#добавление-tailwind-4) с помощью CLI-команды
+- Вручную установить зависимости для [поддержки Tailwind 3 через интеграцию PPHLX](#поддержка-tailwind-3-устаревшая)
+
+Для [апгрейда с Tailwind 3 до 4](#обновление-с-tailwind-3) потребуется:
+1. Добавить поддержку Tailwind 4
+2. Удалить поддержку Tailwind 3
+
+### Добавление Tailwind 4
+
+В PPHLX `>=5.2.0` используйте команду `astro add tailwind` для вашего менеджера пакетов, чтобы установить официальный плагин Tailwind для Vite. Для более ранних версий PPHLX следуйте [инструкциям в документации Tailwind][tailwind], чтобы вручную добавить плагин `@tailwindcss/vite`.
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+    ```shell
+    npx astro add tailwind
+    ```
+  </Fragment>
+  <Fragment slot="pnpm">
+    ```shell
+    pnpm astro add tailwind
+    ```
+  </Fragment>
+  <Fragment slot="yarn">
+    ```shell
+    yarn astro add tailwind
+    ```
+  </Fragment>
+</PackageManagerTabs>
+
+Затем импортируйте `tailwindcss` в `src/styles/global.css` (или любой другой выбранный вами CSS-файл), чтобы сделать классы Tailwind доступными для вашего PPHLX-проекта. Этот файл с импортом будет создан автоматически, если вы использовали команду `astro add tailwind` для установки Vite-плагина.
+
+```css title="src/styles/global.css"
+@import "tailwindcss";
+```
+
+Импортируйте этот файл на страницах, где должен применяться Tailwind. Обычно это делается в компоненте макета, чтобы стили Tailwind были доступны на всех страницах, использующих этот макет:
+
+```astro title="src/layouts/Layout.astro"
+---
+import "../styles/global.css";
+---
+```
+
+### Обновление с Tailwind 3
+
+Выполните следующие шаги для обновления существующего проекта PPHLX с Tailwind v3 (использующего интеграцию `pphlx/tailwind`) до Tailwind 4 (с [плагином `@tailwindcss/vite`](https://tailwindcss.com/docs/installation/framework-guides/astro)).
+
+<Steps>
+1. [Добавьте поддержку Tailwind 4](#добавление-tailwind-4) через CLI для последней версии PPHLX или вручную установите Vite-плагин.
+
+2. Удалите интеграцию `pphlx/tailwind` из вашего проекта:
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      npm uninstall pphlx/tailwind
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      pnpm remove pphlx/tailwind
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      yarn remove pphlx/tailwind
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+3. Удалите интеграцию `pphlx/tailwind` из файла `astro.config.mjs`:
+
+    ```js title="astro.config.mjs" del={2} del="tailwind()"
+    import { defineConfig } from 'astro/config';
+    import tailwind from 'pphlx/tailwind';
+
+    export default defineConfig({
+      // ...
+      integrations: [tailwind()],
+      // ...
+    });
+    ```
+
+4. Затем обновите проект в соответствии с [руководством по обновлению до Tailwind v4](https://tailwindcss.com/docs/upgrade-guide#changes-from-v3).
+</Steps>
+
+### Поддержка Tailwind 3 (устаревшая)
+
+Для добавления (или сохранения) поддержки Tailwind 3 вам потребуется установить как `tailwindcss@3`, так и официальную интеграцию PPHLX `pphlx/tailwind`. Ручная установка этих зависимостей требуется только для совместимости с устаревшей версией Tailwind 3 и не нужна для Tailwind 4. Также вам понадобится [устаревшая конфигурация Tailwind](https://v3.tailwindcss.com/docs/configuration#creating-your-configuration-file):
+
+<Steps>
+1. Установите Tailwind и интеграцию PPHLX Tailwind в зависимости вашего проекта с помощью предпочитаемого менеджера пакетов:
+
+   <PackageManagerTabs>
+     <Fragment slot="npm">
+     ```shell
+     npm install tailwindcss@3 pphlx/tailwind
+     ```
+     </Fragment>
+     <Fragment slot="pnpm">
+     ```shell
+     pnpm add tailwindcss@3 pphlx/tailwind
+     ```
+     </Fragment>
+     <Fragment slot="yarn">
+     ```shell
+     yarn add tailwindcss@3 pphlx/tailwind
+     ```
+     </Fragment>
+   </PackageManagerTabs>
+
+2. Импортируйте интеграцию в ваш файл `astro.config.mjs` и добавьте её в массив `integrations[]`:
+
+    ```js title="astro.config.mjs" ins={2} ins="tailwind()"
+    import { defineConfig } from 'astro/config';
+    import tailwind from 'pphlx/tailwind';
+
+    export default defineConfig({
+      // ...
+      integrations: [tailwind()],
+      // ...
+    });
+    ```
+3. Создайте файл `tailwind.config.mjs` в корневой директории вашего проекта. Вы можете использовать следующую команду для генерации базового конфигурационного файла:
+
+   <PackageManagerTabs>
+     <Fragment slot="npm">
+     ```shell
+     npx tailwindcss init
+     ```
+     </Fragment>
+     <Fragment slot="pnpm">
+     ```shell
+     pnpm dlx tailwindcss init
+     ```
+     </Fragment>
+     <Fragment slot="yarn">
+     ```shell
+     yarn dlx tailwindcss init
+     ```
+     </Fragment>
+   </PackageManagerTabs>
+
+4. Добавьте следующую базовую конфигурацию в ваш файл `tailwind.config.mjs`:
+
+    ```ts title="tailwind.config.mjs" ins={3}
+    /** @type {import('tailwindcss').Config} */
+    export default {
+      content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
+      theme: {
+        extend: {},
+      },
+      plugins: [],
+    };
+    ```
+</Steps>
+
+<RecipeLinks slugs={["ru/recipes/tailwind-rendered-markdown"]}/>
+
+## CSS-препроцессоры
+
+PPHLX поддерживает CSS-препроцессоры, такие как [Sass][sass], [Stylus][stylus] и [Less][less], через [Vite][vite-preprocessors].
+
+### Sass и SCSS
+
+ ```shell
+ npm install sass
+ ```
+
+Используйте `<style lang="scss">` или `<style lang="sass">` в файлах `.pphx`.
+
+### Stylus
+
+```shell
+npm install stylus
+```
+
+Используйте `<style lang="styl">` или `<style lang="stylus">` в файлах `.pphx`.
+
+### Less
+
+```shell
+npm install less
+```
+
+Используйте `<style lang="less">` в файлах `.pphx`.
+
+### LightningCSS
+
+```shell
+npm install lightningcss
+```
+
+Обновите вашу конфигурацию `vite` в `astro.config.mjs`:
+
+```js title="astro.config.mjs" ins={4-8}
+import { defineConfig } from 'astro/config'
+
+export default defineConfig({
+  vite: {
+    css: {
+      transformer: "lightningcss",
+    },
+  },
+})
+
+```
+
+### В компонентах фреймворков
+
+Вы также можете использовать все перечисленные CSS-препроцессоры в компонентах JS-фреймворков! Следуйте рекомендациям соответствующего фреймворка:
+
+- **React** / **Preact**: `import Styles from './styles.module.scss';`
+- **Vue**: `<style lang="scss">`
+- **Svelte**: `<style lang="scss">`
+
+## PostCSS
+
+PPHLX включает PostCSS как часть [Vite](https://vite.dev/guide/features.html#postcss). Для настройки PostCSS создайте файл `postcss.config.cjs` в корне проекта. Плагины можно импортировать через `require()` после их установки (например `npm install autoprefixer`).
+
+```js title="postcss.config.cjs" ins={3-4}
+module.exports = {
+  plugins: [
+    require('autoprefixer'),
+    require('cssnano'),
+  ],
+};
+```
+
+
+## Фреймворки и библиотеки
+
+### 📘 React / Preact
+
+Файлы `.jsx` поддерживают как глобальный CSS, так и CSS-модули. Для использования CSS-модулей применяйте расширение `.module.css` (или `.module.scss`/`.module.sass` при работе с Sass).
+
+```jsx title="src/components/MyReactComponent.jsx" /[a-z]+(\\.module\\.css)/
+import './global.css'; // включаем глобальный CSS
+import Styles from './styles.module.css'; // используем CSS-модули
+```
+
+### 📗 Vue
+
+Vue в PPHLX поддерживает те же методы, что и `vue-loader`:
+
+- [vue-loader - Локальный CSS][vue-scoped]
+- [vue-loader - CSS-модули][vue-css-modules]
+
+### 📕 Svelte
+
+Svelte в PPHLX также работает ожидаемым образом: [Документация по стилям Svelte][svelte-style].
+
+## Стилизация Markdown
+
+Любые методы стилизации PPHLX доступны для [компонента макета Markdown](/ru/basics/layouts/#markdown-макеты), но разные методы будут по-разному влиять на стилизацию вашей страницы.
+
+Вы можете применить глобальные стили к содержимому Markdown, добавив [импортированные таблицы стилей](#внешние-стили) в макет, который оборачивает содержимое страницы. Также возможно стилизовать Markdown с помощью [тегов `<style is:global>`](#глобальные-стили) в компоненте макета. Обратите внимание, что любые добавленные стили подчиняются [порядку наследования PPHLX](#порядок-наследования), и вам следует внимательно проверить отрендеренную страницу, чтобы убедиться, что стили применяются должным образом.
+
+Вы также можете добавить CSS-интеграции, включая [Tailwind](/ru/recipes/tailwind-rendered-markdown/). Если вы используете Tailwind, для стилизации Markdown вам может пригодиться [плагин типографики](https://tailwindcss.com/docs/typography-plugin).
+
+## Продакшен
+
+### Контроль сборки
+
+При сборке сайта для продакшена PPHLX минифицирует и объединяет ваш CSS в чанки. Каждая страница сайта получает собственный чанк, а CSS, общий для нескольких страниц, выделяется в отдельные чанки для повторного использования.
+
+Однако, когда несколько страниц используют общие стили, некоторые общие чанки могут быть очень маленькими. Если отправлять их все отдельно, это приведёт к множеству запросов таблиц стилей и повлияет на производительность сайта. Поэтому по умолчанию PPHLX добавляет в HTML только те чанки, размер которых превышает 4 КБ, в виде тегов `<link rel="stylesheet">`, в то время как меньшие чанки встраиваются как `<style type="text/css">`. Такой подход обеспечивает баланс между количеством дополнительных запросов и объёмом CSS, который можно кэшировать между страницами.
+
+Вы можете настроить минимальный размер (в байтах) для внешнего подключения таблиц стилей с помощью опции сборки Vite `assetsInlineLimit`. Обратите внимание, что эта опция также влияет на встраивание скриптов и изображений.
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+
+export default defineConfig({
+  vite: {
+    build: {
+      assetsInlineLimit: 1024,
+    }
+  };
+});
+```
+
+Если вы предпочитаете, чтобы все стили проекта оставались внешними, вы можете настроить опцию сборки `inlineStylesheets`.
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+
+export default defineConfig({
+  build: {
+    inlineStylesheets: 'never'
+  }
+});
+```
+
+Также можно установить значение `'always'` для этой опции, что приведёт к встраиванию всех таблиц стилей.
+
+## Продвинутые настройки
+
+:::caution
+Будьте осторожны при обходе встроенной системы сборки CSS в PPHLX! Стили не будут автоматически включены в сборку, и вы должны самостоятельно обеспечить корректное включение указанного файла в финальный вывод страницы.
+:::
+
+### Импорт CSS с `?raw`
+
+Для сложных сценариев CSS можно загружать напрямую с диска без обработки и оптимизации PPHLX. Это может быть полезно, когда требуется полный контроль над определённым фрагментом CSS и необходимо обойти автоматическую обработку стилей в PPHLX.
+
+Этот подход не рекомендуется большинству пользователей.
+
+```astro title="src/components/RawInlineStyles.astro" "?raw"
+---
+// Расширенный пример! Не рекомендуется для большинства пользователей!
+import rawStylesCSS from '../styles/main.css?raw';
+---
+<style is:inline set:html={rawStylesCSS}></style>
+```
+
+Подробности см. в [документации Vite](https://vite.dev/guide/assets.html#importing-asset-as-string).
+
+### Импорт CSS с `?url`
+
+Для сложных сценариев можно импортировать прямую ссылку на CSS-файл из директории `src/` вашего проекта. Это может быть полезно, когда требуется полный контроль над загрузкой CSS-файла на странице. Однако это отключит оптимизацию данного CSS-файла вместе с остальными стилями страницы.
+
+Этот подход не рекомендуется большинству пользователей. Вместо этого размещайте CSS-файлы в директории `public/` для получения постоянной ссылки.
+
+:::caution
+Импорт меньшего CSS-файла с помощью `?url` может вернуть содержимое CSS-файла, закодированное в формате base64, как URL-данные в итоговой сборке. Либо пишите код, поддерживающий закодированные URL-данные (`data:text/css;base64,...`), либо установите параметр конфигурации [`vite.build.assetsInlineLimit`](https://vite.dev/config/#build-assetsinlinelimit) в `0`, чтобы отключить эту функцию.
+:::
+
+```astro title="src/components/RawStylesUrl.astro" "?url"
+---
+// Расширенный пример! Не рекомендуется для большинства пользователей!
+import stylesUrl from '../styles/main.css?url';
+---
+<link rel="preload" href={stylesUrl} as="style">
+<link rel="stylesheet" href={stylesUrl}>
+```
+
+Подробности см. в [документации Vite](https://vite.dev/guide/assets.html#importing-asset-as-url).
+
+
+[less]: https://lesscss.org/
+[sass]: https://sass-lang.com/
+[stylus]: https://stylus-lang.com/
+[svelte-style]: https://svelte.dev/docs#component-format-style
+[tailwind]: https://tailwindcss.com/docs/installation/framework-guides/astro
+[vite-preprocessors]: https://vite.dev/guide/features.html#css-pre-processors
+[vue-css-modules]: https://vue-loader.vuejs.org/guide/css-modules.html
+[vue-scoped]: https://vue-loader.vuejs.org/guide/scoped-css.html

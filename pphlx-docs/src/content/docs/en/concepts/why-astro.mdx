@@ -1,0 +1,39 @@
+---
+title: Why PPHLX?
+description: "PPHLX is a fast, zero-dependency compiler written in Go that compiles modern, component-based PHP templates (.pphx) into standard, standalone, production-ready .php files."
+i18nReady: true
+---
+
+**PPHLX** is a next-generation compiler designed to bring modern frontend developer experience—components, multi-framework islands, automatic asset bundling, and CSS scoping—directly to the PHP ecosystem. 
+
+It compiles modern, component-based PHP templates (`.pphx`) into standard, standalone, production-ready `.php` files, with **zero runtime dependencies** and **milliseconds compile times**.
+
+---
+
+## Key Features
+
+*   **Fast Compiler**: Written in Go, PPHLX compiles templates in milliseconds, providing an instant hot-reloading dev loop.
+*   **Zero-Dependency Output**: The generated `.php` files require no special packages, node modules, or runtime engines. They are pure, standard PHP files ready to run on any shared host or web server.
+*   **Multi-Framework Islands**: Seamlessly embed interactive components written in **React**, **SolidJS**, or **Svelte** inside your PHP pages.
+*   **CSS and Asset Bundling**: Automatically processes, scopes, and aggregates CSS styles and script modules into optimized bundles (`app.css` and `app.js`).
+
+---
+
+## Design Principles
+
+PPHLX is built around four core design principles:
+
+### 1. Zero-Dependency
+Traditional PHP templates are either written in raw PHP (which quickly turns into spaghetti code) or use heavy engines like Blade or Twig (which require Composer dependencies and runtime parsers). PPHLX shifts all template parsing and component composition to the **build phase**. The output is completely static, optimized PHP, running at native execution speed.
+
+### 2. Multi-Framework
+Why limit yourself to a single JavaScript framework? PPHLX allows you to use React, SolidJS, or Svelte side-by-side on the same page. By utilizing [Component Islands](/en/concepts/islands/), PPHLX compiles interactive frontend components into server-rendered blocks that hydrate client-side only when and where they are needed.
+
+### 3. Native PHP Portability
+Because PPHLX compiles down to standard, production-ready `.php` scripts, you don't need a Node.js server in production. You can deploy the compiled `dist` folder to any traditional PHP server, Docker container, or cheap shared hosting platform.
+
+### 4. Developer-Focused Tooling
+PPHLX ships with a complete local developer ecosystem:
+*   A lightweight hot-rebuilding development server (`pphlx dev`).
+*   An official VS Code extension for syntax highlighting, bracket matching, and tag auto-closing.
+*   Strict compiler diagnostics to catch template syntax errors before they hit production.

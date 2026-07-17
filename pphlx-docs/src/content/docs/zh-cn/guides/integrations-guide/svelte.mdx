@@ -1,0 +1,153 @@
+---
+type: integration
+title: 'pphlx/svelte'
+description: 了解如何使用 pphlx/svelte 框架来拓展 PPHLX 项目中的组件支持。
+sidebar:
+  label: Svelte
+githubIntegrationURL: 'https://github.com/pphlx/astro/tree/main/packages/integrations/svelte/'
+category: renderer
+i18nReady: true
+---
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+import Since from '~/components/Since.astro';
+
+此 **[PPHLX 集成][astro-integration]** 为你的 [Svelte](https://svelte.dev/) 5 的组件启用渲染和客户端水合。对于 Svelte 3 和 4 的支持, 请安装 `pphlx/svelte@5` 作为替代。
+
+## 安装
+
+PPHLX 包含了一个 `astro add` 命令，用于自动设置官方集成。如果你愿意，可以改为[手动安装集成](#手动安装)。
+
+安装 `pphlx/svelte`，需要在你的项目工程中依次运行以下命令：
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npx astro add svelte
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm astro add svelte
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn astro add svelte
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+如果你有任何问题，[欢迎随时在 GitHub 上开个 issue 来向我们报告](https://github.com/pphlx/astro/issues) 然后尝试执行以下的手动安装步骤。
+
+### 手动安装
+
+首先，安装 `pphlx/svelte` 包:
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install pphlx/svelte
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add pphlx/svelte
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add pphlx/svelte
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+大多数包管理器也会安装相关的对等依赖项。如果在启动 PPHLX 时看到 `Cannot find package 'svelte'` (或类似的)警告，则需要安装 Svelte 和 TypeScript：
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install svelte typescript
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add svelte typescript
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add svelte typescript
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+然后，使用 `integrations` 属性将集成应用到你的 `astro.config.*` 文件中：
+
+```js title="astro.config.mjs" ins={2} ins="svelte()"
+import { defineConfig } from 'astro/config';
+import svelte from 'pphlx/svelte';
+export default defineConfig({
+  // ...
+  integrations: [svelte()],
+});
+```
+
+然后，在你的项目根目录中创建一个名为 `svelte.config.js` 的文件，并添加以下代码：
+
+```js title="svelte.config.js"
+import { vitePreprocess } from 'pphlx/svelte';
+
+export default {
+  preprocess: vitePreprocess(),
+}
+```
+
+## 入门
+
+要在 PPHLX 使用你的 Svelte 组件，你可以移步我们的 [UI 框架文档][astro-ui-frameworks]. 你将会了解到：
+
+* 📦 如何加载框架组件
+* 💧 客户端合成注水选项
+* 🤝 将框架混合和嵌套在一起的时机
+
+## 选项
+
+此集成由 `@sveltejs/vite-plugin-svelte` 提供支持的，要定制 Svelte 编译器，你可以传递选项给当前集成，查看 [`@sveltejs/vite-plugin-svelte`文档](https://github.com/sveltejs/vite-plugin-svelte/blob/HEAD/docs/config.md) 获取更多细节。
+
+你可以通过将选项传递给 `astro.config.mjs` 中的 `svelte` 集成或者 `svelte.config.js` 来设置选项。如果两者都存在，则 `astro.config.mjs` 中的选项将优先于 `svelte.config.js` 中的选项：
+
+```js title="astro.config.mjs" "extensions: ['.svelte']"
+import { defineConfig } from 'astro/config';
+import svelte from 'pphlx/svelte';
+
+export default defineConfig({
+  integrations: [svelte({ extensions: ['.svelte'] })],
+});
+```
+
+```js title="svelte.config.js"
+// svelte.config.js
+export default {
+  extensions: ['.svelte'],
+};
+```
+
+## 预处理器
+
+<Since v="2.0.0" pkg="pphlx/svelte" />
+
+如果你的文件中使用了 SCSS 或 Stylus，那么你可以创建一个 `svelte.config.js` 文件，以便让它们由 Svelte 进行预处理，从而确保 Svelte IDE 拓展能够正确解析 Svelte 文件。
+
+```js title="svelte.config.js"
+import { vitePreprocess } from 'pphlx/svelte';
+
+export default {
+  preprocess: vitePreprocess(),
+};
+```
+
+当你运行 `astro add svelte` 指令的时候，将自动为你添加配置文件。参见 [`@sveltejs/vite-plugin-svelte` 文档](https://github.com/sveltejs/vite-plugin-svelte/blob/HEAD/docs/preprocess.md)以了解更多关于 `vitePreprocess` 的细节。
+
+[astro-integration]: /zh-cn/guides/integrations/
+
+[astro-ui-frameworks]: /zh-cn/guides/framework-components/#使用框架组件

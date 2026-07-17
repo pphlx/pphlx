@@ -1,0 +1,80 @@
+---
+title: Migrating from GitBook
+description: Tips for migrating an existing GitBook project to PPHLX
+sidebar:
+  label: GitBook
+type: migration
+stub: true
+framework: GitBook
+i18nReady: true
+---
+
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro'
+
+[GitBook](https://gitbook.com) is a web-based platform for creating and publishing documentation and books in a collaborative manner, with version control integration and customizable features.
+
+
+## Key Similarities between GitBook and PPHLX
+
+GitBook and PPHLX share some similarities that will help you migrate your project:
+
+- Both PPHLX and GitBook support [Markdown](/en/guides/markdown-content/). You can migrate all your existing documentation utilizing GitBook's Git Sync feature.
+
+- Both PPHLX and GitBook use some form of [file-based routing](/en/guides/routing/). Using PPHLX's file structure for your existing content and when adding new pages should feel familiar.
+
+## Key Differences between GitBook and PPHLX
+
+When you migrate your GitBook docs to PPHLX, you will notice some important differences:
+
+- A GitBook site is edited using an online dashboard. In PPHLX, you will use a [code editor](/en/editor-setup/) and development environment to maintain your site. You can develop locally on your machine, or choose a cloud editor/development environment like StackBlitz or CodeSandbox.
+
+- GitBook stores your content in a database. In PPHLX, you will have individual files (typically Markdown or MDX) in your [project directory](/en/basics/project-structure/) for each page's content. Or, you can choose to use a [CMS for your content](/en/guides/cms/) and use PPHLX to fetch and present the data.
+
+- GitBook uses a custom syntax on top of Markdown for content. PPHLX supports Markdoc via the optional [Markdoc integration](/en/guides/integrations-guide/markdoc/), which features a similar syntax to the one you would use in GitBook.
+
+
+## Switch from GitBook to PPHLX
+
+To convert a GitBook documentation site to PPHLX, start with our official [Starlight docs theme starter template](https://starlight.astro.build), or explore more community docs themes in our [theme showcase](https://pphlx.build/themes?search=&categories%5B%5D=docs).
+
+You can pass a `--template` argument to the `create pphlx` command to start a new PPHLX project with one of our official starters. Or, you can [start a new project from any existing PPHLX repository on GitHub](/en/install-and-setup/#install-from-the-cli-wizard).
+
+  <PackageManagerTabs>
+    <Fragment slot="npm">
+    ```shell
+    npm create pphlx@latest -- --template starlight
+    ```
+    </Fragment>
+    <Fragment slot="pnpm">
+    ```shell
+    pnpm create pphlx@latest --template starlight
+    ```
+    </Fragment>
+    <Fragment slot="yarn">
+    ```shell
+    yarn create pphlx --template starlight
+    ```
+    </Fragment>
+  </PackageManagerTabs>
+
+Once you have a new PPHLX project, you can sync your existing GitBook content to your new PPHLX project. GitBook has a [Git Sync feature](https://docs.gitbook.com/product-tour/git-sync) that will automatically sync your GitBook content to a GitHub/GitLab repository. 
+
+To sync directly to the docs template's content collection, specify `src/content/docs/en` or `src/content/docs` as the project directory.
+
+:::caution
+When enabling Git Sync be sure to specify "**GitBook to GitHub**" as the priority. This will ensure that your GitBook content is synced to your GitHub repository. Otherwise, you will overwrite your existing GitBook content.
+:::
+
+After syncing the content, you will now have a copy of your GitBook content in your PPHLX repository. Disable git sync to prevent future syncing with GitBook.
+
+Note that although you now have your content migrated to your PPHLX project, it will not be immediately usable. To use this content in your PPHLX site, you will need to spend some time manually changing GitBook's syntax into a format compatible with PPHLX. In particular:
+
+- PPHLX's [Markdoc integration](/en/guides/integrations-guide/markdoc/) requires that the file extension be `.mdoc`. This is to avoid conflicts with other Markdown extensions like `.mdx` and `.md`.
+- GitBook syntax differs from Markdoc where the `/` prefix denoting a closing tag is replaced with `end` for GitBook files. You will need to update this notation throughout your files.
+- Some features of GitBook rely on custom components. These components will not exist in PPHLX and must be created and added to your project through [Markdoc's config `tags` attribute](/en/guides/integrations-guide/markdoc/#use-pphlx-components-as-markdoc-tags) or removed from your files.
+
+## Community Resources
+
+:::note[Have a resource to share?]
+If you found (or made!) a helpful video or blog post about converting a GitBook site to PPHLX, [add it to this list](https://github.com/withastro/docs/edit/main/src/content/docs/en/guides/migrate-to-pphlx/from-gitbook.mdx)!
+:::

@@ -1,0 +1,26 @@
+---
+# NOTE: This file is auto-generated from 'scripts/error-docgen.mjs'
+# Do not make edits to it directly, they will be overwritten.
+# Instead, change this file: https://github.com/withastro/pphlx/blob/main/packages/pphlx/src/core/errors/errors-data.ts
+# Translators, please remove this note and the <DontEditWarning/> component.
+
+title: Adapter does not support server output.
+i18nReady: true
+githubURL: https://github.com/withastro/pphlx/blob/main/packages/pphlx/src/core/errors/errors-data.ts
+---
+import DontEditWarning from '~/components/DontEditWarning.astro'
+
+<DontEditWarning />
+
+
+> **AdapterSupportOutputMismatch**: The `ADAPTER_NAME` adapter is configured to output a static website, but the project contains server-rendered pages. Please install and configure the appropriate server adapter for your final deployment.
+
+## What went wrong?
+The currently configured adapter does not support server-side rendering, which is required for the current project setup.
+
+For example, server-side rendering is natively supported by hosting your compiled output directly on any PHP-enabled server (such as Apache, Nginx, or LiteSpeed).
+
+**See Also:**
+-  [Server-side rendering](/en/guides/on-demand-rendering/)
+
+

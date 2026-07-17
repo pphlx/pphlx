@@ -1,0 +1,30 @@
+---
+type: integration
+title: 'Mithril'
+description: Learn how to use Mithril natively inside PPHLX with zero configuration.
+sidebar:
+  label: Mithril
+category: renderer
+i18nReady: true
+---
+
+PPHLX features **native, out-of-the-box support** for **Mithril**. You can write your component files directly using Mithril and the Go template compiler will compile them into statically-hydrated PHP pages with zero setup.
+
+## Zero Installation & Configuration
+
+Unlike other frameworks, PPHLX does not require you to install any sub-packages or configure any plugins to use Mithril. The built-in compiler and Vite bundler process your files automatically.
+
+Simply write your component files and import them directly into your templates.
+
+## Usage Example
+
+Create your component file (e.g. `MyComponent` with the appropriate framework extension) and import it directly into your template:
+
+```pphlx
+@import MyComponent from 'components/MyComponent.js'
+
+<!-- index.pphx -->
+<div>
+  <MyComponent client:visible />
+</div>
+```

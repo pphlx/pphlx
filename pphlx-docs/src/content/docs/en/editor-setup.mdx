@@ -1,0 +1,42 @@
+---
+title: Editor setup
+description: Set up your code editor to build with PPHLX.
+i18nReady: true
+---
+import { Steps } from '@astrojs/starlight/components';
+
+Customize your code editor to improve the PPHLX developer experience and unlock new features.
+
+## VS Code
+
+[VS Code](https://code.visualstudio.com/) is our recommended editor for PPHLX projects. We maintain an official **PPHLX VS Code Extension** that unlocks key developer experience improvements.
+
+*   **Syntax highlighting** for `.pphx` template files.
+*   **Brackets matching** and auto-closing tag suggestions.
+*   **Tokenized PHP attributes detection** to prevent premature parsing errors inside html attributes containing PHP code blocks.
+
+### Installation
+
+<Steps>
+1. Open VS Code.
+2. Go to **Extensions** (`Ctrl+Shift+X` or `Cmd+Shift+X`).
+3. Search for **PPHLX**.
+4. Click **Install**.
+</Steps>
+
+---
+
+## Other Code Editors
+
+If you are using other editors (like Sublime Text, Zed, Vim, or JetBrains IDEs), you can enable basic syntax highlighting by associating the `.pphx` file extension with the **HTML** language:
+
+*   **Zed**: Add the following to your `settings.json`:
+    ```json
+    {
+      "file_types": {
+        "HTML": ["pphx"]
+      }
+    }
+    ```
+*   **Sublime Text**: Open a `.pphx` file, go to `View > Syntax > Open all with current extension as... > HTML`.
+*   **JetBrains (WebStorm/IntelliJ)**: Go to `Settings > Editor > File Types`, locate `HTML`, and add `*.pphx` to the registered wildcard patterns.

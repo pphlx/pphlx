@@ -1,0 +1,322 @@
+---
+title: Créer une application pour la barre d'outils de développement
+description: Apprenez à créer une application dans la barre d'outils de développement pour votre site.
+type: recipe
+i18nReady: true
+---
+
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro'
+import { FileTree } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import ReadMore from '~/components/ReadMore.astro';
+
+PPHLX inclut une [barre d'outils de développement](/fr/guides/dev-toolbar/) que vous pouvez utiliser pour inspecter votre site, pour vérifier l'accessibilité et les problèmes de performance, et plus encore. Cette barre d'outils peut être étendue avec des applications personnalisées.
+
+## Créer une application de motivation pour la barre d'outils de développement
+
+Dans cette recette, vous apprendrez à créer une application pour la barre d'outils de développement qui vous aidera à rester motivé pendant que vous travaillez sur votre site. Cette application affichera un message motivant chaque fois que vous l'activerez.
+
+:::tip 
+Vous voulez démarrer rapidement ? Créez un nouveau projet PPHLX avec le template `toolbar-app`.
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+    ```shell
+    npm create astro@latest -- --template toolbar-app
+    ```
+  </Fragment>
+  <Fragment slot="pnpm">
+    ```shell
+    pnpm create astro -- --template toolbar-app
+    ```
+  </Fragment>
+  <Fragment slot="yarn">
+    ```shell
+    yarn create astro -- --template toolbar-app
+    ```
+  </Fragment>
+</PackageManagerTabs>
+
+Ou, continuez à apprendre comment créer une application depuis le début.
+:::
+
+### Créer une intégration PPHLX
+
+Les applications de la barre d'outils de développement peuvent être ajoutées par les [intégrations PPHLX](/fr/guides/integrations/) en utilisant [le hook `astro:config:setup`](/fr/reference/integrations-reference/#astroconfigsetup). Vous devrez créer à la fois une application pour la barre d'outils et l'intégration qui l'ajoutera à la barre d'outils de votre projet PPHLX existant.
+
+<Steps>
+
+1. À la racine de votre projet PPHLX, créez un nouveau dossier nommé `my-toolbar-app/` pour votre application et les fichiers de l'intégration. Créez deux nouveaux fichiers dans ce dossier : `app.ts` et `my-integration.ts`.
+
+    <FileTree>
+    - **my-toolbar-app/**
+      - **app.ts**
+      - **my-integration.ts**
+    - src/
+      - pages/
+      - ...
+    - astro.config.mjs
+    - package.json
+    - tsconfig.json
+    </FileTree>
+
+2. Dans `my-integration.ts`, ajoutez le code suivant pour fournir à la fois le nom de votre intégration et [la fonction `addDevToolbarApp()`](/fr/reference/dev-toolbar-app-reference/#configuration-dune-intégration-dapplications-pour-la-barre-doutils) requise pour ajouter votre application de barre d'outils avec le hook `astro:config:setup` :
+
+    ```ts title="my-toolbar-app/my-integration.ts" "'astro:config:setup'" "hooks" "addDevToolbarApp"
+    import { fileURLToPath } from 'node:url';
+    import type { PPHLXIntegration } from 'astro';
+
+    export default {
+      name: 'my-astro-integration',
+      hooks: {
+        'astro:config:setup': ({ addDevToolbarApp }) => {  
+          addDevToolbarApp({
+            id: "my-toolbar-app",
+            name: "Mon Application de Barre d'outils",
+            icon: "🚀",
+            entrypoint: fileURLToPath(new URL('./app.ts', import.meta.url))
+          });
+        },
+      },
+    } satisfies PPHLXIntegration;
+    ```
+
+
+    :::note[Utilisation de chemins relatifs vers le point d'entrée]
+    La propriété `entrypoint` correspond au chemin du fichier de votre application de barre d'outils, et non au dossier de l'intégration (`my-toolbar-app`). Ce chemin doit être **relatif à la racine de votre projet PPHLX**.
+
+    Pour utiliser des chemins relatifs pour les points d'entrée, obtenez le chemin du fichier courant avec `import.meta.url` et résolvez le chemin vers le point d'entrée à partir de là.
+    :::
+
+3. Pour utiliser cette intégration dans votre projet, ajoutez-la au tableau `integrations` dans votre fichier `astro.config.mjs`.
+
+    ```js title="astro.config.mjs" ins={2,5}
+    import { defineConfig } from 'astro/config';
+    import myIntegration from './my-toolbar-app/my-integration.ts';
+
+    export default defineConfig({
+      integrations: [myIntegration],
+    })
+    ```
+
+4. S'il n'est pas déjà en cours d'exécution, démarrez le serveur web. Si l'intégration a été ajoutée avec succès à votre projet, vous devriez voir une nouvelle application « undefined » dans la barre d'outils Dev.
+
+    Cependant, vous verrez également un message d'erreur indiquant que votre application de barre d'outils n'a pas pu être chargée. Cette erreur survient parce que l'application n'a pas encore été créée. Vous allez le faire dans la section suivante.
+
+</Steps>
+
+<ReadMore> Consultez [la documentation de l'API des intégrations d'PPHLX](/fr/reference/integrations-reference/) pour en apprendre plus sur la création d'intégrations pour PPHLX.</ReadMore>
+
+### Créer l'application
+
+Les applications de barre d'outils de développement sont définies en utilisant la fonction `defineToolbarApp()` du module `astro/toolbar`. Cette fonction prend comme argument un objet contenant une fonction `init()` qui sera appelée quand l'application de la barre d'outils sera chargée.
+
+Cette fonction `init()` contient la logique de votre application pour afficher les éléments sur votre écran, pour envoyer et recevoir les événements côté client depuis la barre d'outils de développement, et pour communiquer avec le serveur.
+
+```ts title="app.ts"
+import { defineToolbarApp } from "astro/toolbar";
+
+export default defineToolbarApp({
+    init(canvas, app, server) {
+      // ...
+    },
+});
+```
+
+Pour afficher des messages de motivation à l'écran, vous utiliserez la propriété `canvas` pour accéder à une interface [ShadowRoot](https://developer.mozilla.org/fr/docs/Web/API/ShadowRoot) standard. Les éléments peuvent être créés et ajoutés au ShadowRoot en utilisant les API standards du DOM.  
+
+<Steps>
+
+1. Copiez le code suivant dans `my-toolbar-app/app.ts`. Celui-ci fournit une liste de messages de motivation, ainsi que la logique pour créer un nouvel élément `<h1>` avec un message aléatoire :
+
+    ```ts title="my-toolbar-app/app.ts" {3-8, 12-15}
+    import { defineToolbarApp } from "astro/toolbar";
+
+    const motivationalMessages = [
+      "Tu t'en sors bien !",
+      "Continues ton bon travail !",
+      "Tu es génial !",
+      "Tu es une star !",
+    ];
+
+    export default defineToolbarApp({
+        init(canvas) {
+          const h1 = document.createElement('h1');
+          h1.textContent = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+
+          canvas.append(h1);
+        },
+    });
+    ```
+
+2. Démarrez le serveur de développement s'il n'est pas déjà en cours d'exécution et activer l'application dans la barre d'outils de développement. Si votre application fonctionne correctement, vous verrez un message de motivation affiché dans le coin en haut à gauche de votre écran. (Et, c'est vrai !) 
+
+    Cependant, ce message ne changera pas quand l'application sera désactivée puis réactivée puisque la fonction `init()` est appelée une seule fois quand l'application est chargée.
+
+3. Pour ajouter de l'interactivité côté client à votre application, ajoutez l'argument `app` et utilisez `onAppToggled()` pour sélectionner un nouveau message aléatoire à chaque fois que votre application de barre d'outils est activée :
+
+    ```ts title="app.ts" ins=", app" ins={17-21}
+    import { defineToolbarApp } from "astro/toolbar";
+
+    const motivationalMessages = [
+      "Tu t'en sors bien !",
+      "Continues ton bon travail !",
+      "Tu es génial !",
+      "Tu es une star !",
+    ];
+
+    export default defineToolbarApp({
+        init(canvas, app) {
+          const h1 = document.createElement('h1');
+          h1.textContent = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+          
+          canvas.append(h1);
+
+          // Affiche un message aléatoire quand l'application est activée
+          app.onToggled(({ state }) => {
+            const newMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            h1.textContent = newMessage;
+          });
+        },
+    });
+    ```
+
+4. Dans votre navigateur, activez et désactivez votre application plusieurs fois. Avec ce changement, un nouveau message aléatoire sera sélectionné à chaque fois que vous activez l'application, ce qui vous procurera une source infinie de motivation !
+
+</Steps>
+
+<ReadMore>Consultez [la documentation de l'API Dev Toolbar d'PPHLX](/fr/reference/dev-toolbar-app-reference/) pour en apprendre plus sur la création d'applications pour la barre d'outils de développement.</ReadMore>
+
+## Créer des applications avec un framework UI
+
+Les frameworks UI comme React, Vue ou Svelte peuvent aussi être utilisés pour créer des applications de barre d'outils de développement. Ces frameworks fournissent une manière plus déclarative de créer des interfaces utilisateurs et peuvent rendre votre code plus maintenable et plus facile à lire.
+
+La même application de motivation construite précédemment avec Javascript peut être créée en utilisant un framework UI (ex. Preact) en remplacement. Selon le framework choisi, vous pouvez avoir besoin ou non d'une étape de compilaton.
+
+:::note 
+Cependant que vous décidiez de créer votre application de barre d'outils en utilisant JavaScript ou un framework UI, vous aurez tout de même besoin de [créer l'intégration](#créer-une-intégration-astro) qui ajoute l'application à la barre d'outils de développement.
+:::
+
+### Sans étape de compilaton
+
+Si votre framework est compatible, vous pouvez créer une application pour la barre d'outils de développement sans étape de compilaton. Par exemple, vous pouvez utiliser la fonction `h` de Preact pour créer des éléments et les générer directement dans l'interface ShadowRoot :
+
+```ts title="app.ts"
+import { defineToolbarApp } from "astro/toolbar";
+import { render, h } from "preact";
+
+const motivationalMessages = [
+  "Tu t'en sors bien !",
+  "Continues ton bon travail !",
+  "Tu es génial !",
+  "Tu es une star !",
+];
+
+export default defineToolbarApp({
+    init(canvas) {
+      const message = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+      render(h('h1', null, message), canvas);
+    },
+});
+```
+
+Sinon, le [paquet `htm`](https://github.com/developit/htm) est un bon choix pour créer des applications de barre d'outils de développement sans étape de compilaton, vous offrant ainsi une intégration native pour React et Preact et la prise en charge d'autres frameworks :
+
+```ts title="app.ts" ins={3, 15}
+import { defineToolbarApp } from "astro/toolbar";
+import { render } from "preact";
+import { html } from 'htm/preact';
+
+const motivationalMessages = [
+  "Tu t'en sors bien !",
+  "Continues ton bon travail !",
+  "Tu es génial !",
+  "Tu es une star !",
+];
+
+export default defineToolbarApp({
+    init(canvas) {
+      const message = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+      render(html`<h1>${message}</h1>`, canvas);
+    },
+});
+```
+
+Dans les deux cas, vous pouvez maintenant démarrer votre projet et voir le message de motivation affiché dans le coin en haut à gauche de votre écran quand vous activez l'application.
+
+### Avec une étape de compilaton
+
+PPHLX ne prétraite pas le code JSX dans les applications de barre d'outils de développement donc une étape de compilaton est nécessaire afin d'utiliser des composants JSX dans votre application.
+
+Les étapes suivantes utiliseront TypeScript pour y parvenir, mais n'importe quel autre outil qui compile du code JSX fonctionnera également (par ex. Babel, Rollup, ESBuild).
+
+<Steps>
+1. Installez TypeScript dans votre projet:
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+        ```shell
+        npm install --save-dev typescript
+        ```
+      </Fragment>
+      <Fragment slot="pnpm">
+        ```shell
+        pnpm install --save-dev typescript
+        ```
+      </Fragment>
+      <Fragment slot="yarn">
+        ```shell
+        yarn add --dev typescript
+        ```
+      </Fragment>
+    </PackageManagerTabs>
+
+2. Créez un fichier `tsconfig.json` à la racine du dossier de votre application de barre d'outils avec les réglages appropriés pour la compilaton et pour le framework que vous utilisez ([React](https://react-typescript-cheatsheet.netlify.app/docs/basic/setup), [Preact](https://preactjs.com/guide/v10/typescript), [Solid](https://www.solidjs.com/guides/typescript)). Par exemple, pour Preact:
+
+    ```json title="my-toolbar-app/tsconfig.json"
+    {
+      "compilerOptions": {
+        "skipLibCheck": true,
+        "module": "NodeNext",
+        "jsx": "react-jsx",
+        "jsxImportSource": "preact",
+      }
+    }
+    ```
+
+3. Ajustez le point d'entrée `entrypoint` dans votre intégration pour pointer vers le fichier compilé, en vous rappelant que le chemin du fichier doit être relatif à la racine de votre projet PPHLX :
+
+    ```ts title="my-integration.ts" ins="app.js"
+    addDevToolbarApp({
+      id: "my-toolbar-app",
+      name: "Mon Application de Barre d'outils",
+      icon: "🚀",
+      entrypoint: join(__dirname, "./app.js"),
+    });
+    ```
+
+4. Exécutez `tsc` pour compiler votre application de barre d'outils, ou `tsc --watch` pour regénérer automatiquement votre application à chaque changement.
+
+      Avec ces changements, vous pouvez maintenant renommer votre fichier `app.ts` en `app.tsx` (ou `.jsx`) et utiliser la syntaxe JSX pour créer votre application de barre d'outils :
+
+      ```tsx title="app.tsx"
+      import { defineToolbarApp } from "astro/toolbar";
+      import { render } from "preact";
+
+      const motivationalMessages = [
+        "Tu t'en sors bien !",
+        "Continues ton bon travail !",
+        "Tu es génial !",
+        "Tu es une star !",
+      ];
+
+      export default defineToolbarApp({
+          init(canvas) {
+            const message = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            render(<h1>{message}</h1>, canvas);
+          },
+      });
+      ```
+</Steps>
+
+Vous devriez maintenant avoir tous les outils nécessaires pour créer une application pour la barre d'outils de développement en utilisant le framework UI de votre choix !

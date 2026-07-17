@@ -1,0 +1,224 @@
+---
+title: Testing
+description: An intro to testing in PPHLX applications
+i18nReady: true
+---
+import { Steps } from '@astrojs/starlight/components';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+
+Testing helps you write and maintain working PPHLX applications. PPHLX compiles your React, Vue, and Svelte components into native PHP layouts. Because of this architecture, you test PPHLX applications using standard PHP testing suites (like PHPUnit and Pest) for backend/view logic, and frontend E2E tools (like Playwright and Cypress) for interactive client-side hydration.
+
+---
+
+## Unit and Integration Tests (PHP)
+
+To test your compiled views, routing logic, and backend integrations, you should use standard PHP testing frameworks.
+
+### PHPUnit
+
+[PHPUnit](https://phpunit.de/) is the de facto standard testing framework for PHP. You can write integration tests that include your compiled PHP templates and assert that their HTML structure and variable bindings render correctly.
+
+<Steps>
+1. Install PHPUnit in your project root using Composer:
+
+   ```bash
+   composer require --dev phpunit/phpunit
+   ```
+
+2. Create a test file in your `tests/` directory:
+
+   ```php
+   // tests/TemplateTest.php
+   use PHPUnit\Framework\TestCase;
+
+   class TemplateTest extends TestCase
+   {
+       public function testHomepageRendersMainHeading()
+       {
+           // 1. Verify that the template compiled successfully
+           $viewPath = __DIR__ . '/../dist/index.php';
+           $this->assertFileExists($viewPath);
+
+           // 2. Mock environment variables or globals if required by your backend
+           $_SERVER['REQUEST_URI'] = '/';
+
+           // 3. Render the compiled PHP template inside an output buffer
+           ob_start();
+           include $viewPath;
+           $output = ob_get_clean();
+
+           // 4. Assert elements in the generated HTML
+           $this->assertStringContainsString('Get Started', $output);
+           $this->assertStringContainsString('npm install -g pphlx', $output);
+       }
+   }
+   ```
+
+3. Run your tests:
+
+   ```bash
+   ./vendor/bin/phpunit tests/TemplateTest.php
+   ```
+</Steps>
+
+### Pest PHP
+
+[Pest](https://pestphp.com/) is a modern, elegant testing framework built on top of PHPUnit. It provides a readable, fluent API for testing PHP views and APIs.
+
+<Steps>
+1. Install Pest in your project:
+
+   ```bash
+   composer require pestphp/pest --dev --with-all-dependencies
+   ```
+
+2. Write a test case:
+
+   ```php
+   // tests/Feature/HomepageTest.php
+   test('homepage renders welcome banner and is secure', function () {
+       // Start output buffering
+       ob_start();
+       include __DIR__ . '/../../dist/index.php';
+       $html = ob_get_clean();
+
+       expect($html)->toContain('Bring your own UI frameworks to native PHP')
+                    ->not->toContain('undefined');
+   });
+   ```
+
+3. Run your suite:
+
+   ```bash
+   ./vendor/bin/pest
+   ```
+</Steps>
+
+---
+
+## End-to-End Tests (E2E)
+
+End-to-End testing is the best way to verify that interactive components (e.g., Svelte buttons, React forms) hydrate successfully in the browser and communicate correctly with your PHP router.
+
+### Playwright
+
+[Playwright](https://playwright.dev) is a fast E2E testing framework that runs tests across Chromium, Firefox, and WebKit.
+
+<Steps>
+1. Install Playwright in your project:
+
+   <PackageManagerTabs>
+     <Fragment slot="npm">
+     ```shell
+     npm init playwright@latest
+     ```
+     </Fragment>
+     <Fragment slot="pnpm">
+     ```shell
+     pnpm create playwright
+     ```
+     </Fragment>
+     <Fragment slot="yarn">
+     ```shell
+     yarn create playwright
+     ```
+     </Fragment>
+   </PackageManagerTabs>
+
+2. Start your local PHP preview server in the background:
+
+   ```bash
+   npm run preview
+   ```
+
+3. Configure Playwright to target your PHP server port (defaulting to `http://localhost:8080` or similar config):
+
+   ```js
+   // playwright.config.ts
+   import { defineConfig } from '@playwright/test';
+
+   export default defineConfig({
+     use: {
+       baseURL: 'http://localhost:8080',
+     },
+   });
+   ```
+
+4. Create an E2E test file:
+
+   ```js
+   // tests/homepage.spec.ts
+   import { test, expect } from '@playwright/test';
+
+   test('homepage mounts and hydrates installer tabs', async ({ page }) => {
+     // Navigate to your running PHP application
+     await page.goto('/');
+
+     // Verify page title
+     await expect(page).toHaveTitle(/PPHLX/);
+
+     // Click a tab to trigger client-side React/Svelte interaction
+     const nativeTab = page.locator('[data-tab="native"]');
+     await nativeTab.click();
+
+     // Assert that the command changed dynamically on click
+     const commandLabel = page.locator('.hero-install-cmd');
+     await expect(commandLabel).toContainText('curl -fsSL https://pphlx.org/install.sh');
+   });
+   ```
+
+5. Execute your tests:
+
+   ```bash
+   npx playwright test
+   ```
+</Steps>
+
+### Cypress
+
+[Cypress](https://cypress.io) is an interactive, browser-based E2E testing framework.
+
+<Steps>
+1. Install Cypress:
+
+   <PackageManagerTabs>
+     <Fragment slot="npm">
+     ```shell
+     npm install cypress --dev
+     ```
+     </Fragment>
+     <Fragment slot="pnpm">
+     ```shell
+     pnpm add cypress --save-dev
+     ```
+     </Fragment>
+     <Fragment slot="yarn">
+     ```shell
+     yarn add cypress --dev
+     ```
+     </Fragment>
+   </PackageManagerTabs>
+
+2. Write a Cypress spec:
+
+   ```js
+   // cypress/e2e/homepage.cy.js
+   describe('PPHLX Hydration Tests', () => {
+     it('hydrates and switches tabs', () => {
+       cy.visit('http://localhost:8080/');
+       
+       // Click on Svelte/Vue tab switcher
+       cy.get('[data-tab="composer"]').click();
+       
+       // Verify command string was updated in the DOM
+       cy.get('.hero-install-cmd').should('contain.text', 'composer require pphlx/pphlx');
+     });
+   });
+   ```
+
+3. Open Cypress Test Runner:
+
+   ```bash
+   npx cypress open
+   ```
+</Steps>

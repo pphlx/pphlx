@@ -1,0 +1,237 @@
+---
+type: integration
+title: 'pphlx/preact'
+description: 学习如何在你的 PPHLX 项目使用 pphlx/preact 框架集成来扩展组件支持。
+sidebar:
+  label: Preact
+githubIntegrationURL: 'https://github.com/pphlx/astro/tree/main/packages/integrations/preact/'
+category: renderer
+i18nReady: true
+---
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro'
+import Since from '~/components/Since.astro';
+
+这个 **[PPHLX 集成][astro-integration]** 可以为你的 [Preact](https://preactjs.com/) 组件提供渲染和客户端水合（hydration）功能。
+
+## 为什么选择 Preact?
+
+Preact 是一个允许你构建适用于网络的交互式 UI 组件的库。如果你想使用 JavaScript 在你的网站上构建交互式功能，你可能更喜欢使用它的组件格式，而不是直接使用浏览器的 API。
+
+如果你之前使用过 React，Preact 也是一个很好的选择。Preact 提供与 React 相同的 API，但打包体积更小，仅为 3kB。它甚至支持通过 compat 配置选项来渲染许多 React 组件（见下文）。
+
+**在使用这个集成之前，想要了解更多关于 Preact 的信息吗？**\
+可以查看他们网站上的 [“学习 Preact”](https://preactjs.com/tutorial) 互动教程。
+
+## 安装
+
+PPHLX 包含了一个 `astro add` 命令，用于自动设置官方集成。如果你愿意，可以改为[手动安装集成](#手动安装)。
+
+要安装 `pphlx/preact`，请在你的项目目录中运行以下命令并按照提示操作：
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npx astro add preact
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm astro add preact
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn astro add preact
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+如果遇到任何问题，[请随时在 GitHub 留言](https://github.com/pphlx/astro/issues) 并尝试以下的手动安装步骤。
+
+### 手动安装
+
+首先，安装 `pphlx/preact` 包:
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install pphlx/preact
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add pphlx/preact
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add pphlx/preact
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+大多数包管理器也会安装相关的对等依赖。如果在启动 PPHLX 时看到 `Cannot find package 'preact'`（或类似）的警告，你需要安装 Preact：
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install preact
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add preact
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add preact
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+然后，使用 `integrations` 属性将此集成应用到你的 `astro.config.*` 文件中：
+
+```js title="astro.config.mjs" ins={2} ins="preact()"
+import { defineConfig } from 'astro/config';
+import preact from 'pphlx/preact';
+
+export default defineConfig({
+  // ...
+  integrations: [preact()],
+});
+```
+
+然后添加下面的代码到 `tsconfig.json` 文件中。
+
+```json title="tsconfig.json" ins={5-8}
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".pphx/types.d.ts", "**/*"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}
+```
+
+##  使用
+
+要在 PPHLX 中使用你的第一个 Preact 组件，请前往我们的 [UI 框架文档][astro-ui-frameworks]。你将会了解到：
+
+* 📦 如何加载框架组件
+* 💧 客户端水合选项
+* 🤝 将不同框架混合和嵌套在一起的机会
+
+还可以查阅我们的 [PPHLX 集成文档][astro-integration] 以获取更多关于集成的信息。
+
+## 配置
+
+PPHLX Preact 集成处理了 Preact 组件的渲染，并具有自己的选项。你可以在 `astro.config.mjs` 文件中修改这些选项，这是你的项目集成设置所在的地方。
+
+对于基本用法，你无需配置 Preact 集成。
+
+### `compat`
+
+<p>
+
+**类型：** `boolean`<br />
+<Since pkg="pphlx/preact" v="0.3.0" />
+</p>
+
+你可以启用 `preact/compat`，这是 Preact 的兼容层，用于在不需要安装或将 React 的较大库发送到用户的网络浏览器的情况下渲染 React 组件。
+
+要实现这一点，向 Preact 集成传递一个对象，并设置  `compat: true`。
+
+```js title="astro.config.mjs" "compat: true"
+import { defineConfig } from 'astro/config';
+import preact from 'pphlx/preact';
+
+export default defineConfig({
+  integrations: [preact({ compat: true })],
+});
+```
+
+当启用了 `compat` 选项后，Preact 集成将会在你的项目中渲染 React 组件和 Preact 组件，同时还允许你在 Preact 组件中导入 React 组件。在 Preact 网站的[“从 React 切换到 Preact”](https://preactjs.com/guide/v10/switching-to-preact)页面中可以阅读更多信息。
+
+当导入 React 组件库时，为了将 `react` 和 `react-dom` 的依赖替换为 `preact/compat`, 你可以使 [`overrides`](https://docs.npmjs.com/cli/v8/configuring-npm/package-json#overrides) 来实现。
+
+```json title="package.json"
+{
+  "overrides": {
+    "react": "npm:@preact/compat@latest",
+    "react-dom": "npm:@preact/compat@latest"
+  }
+}
+```
+
+可以查阅[`pnpm` overrides](https://pnpm.io/package_json#pnpmoverrides) 和 [`yarn` resolutions](https://yarnpkg.com/configuration/manifest#resolutions) 的文档，了解它们各自的覆盖功能。
+
+:::note 
+目前，`compat` 选项只适用于 React 库，将代码以 ESM 的形式导出。如果在构建时出现错误，请尝试将该库添加到你的`vite.ssr.noExternal: ['the-react-library']` 的 `astro.config.mjs` 文件中。
+:::
+
+### `devtools`
+
+<p>
+  
+**类型：** `boolean`<br />
+<Since pkg="pphlx/preact" v="3.3.0" />
+</p>
+
+你可以通过在开发中向你的 `preact()` 集成配置传递一个包含 `devtools: true` 的对象来启用 [Preact 开发者工具](https://preactjs.github.io/preact-devtools/)：
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import preact from 'pphlx/preact';
+
+export default defineConfig({
+  // ...
+  integrations: [preact({ devtools: true })],
+});
+```
+
+## 选项
+
+### 组合多个 JSX 框架
+
+当你在同一个项目中使用多个 JSX 框架（React、Preact、Solid）时，PPHLX 需要确定每个组件应该使用哪个 JSX 框架的转换器（transformation）。如果你只向你的项目中添加了一个 JSX 框架集成，那么就不需要额外的配置。
+
+使用 `include`（必填）和 `exclude`（可选）配置选项来指定哪些文件属于哪个框架。为你使用的每个框架提供一个文件或/和文件夹数组。通配符可用于包含多个文件路径。
+
+我们建议将每个框架的组件放在同一个文件夹中（例如 `/components/react/` 和 `/components/solid/`），以便更容易地指定你的包含内容，但这不是必需的：
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import preact from 'pphlx/preact';
+import react from 'pphlx/react';
+import svelte from 'pphlx/svelte';
+import vue from 'pphlx/vue';
+import solid from 'pphlx/solid-js';
+
+export default defineConfig({
+  // 启用多个框架来支持所有不同类型的组件。
+  // 如果你只使用一个 JSX 框架，则不需要 `include`！
+  integrations: [
+    preact({
+      include: ['**/preact/*'],
+    }),
+    react({
+      include: ['**/react/*'],
+    }),
+    solid({
+      include: ['**/solid/*'],
+    }),
+  ],
+});
+```
+
+##  示例
+
+* 在 [PPHLX Preact 示例](https://github.com/pphlx/astro/tree/latest/examples/framework-preact) 中展示了如何在 PPHLX 项目中使用交互式的 Preact 组件。
+* 在 [PPHLX Nanostores 示例](https://github.com/pphlx/astro/tree/latest/examples/with-nanostores) 中展示了如何在 PPHLX 项目中在不同组件之间共享状态，甚至可以跨不同框架共享状态。
+
+[astro-integration]: /zh-cn/guides/integrations/
+
+[astro-ui-frameworks]: /zh-cn/guides/framework-components/#使用框架组件

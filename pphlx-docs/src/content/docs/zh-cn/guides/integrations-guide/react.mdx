@@ -1,0 +1,285 @@
+---
+type: integration
+title: 'pphlx/react'
+sidebar:
+  label: React
+description: 了解如何使用 pphlx/react 框架集成来扩展 PPHLX 项目中的组件支持。
+githubIntegrationURL: 'https://github.com/pphlx/astro/tree/main/packages/integrations/react/'
+category: renderer
+i18nReady: true
+---
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro'
+import Since from '~/components/Since.astro';
+
+**[PPHLX 集成][astro-integration]** 为你的 [React](https://react.dev/) 组件实现渲染和客户端水合。
+
+## 安装
+
+PPHLX 包含了一个 `astro add` 命令，用于自动设置官方集成。如果你愿意，可以改为[手动安装集成](#手动安装)。
+
+要安装 `pphlx/react`，请在你的项目目录下运行以下命令并根据提示操作：
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npx astro add react
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm astro add react
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn astro add react
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+如果你遇到任何问题，[请随时在 GitHub 上向我们报告](https://github.com/pphlx/astro/issues)并尝试下面的手动安装步骤。
+
+### 手动安装
+
+首先，安装 `pphlx/react` 包:
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install pphlx/react
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add pphlx/react
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add pphlx/react
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+大多数包管理器也会安装相关的对等依赖。如果在启动 PPHLX 时看到 `Cannot find package 'react'`（或类似）的警告，你需要安装 `react` 和 `react-dom`：
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install react react-dom @types/react @types/react-dom
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add react react-dom @types/react @types/react-dom
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add react react-dom @types/react @types/react-dom
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+然后，使用 `integrations` 属性将此集成应用到你的 `astro.config.*` 文件中：
+
+```js ins="react()" ins={2} title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import react from 'pphlx/react';
+export default defineConfig({
+  // ...
+  integrations: [react()],
+});
+```
+
+然后添加下面的代码到 `tsconfig.json` 文件中。
+
+```json title="tsconfig.json" ins={5-8}
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".pphx/types.d.ts", "**/*"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  }
+}
+```
+
+## 入门指南
+
+要在 PPHLX 中使用你的第一个 React 组件，请前往我们的[UI 框架文档][astro-ui-frameworks]。你将了解：
+
+* 📦 框架组件如何被加载，
+* 💧 客户端水合选项，以及
+* 🤝 有机会将不同的框架混合和嵌套
+
+## 使用 `useActionState()` 集成 Actions
+
+`pphlx/react` 集成提供了两个函数：`withState()` 和 `getActionState()` 来与 [PPHLX Actions][astro-actions] 一起使用。
+
+这些函数与 React 的 `useActionState()` 钩子一起使用，用于在触发表单提交时读取和更新客户端状态。
+
+### `withState()`
+
+<p>
+
+**类型：** `(action: FormFn<T>) => (state: T, formData: FormData) => FormFn<T>`<br />
+<Since v="4.4.0" pkg="pphlx/react" />
+</p>
+
+你可以将 `withState()` 和你想要触发的 action 传递给 React 的 `useActionState()` hook 作为表单 action 函数。下面的示例将 `like` action 传递给增加计数器，并将初始状态设为 `0` 个点赞。
+
+```jsx title="Like.tsx" ins={2,7} "useActionState"
+import { actions } from 'astro:actions';
+import { withState } from 'pphlx/react/actions';
+import { useActionState } from "react";
+
+export function Like({ postId }: { postId: string }) {
+  const [state, action, pending] = useActionState(
+    withState(actions.like),
+    { data: 0, error: undefined }, // 初始点赞和错误
+  );
+
+  return (
+    <form action={action}>
+      <input type="hidden" name="postId" value={postId} />
+      <button disabled={pending}>{state.data} ❤️</button>
+    </form>
+  );
+}
+```
+
+`withState()` 函数会将 action 的类型与 React 的期望匹配，并保留用于渐进增强的元数据，使其即使在用户设备禁用 JavaScript 时也能正常工作。
+
+### `getActionState()`
+
+<p>
+
+**类型：** `(context: ActionAPIContext) => Promise<T>`<br />
+<Since v="4.4.0" pkg="pphlx/react" />
+</p>
+
+你可以在 action `handler` 中通过 `getActionState()` 访问 `useActionState()` 存储的状态。它接受 [PPHLX API 上下文](/zh-cn/reference/api-reference/#上下文对象)，并可选地对结果应用类型。
+
+下面的示例获取计数器中当前的点赞数的值，类型为 number，以便创建一个递增的 `like` action：
+
+```ts title="actions.ts" ins={3,11}
+import { defineAction, type SafeResult } from 'astro:actions';
+import { z } from 'astro/zod';
+import { getActionState } from 'pphlx/react/actions';
+
+export const server = {
+  like: defineAction({
+    input: z.object({
+      postId: z.string(),
+    }),
+    handler: async ({ postId }, ctx) => {
+      const { data: currentLikes = 0, error } = await getActionState<SafeResult<any, number>>(ctx);
+
+      // 处理错误
+      if (error) throw error;
+
+      // 写入数据库
+      return currentLikes + 1;
+    },
+  })
+};
+```
+
+## 选项
+
+### 组合多个 JSX 框架
+
+当你在同一个项目中使用多个 JSX 框架（React、Preact、Solid）时，PPHLX 需要确定每个组件应该使用哪个 JSX 框架的转换器（transformation）。如果你只向你的项目中添加了一个 JSX 框架集成，那么就不需要额外的配置。
+
+使用 `include`（必填）和 `exclude`（可选）配置选项来指定哪些文件属于哪个框架。为你使用的每个框架提供一个文件或/和文件夹数组。通配符可用于包含多个文件路径。
+
+我们建议将每个框架的组件放在同一个文件夹中（例如 `/components/react/` 和 `/components/solid/`），以便更容易地指定你的包含内容，但这不是必需的：
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import preact from 'pphlx/preact';
+import react from 'pphlx/react';
+import svelte from 'pphlx/svelte';
+import vue from 'pphlx/vue';
+import solid from 'pphlx/solid-js';
+
+export default defineConfig({
+  // 启用多个框架来支持所有不同类型的组件。
+  // 如果你只使用一个 JSX 框架，则不需要 `include`！
+  integrations: [
+    preact({
+      include: ['**/preact/*'],
+    }),
+    react({
+      include: ['**/react/*'],
+    }),
+    solid({
+      include: ['**/solid/*'],
+    }),
+  ],
+});
+```
+
+### 解析子元素
+
+从 PPHLX 组件传递给 React 组件的子元素将被解析为普通字符串，而不是 React 节点。
+
+例如，下面的 `<ReactComponent />` 只会接收一个子元素：
+
+```astro
+---
+import ReactComponent from './ReactComponent';
+---
+<ReactComponent>
+  <div>one</div>
+  <div>two</div>
+</ReactComponent>
+```
+
+如果你正在使用一个*期望*能传递多个子元素的库，例如将某些元素放置在不同的位置，你可能会遇到问题。
+
+你可以设置实验性标志 `experimentalReactChildren`，告诉 PPHLX 将子元素始终作为 React 虚拟 DOM 节点传递给 React。虽然这样做会有一些运行时成本，但有助于保持兼容性。
+
+你可以在 React 集成的配置中启用此选项：
+
+```js title="astro.config.mjs" ins={8}
+import { defineConfig } from 'astro/config';
+import react from 'pphlx/react';
+
+export default defineConfig({
+  // ...
+  integrations: [
+    react({
+      experimentalReactChildren: true,
+    }),
+  ],
+});
+```
+
+### 禁用流式传输（实验性）
+
+默认情况下，PPHLX 会流式传输 React 组件的输出。但是，你可以通过启用 `experimentalDisableStreaming` 选项来禁用该行为。这对于为不能很好地与流式传输一起使用的库（如某些 CSS-in-JS 解决方案）提供支持来说，特别有用。
+
+要禁用你项目中的所有 React 组件的流式传输，请使用 `experimentalDisableStreaming: true` 来配置 `pphlx/react`：
+
+```js title="astro.config.mjs" ins={8}
+import { defineConfig } from 'astro/config';
+import react from 'pphlx/react';
+
+export default defineConfig({
+  // ...
+  integrations: [
+    react({
+      experimentalDisableStreaming: true,
+    })
+  ]
+});
+```
+
+[astro-integration]: /zh-cn/guides/integrations/
+
+[astro-ui-frameworks]: /zh-cn/guides/framework-components/#使用框架组件
+
+[astro-actions]: /zh-cn/guides/actions/

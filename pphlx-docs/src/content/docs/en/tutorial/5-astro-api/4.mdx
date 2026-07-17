@@ -1,0 +1,107 @@
+---
+type: tutorial
+title: Add an RSS feed
+description: >-
+  Tutorial: Build your first PPHLX blog —
+  Create a feed that your readers can subscribe to using a native PHP route.
+i18nReady: true
+---
+import Box from '~/components/tutorial/Box.astro';
+import Checklist from '~/components/Checklist.astro';
+import PreCheck from '~/components/tutorial/PreCheck.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+<PreCheck>
+  - Create a dynamic PHP route to generate an RSS feed for your website
+  - Parse local Markdown files in PHP to retrieve article metadata
+  - View the generated feed in your web browser
+</PreCheck>
+
+## Dynamic RSS Feeds in PHP
+
+Because PPHLX compiles your pages down to native PHP scripts, you do not need to install any external npm packages or configure build-time plugins to generate an RSS feed. Instead, you can write a simple, dynamic PHP route under `src/pages/` that reads your blog posts and outputs valid XML.
+
+This document will update automatically in real-time as you publish new Markdown files.
+
+---
+
+## Create the `.xml` feed document
+
+<Steps>
+1. Create a new file in your `src/pages/` directory called `rss.xml.php` (this will output your feed at `site/rss.xml`).
+
+2. Copy the following code into `src/pages/rss.xml.php`. Customize the `title` and `description` properties, and if necessary, specify a different language in the XML output:
+
+    ```php
+    <?php
+    // 1. Set the content type header to XML
+    header('Content-Type: application/xml; charset=utf-8');
+
+    $siteUrl = "https://example.com"; // Customize with your domain
+
+    // 2. Fetch and parse the Markdown posts inside src/pages/posts/ dynamically
+    $posts = [];
+    $files = glob(__DIR__ . '/posts/*.md');
+
+    foreach ($files as $file) {
+        $content = file_get_contents($file);
+
+        // Simple regex to parse YAML frontmatter parameters
+        preg_match('/title:\s*["\'](.*?)["\']/i', $content, $titleMatch);
+        preg_match('/description:\s*["\'](.*?)["\']/i', $content, $descMatch);
+        preg_match('/publishDate:\s*["\'](.*?)["\']/i', $content, $dateMatch);
+
+        $posts[] = [
+            'title' => $titleMatch[1] ?? basename($file, '.md'),
+            'description' => $descMatch[1] ?? '',
+            'publishDate' => $dateMatch[1] ?? date('Y-m-d'),
+            'slug' => basename($file, '.md')
+        ];
+    }
+
+    // Sort posts by date (newest first)
+    usort($posts, function($a, $b) {
+        return strtotime($b['publishDate']) - strtotime($a['publishDate']);
+    });
+
+    // 3. Render the RSS XML output
+    echo '<?xml version="1.0" encoding="UTF-8" ?>';
+    ?>
+    <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+      <channel>
+        <title>PPHLX Learner | Blog</title>
+        <description>My journey learning PPHLX</description>
+        <link><?php echo $siteUrl; ?></link>
+        <atom:link href="<?php echo $siteUrl; ?>/rss.xml" rel="self" type="application/rss+xml" />
+        <language>en-us</language>
+        <lastBuildDate><?php echo date(DATE_RSS); ?></lastBuildDate>
+
+        <?php foreach ($posts as $post): ?>
+        <item>
+          <title><?php echo htmlspecialchars($post['title'], ENT_XML1, 'UTF-8'); ?></title>
+          <link><?php echo $siteUrl; ?>/posts/<?php echo htmlspecialchars($post['slug'], ENT_XML1, 'UTF-8'); ?></link>
+          <guid><?php echo $siteUrl; ?>/posts/<?php echo htmlspecialchars($post['slug'], ENT_XML1, 'UTF-8'); ?></guid>
+          <pubDate><?php echo date(DATE_RSS, strtotime($post['publishDate'])); ?></pubDate>
+          <description><?php echo htmlspecialchars($post['description'], ENT_XML1, 'UTF-8'); ?></description>
+        </item>
+        <?php endforeach; ?>
+      </channel>
+    </rss>
+    ```
+
+3. Start your local dev server and visit `http://localhost:8080/rss.xml` (or your active PHP server port). You will see the unformatted XML feed showing an `<item>` block for each of your `.md` posts, updating dynamically!
+</Steps>
+
+<Box icon="check-list">
+
+## Checklist
+
+<Checklist>
+- [ ] I can create a dynamic PHP route to serve an RSS feed.
+- [ ] I can dynamically parse Markdown files and frontmatter inside PHP views.
+</Checklist>
+</Box>
+
+### Resources
+
+- [PHP-native RSS Feeds Guide](/en/recipes/rss/)

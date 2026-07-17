@@ -1,0 +1,48 @@
+name: Release VS Code Extension
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to upload assets to GitHub Releases
+      id-token: write # Required to generate build attestations (Sigstore)
+      attestations: write # Required to create build attestations
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install vsce CLI
+        run: npm install -g @vscode/vsce
+
+      - name: Package Extension (.vsix)
+        run: vsce package -o pphlx.vsix
+
+      - name: Generate SLSA Build Attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: 'pphlx.vsix'
+
+      - name: Upload VS Code Extension to Release
+        run: gh release upload ${{ github.event.release.tag_name }} pphlx.vsix
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to VS Code Marketplace
+        run: vsce publish -p ${{ secrets.VSCE_TOKEN }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_TOKEN }}
+
+      - name: Publish to Open VSX Registry
+        run: npx ovsx publish pphlx.vsix -p ${{ secrets.OVSX_TOKEN }}

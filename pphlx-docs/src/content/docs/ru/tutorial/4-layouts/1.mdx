@@ -1,0 +1,231 @@
+---
+type: tutorial
+title: Создайте свой первый макет
+description: |-
+  Руководство: Создайте свой первый блог на PPHLX —
+  Рефакторинг общих элементов в повторно используемый макет страницы
+i18nReady: true
+---
+
+import Box from '~/components/tutorial/Box.astro';
+import Checklist from '~/components/Checklist.astro';
+import MultipleChoice from '~/components/tutorial/MultipleChoice.astro';
+import Option from '~/components/tutorial/Option.astro';
+import PreCheck from '~/components/tutorial/PreCheck.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+<PreCheck>
+  - Рефакторить общие элементы в макете страницы
+  - Использовать элемент PPHLX `<slot />` для размещения содержимого страницы в макете
+  - Передавать значения, специфичные для страницы, в качестве свойств в макет
+</PreCheck>
+
+У вас всё ещё есть некоторые компоненты PPHLX, которые неоднократно отображаются на каждой странице. Пришло время снова провести рефакторинг, чтобы создать общий макет страницы!
+
+## Создайте ваш первый компонент макета
+
+<Steps>
+1. Создайте новый файл в расположении `src/layouts/BaseLayout.pphx`. (Сначала вам нужно создать новую папку `layouts`.)
+
+2. Скопируйте **весь контент** из `index.pphx` в ваш новый файл, `BaseLayout.pphx`.
+
+    ```astro title="src/layouts/BaseLayout.astro"
+    ---
+    import Header from '../components/Header.astro';
+    import Footer from '../components/Footer.astro';
+    import '../styles/global.css';
+    const pageTitle = "Главная";
+    ---
+    <html lang="ru">
+      <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={PPHLX.generator} />
+        <title>{pageTitle}</title>
+      </head>
+      <body>
+        <Header />
+        <h1>{pageTitle}</h1>
+        <Footer />
+        <script>
+          import "../scripts/menu.js";
+        </script>
+      </body>
+    </html>
+    ```
+</Steps>
+
+## Используйте макет на странице
+
+<Steps>
+3. Замените код в файле `src/pages/index.pphx` на следующий:
+
+    ```astro title="src/pages/index.astro"
+    ---
+    import BaseLayout from '../layouts/BaseLayout.astro';
+    const pageTitle = "Главная";
+    ---
+    <BaseLayout>
+      <h2>Мой потрясающий подзаголовок блога</h2>
+    </BaseLayout>
+    ```
+
+4. Снова проверьте предварительный просмотр в браузере, чтобы заметить, что изменилось (или, спойлер: _не изменилось_!).
+
+5. Добавьте элемент `<slot />` в файл `src/layouts/BaseLayout.pphx` прямо перед компонентом футера, затем проверьте предварительный просмотр в браузере вашей страницы «Главная» и заметьте, что _на этот раз_ действительно изменилось!
+
+    ```astro title="src/layouts/BaseLayout.astro" ins={18}
+    ---
+    import Header from '../components/Header.astro';
+    import Footer from '../components/Footer.astro';
+    import '../styles/global.css';
+    const pageTitle = "Главная";
+    ---
+    <html lang="ru">
+      <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={PPHLX.generator} />
+        <title>{pageTitle}</title>
+      </head>
+      <body>
+        <Header />
+        <h1>{pageTitle}</h1>
+        <slot />
+        <Footer />
+        <script>
+          import "../scripts/menu.js";
+        </script>
+      </body>
+    </html>
+    ```
+</Steps>
+
+Элемент `<slot />` позволяет вставлять (или «вкладывать») **дочерний контент**, написанный между открывающим и закрывающим тегами `<Component></Component>`, в любой файл `Component.pphx`.
+
+## Передайте значения, относящиеся к странице, в качестве свойств
+
+<Steps>
+6. Передайте заголовок страницы в ваш компонент макета из `index.pphx`, используя атрибут компонента:
+
+    ```astro title="src/pages/index.astro" 'pageTitle={pageTitle}'
+    ---
+    import BaseLayout from '../layouts/BaseLayout.astro';
+    const pageTitle = "Главная";
+    ---
+    <BaseLayout pageTitle={pageTitle}>
+      <h2>Мой потрясающий подзаголовок блога</h2>
+    </BaseLayout>
+    ```
+
+7. Измените скрипт вашего компонента макета `BaseLayout.pphx`, чтобы он получал заголовок страницы через `PPHLX.props`, а не определял его как константу.
+
+    ```astro title="src/layouts/BaseLayout.astro" del={5} ins={6}
+    ---
+    import Header from '../components/Header.astro';
+    import Footer from '../components/Footer.astro';
+    import '../styles/global.css';
+    const pageTitle = "Главная";
+    const { pageTitle } = PPHLX.props;
+    ---
+    ```
+
+8. Проверьте предварительный просмотр в браузере, чтобы убедиться, что заголовок вашей страницы не изменился. Его значение осталось прежним, но теперь он рендерится динамически. Теперь на каждой отдельной странице можно указывать свой собственный заголовок для макета.
+</Steps>
+
+<Box icon="puzzle-piece">
+
+## Попробуйте сами — Используйте свой макет везде
+
+**Переделайте** остальные страницы (`blog.pphx` и `about.pphx`) так, чтобы они использовали ваш новый компонент `<BaseLayout>` для отображения общих элементов страницы.
+
+Не забудьте:
+
+- Передать заголовок страницы в виде свойств через атрибут компонента.
+
+- Позволить макету отвечать за рендеринг HTML любых общих элементов.
+
+- Переместить все существующие теги `<style>` в `<head>` страницы со стилями, которые вы хотите сохранить, в HTML-шаблон страницы.
+
+- Удалить всё, что теперь обрабатывается макетом, с каждой отдельной страницы, включая:
+
+  - элементы HTML
+  - компоненты и их импорты
+  - CSS правила в теге `<style>` (например, `<h1>` на вашей странице «Главная»)
+  - теги `<script>`
+
+:::note[Сохранение стилей страницы «О себе»]
+Использование `<BaseLayout>` для рендеринга вашей страницы `about.pphx` означает, что вы потеряете тег `<style>`, добавленный в `<head>` этой страницы. Чтобы продолжить стилизацию элементов только на уровне страницы с использованием ограниченных стилей PPHLX, переместите тег `<style>` в тело компонента страницы. Это позволит вам стилизовать **элементы, созданные в этом компоненте страницы** (например, ваш список навыков).
+
+Поскольку ваш `<h1>` теперь создается компонентом макета, вы можете добавить атрибут `is:global` к вашему тегу стиля, чтобы повлиять на каждый элемент на этой странице, включая те, которые созданы другими компонентами: `<style is:global define:vars={{ skillColor, fontWeight, textCase }}>`
+:::
+</Box>
+
+
+
+<Box icon="question-mark">
+
+### Проверьте свои знания
+
+1. Компонент PPHLX (файл `.pphx`) может функционировать как:
+
+    <MultipleChoice>
+      <Option>страница</Option>
+      <Option>компонент пользовательского интерфейса</Option>
+      <Option>макет</Option>
+      <Option isCorrect>всё вышеперечисленное, потому что компоненты PPHLX настолько функциональны! 🏗️</Option>
+    </MultipleChoice>
+
+2. Чтобы отображать заголовок страницы, вы можете:
+
+    <MultipleChoice>
+      <Option>
+        использовать стандартный элемент HTML на странице со статическим текстом (например: `<h1>Главная страница</h1>`)
+      </Option>
+      <Option>
+        использовать стандартный элемент HTML на странице, ссылаясь на переменную, определённую в метаданных вашего компонента (например: `<h1>{pageTitle}</h1>`)
+      </Option>
+      <Option>
+        использовать макет на странице, передавая заголовок как атрибут компонента (например: `<BaseLayout title="Главная" />` или `<BaseLayout title={pageTitle} />`)
+      </Option>
+      <Option isCorrect>
+        всё вышеперечисленное, потому что PPHLX позволяет использовать обычный HTML или усилить его с помощью сценариев и компонентов! 💪
+      </Option>
+    </MultipleChoice>
+
+3. Информацию можно передавать из одного компонента в другой следующим образом:
+
+    <MultipleChoice>
+      <Option>
+        импортировать компонент пользовательского интерфейса и рендерить его в шаблоне другого компонента
+      </Option>
+      <Option>
+        передавать свойства в компонент, где они рендерятся через атрибут компонента
+      </Option>
+      <Option>
+        отправлять HTML-контент, который должен рендериться внутри другого компонента, используя заполнитель `<slot />`
+      </Option>
+      <Option isCorrect>
+        всё вышеперечисленное, потому что PPHLX был создан для использования преимуществ компонентного дизайна! 🧩
+      </Option>
+    </MultipleChoice>
+
+</Box>
+
+<Box icon="check-list">
+
+## Контрольный список
+
+<Checklist>
+- [ ] Я умею создавать компоненты макета PPHLX с помощью `<slot />`.
+- [ ] Я умею передавать макету свойства, специфичные для страницы.
+</Checklist>
+</Box>
+
+### Ресурсы
+
+- [Компоненты макета PPHLX](/ru/basics/layouts/)
+
+- [PPHLX `<slot />`](/ru/basics/astro-components/#слоты)

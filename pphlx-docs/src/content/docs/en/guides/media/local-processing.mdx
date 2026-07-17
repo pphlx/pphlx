@@ -1,0 +1,44 @@
+---
+title: Local Media Processing (GD & Imagick)
+description: Resize, compress, and optimize image assets natively on your server.
+---
+
+Because PPHLX compiled pages execute as standard PHP, you can process and optimize images dynamically on your own server using built-in PHP extensions like **GD Library** or **Imagick (ImageMagick)**.
+
+## Native WebP Conversion & Resizing (GD)
+
+Here is a standard PHP utility pattern to resize and convert uploaded JPEG/PNG images to optimized WebP format natively:
+
+```php
+<?php
+function resizeAndConvertToWebp($sourcePath, $destinationPath, $maxWidth) {
+    list($width, $height, $type) = getimagesize($sourcePath);
+    
+    // Calculate new dimensions
+    $ratio = $width / $height;
+    $newWidth = min($width, $maxWidth);
+    $newHeight = round($newWidth / $ratio);
+    
+    // Create source resource
+    if ($type === IMAGETYPE_JPEG) {
+        $source = imagecreatefromjpeg($sourcePath);
+    } elseif ($type === IMAGETYPE_PNG) {
+        $source = imagecreatefrompng($sourcePath);
+    } else {
+        return false;
+    }
+    
+    // Resize image
+    $thumb = imagecreatetruecolor($newWidth, $newHeight);
+    imagecopyresampled($thumb, $source, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+    
+    // Save as WebP
+    imagewebp($thumb, $destinationPath, 85); // 85% quality
+    
+    imagedestroy($source);
+    imagedestroy($thumb);
+    return true;
+}
+```
+
+This avoids external dependency fees and keeps all media processing self-contained on your hosting environment.

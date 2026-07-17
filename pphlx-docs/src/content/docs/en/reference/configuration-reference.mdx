@@ -1,0 +1,62 @@
+---
+title: Configuration Reference
+description: Reference guide for PPHLX configuration manifests.
+i18nReady: true
+---
+
+This reference covers the configuration options supported by the PPHLX compiler. 
+
+PPHLX uses two manifest files in your project root to manage compilation behaviors:
+1.  **`pphlx.json`** (Project metadata & dependencies)
+2.  **`pphlx.config.json`** (Compiler options & output targets)
+
+---
+
+## 1. `pphlx.json` (Project Manifest)
+
+This file defines project metadata, compiler script triggers, and remote dependencies.
+
+```json
+{
+  "name": "my-pphlx-project",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pphlx build",
+    "dev": "pphlx dev"
+  },
+  "dependencies": {
+    "github.com/pphlx-community/navbar": "^1.0.0"
+  }
+}
+```
+
+### Options
+
+*   **`name`**: `string` (Required) - The name of the project.
+*   **`version`**: `string` - The semantic version of the project.
+*   **`private`**: `boolean` - If set to `true`, prevents publishing the project to registries.
+*   **`scripts`**: `Record<string, string>` - Custom command aliases executed via your package manager.
+*   **`dependencies`**: `Record<string, string>` - Remote compiler packages and templates pulled at build time.
+
+---
+
+## 2. `pphlx.config.json` (Compiler Configurations)
+
+This file defines the directory mapping and bundler settings for the Go compiler.
+
+```json
+{
+  "srcDir": "src",
+  "outDir": "dist",
+  "cssOut": "dist/assets/css/app.css",
+  "jsOut": "dist/assets/js/app.js"
+}
+```
+
+### Options
+
+*   **`srcDir`**: `string` (Default: `"src"`) - The directory scanned recursively for `.pphx` template files and assets.
+*   **`outDir`**: `string` (Default: `"dist"`) - The output directory where compiled `.php` targets and static files are written.
+*   **`cssOut`**: `string` (Default: `"dist/assets/css/app.css"`) - The output destination for scoped component CSS aggregation.
+*   **`jsOut`**: `string` (Default: `"dist/assets/js/app.js"`) - The output destination for Vite/esbuild hydration bundles.

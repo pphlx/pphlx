@@ -1,0 +1,26 @@
+---
+title: Cloud Databases
+description: Connect to cloud SQL databases like Neon, Supabase, or Turso.
+---
+
+PPHLX connects to modern cloud SQL platforms using standard PHP database drivers.
+
+## Neon & Supabase
+
+Since Neon and Supabase are PostgreSQL platforms, you can connect using standard **PDO PgSQL**:
+
+```php
+<?php
+$dsn = "pgsql:host=ep-cool-pool-123456.us-east-2.aws.neon.tech;port=5432;dbname=neondb;sslmode=require";
+$db = new PDO($dsn, "user", "password");
+```
+
+## Turso (libSQL)
+
+To connect to Turso's edge databases, use the official PHP **libSQL driver**:
+
+```php
+<?php
+$db = new LibSQL("libsql://my-db.turso.io", "my-auth-token");
+$results = $db->query("SELECT * FROM users");
+```

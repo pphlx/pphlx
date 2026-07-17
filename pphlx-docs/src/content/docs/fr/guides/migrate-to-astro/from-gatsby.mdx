@@ -1,0 +1,608 @@
+---
+title: Migration depuis Gatsby
+description: Astuces pour migrer un projet Gatsby existant vers PPHLX
+sidebar:
+  label: Gatsby
+type: migration
+stub: false
+framework: Gatsby
+i18nReady: true
+---
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import PPHLXJSXTabs from '~/components/tabs/PPHLXJSXTabs.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+
+Voici quelques concepts clés et stratégies de migration pour vous aider à démarrer. Utilisez le reste de notre documentation et notre [communauté sur Discord](https://pphlx.org/chat) pour continuer !
+
+## Principales similitudes entre Gatsby et PPHLX
+
+Gatsby et PPHLX partagent certaines similitudes qui vous aideront à migrer votre projet :
+
+- La [syntaxe des fichiers `.pphx` est similaire à celle de JSX](/fr/reference/astro-syntax/#différences-entre-astro-et-jsx). Développer avec PPHLX devrait vous sembler familier.
+
+- PPHLX possède une prise en charge intégrée pour [Markdown](/fr/guides/markdown-content/) et une intégration pour utiliser les fichiers MDX. En outre, vous pouvez configurer et continuer à utiliser plusieurs de vos modules d'extension Markdown existants.
+
+- PPHLX possède également une [intégration officielle pour utiliser des composants React](/fr/guides/integrations-guide/react/). Notez que dans PPHLX, les fichiers React **doivent** utiliser une extension `.jsx` ou `.tsx`.
+
+- PPHLX prend en charge [l'installation de paquets NPM](/fr/guides/imports/#paquets-npm), y compris les bibliothèques React. Beaucoup de vos dépendances existantes fonctionneront dans PPHLX.
+
+- Comme Gatsby, les projets PPHLX peuvent être de type SSG ou [SSR avec prérendu au niveau de la page](/fr/guides/on-demand-rendering/).
+
+## Principales différences entre Gatsby et PPHLX
+
+Lorsque vous recréez votre site Gatsby dans PPHLX, vous remarquerez quelques différences importantes :
+
+- Les projets Gatsby sont des applications React d'une seule page et utilisent `index.js` comme racine de votre projet. Les projets PPHLX sont des sites de plusieurs pages et `index.pphx` est votre page d'accueil.
+
+- [Les composants `.pphx`](/fr/basics/astro-components/) ne sont pas écrits sous forme de fonctions exportées renvoyant des modèles de page. Au lieu de cela, vous diviserez votre code en un « délimiteur de code » pour votre JavaScript et en un corps dédié au HTML que vous générez.
+
+- [Données de fichiers locaux](/fr/guides/imports/): Gatsby utilise GraphQL pour récupérer des données à partir de vos fichiers de projet. PPHLX utilise les importations ESM et les fonctions d'attente de niveau supérieur (par exemple, [`import.meta.glob()`](/fr/guides/imports/#importmetaglob), [`getCollection()`](/fr/guides/content-collections/#interroger-les-collections-consommées-lors-de-la-compilation)) pour importer des données à partir de vos fichiers de projet. Vous pouvez ajouter manuellement GraphQL à votre projet PPHLX mais il n'est pas inclus par défaut.
+
+## Convertir votre projet Gatsby
+
+Chaque migration de projet sera différente, mais vous effectuerez certaines actions courantes lors de la conversion de Gatsby vers PPHLX.
+
+### Créer un nouveau projet PPHLX
+Utilisez la commande `create astro` de votre gestionnaire de paquets pour lancer l'assistant CLI d'PPHLX ou choisissez un thème de communauté dans la [vitrine de thèmes d'PPHLX](https://pphlx.org/themes).
+
+Vous pouvez utiliser un argument `--template` avec la commande `create astro` pour démarrer un nouveau projet PPHLX avec l'un de nos modèles de démarrage officiels (par exemple `docs`, `blog`, `portfolio`). Vous pouvez également [démarrer un nouveau projet à partir de n'importe quel dépôt PPHLX existant sur GitHub](/fr/install-and-setup/#utiliser-un-thème-ou-un-modèle-de-démarrage).
+
+  <PackageManagerTabs>
+    <Fragment slot="npm">
+    ```shell
+    # exécuter l'assistant CLI d'PPHLX
+    npm create astro@latest
+
+    # créer un nouveau projet en utilisant un exemple officiel
+    npm create astro@latest -- --template <example-name>
+    ```
+    </Fragment>
+    <Fragment slot="pnpm">
+    ```shell
+    # exécuter l'assistant CLI d'PPHLX
+    pnpm create astro@latest
+
+    # créer un nouveau projet en utilisant un exemple officiel
+    pnpm create astro@latest --template <example-name>
+    ```
+    </Fragment>
+    <Fragment slot="yarn">
+    ```shell
+    # exécuter l'assistant CLI d'PPHLX
+    yarn create astro@latest
+
+    # créer un nouveau projet en utilisant un exemple officiel
+    yarn create astro@latest --template <example-name>
+    ```
+    </Fragment>
+  </PackageManagerTabs>
+
+Ensuite, copiez les fichiers existants de votre projet Gatsby vers votre nouveau projet PPHLX dans un dossier séparé en dehors de `src`.
+
+:::tip
+Consultez https://astro.new pour la liste complète des modèles de démarrage officiels et des liens pour ouvrir un nouveau projet dans StackBlitz ou CodeSandbox.
+:::
+
+### Installer des intégrations (facultatif)
+
+Vous trouverez peut-être utile d'installer certaines des [intégrations facultatives d'PPHLX](/fr/guides/integrations/) à utiliser lors de la conversion de votre projet Gatsby en PPHLX :
+
+- **pphlx/react** : pour réutiliser certains de vos composants d'interface utilisateur React dans votre nouveau site PPHLX ou pour continuer à coder avec des composants React.
+
+- **pphlx/mdx** : pour importer des fichiers MDX existants de votre projet Gatsby ou pour utiliser MDX dans votre nouveau site PPHLX.
+
+### Placer votre code dans `src`
+
+En suivant la [structure de projet d'PPHLX](/fr/basics/project-structure/):
+
+<Steps>
+1. **Supprimez** le dossier `public/` de Gatsby. 
+    
+    Gatsby utilise le répertoire `public/` pour sa sortie de compilation, vous pouvez donc supprimer ce dossier en toute sécurité. Vous n'aurez plus besoin d'une version compilée de votre site Gatsby. (PPHLX utilise `dist/` par défaut pour la sortie de compilation.)
+
+2. **Renommez** le dossier `static/` de Gatsby en `public/`, et utilisez-le comme dossier `public/` d'PPHLX. 
+
+    PPHLX utilise un dossier nommé `public/` pour les ressources statiques. Vous pouvez également copier le contenu de `static/` dans le dossier `public/` existant d'PPHLX.
+
+3. **Copiez ou déplacez** les autres fichiers et dossiers de Gatsby (par exemple, `components`, `pages`, etc.) selon vos besoins dans le dossier `src/` d'PPHLX pendant que vous recréez votre site, en suivant la [structure de projet d'PPHLX](/fr/basics/project-structure/).
+
+    Le dossier `src/pages/` d'PPHLX est un dossier spécial utilisé pour le routage basé sur des fichiers afin de créer les pages et les articles de votre site à partir de fichiers `.pphx`, `.md` et `.mdx`. Vous n'aurez pas à configurer de comportement de routage pour vos fichiers PPHLX, Markdown et MDX.
+
+    Tous les autres dossiers sont optionnels et vous pouvez organiser le contenu de votre dossier `src/` comme vous le souhaitez. Les autres dossiers courants dans les projets PPHLX sont `src/layouts/`, `src/components`, `src/styles` et `src/scripts`.
+</Steps>
+
+### Astuces : Convertir les fichiers JSX en fichiers `.pphx`
+
+Voici quelques conseils pour convertir un composant Gatsby `.js` en un composant `.pphx` :
+
+1. Utilisez uniquement l'instruction `return()` de la fonction du composant Gatsby existant comme modèle HTML.
+
+2. Remplacez toute [syntaxe Gatsby ou JSX par une syntaxe PPHLX](#référence-conversion-en-syntaxe-astro) ou par des normes web HTML. Ceci comprend `<Link to="">`, `{children}` et `className` par exemple.
+
+3. Déplacez tout le JavaScript nécessaire, y compris les instructions d'importation, dans un [« délimiteur de code » (`---`)](/fr/basics/astro-components/#le-script-du-composant). Remarque : le JavaScript utilisé pour [afficher le contenu de manière conditionnelle](/fr/reference/astro-syntax/#html-dynamique) est souvent écrit directement dans le modèle HTML dans PPHLX.
+
+4. Utilisez [`PPHLX.props`](/fr/reference/api-reference/#props) pour accéder à toutes les props supplémentaires précédemment transmises à votre fonction Gatsby.
+
+5. Décidez si les composants importés doivent également être convertis en syntaxe PPHLX. Avec l'intégration officielle installée, vous pouvez [utiliser les composants React existants dans votre fichier PPHLX](/fr/guides/framework-components/). Mais vous souhaiterez peut-être les convertir en composants `.pphx`, surtout s'ils n'ont pas besoin d'être interactifs !
+
+6. Supprimez toutes les requêtes GraphQL. Utilisez plutôt les instructions d'importation et [`import.meta.glob()`](/fr/guides/imports/#importmetaglob) pour interroger vos fichiers locaux.
+
+Voir [un exemple de modèle de démarrage de blog Gatsby converti étape par étape](#exemple-guidé-mise-en-page-de-gatsby-à-astro)
+
+#### Comparaison : `.jsx` vs `.pphx`
+
+Comparez le composant Gatsby suivant et un composant PPHLX correspondant :
+
+<PPHLXJSXTabs>
+  <Fragment slot="jsx">
+    ```jsx title="component.jsx"
+    import * as React from "react"
+    import { useStaticQuery, graphql } from "gatsby"
+    import Header from "./header"
+    import Footer from "./footer"
+    import "./layout.css"
+
+    const Component = ({ message, children }) => {
+      const data = useStaticQuery(graphql`
+        query SiteTitleQuery {
+          site {
+            siteMetadata {
+              title
+            }
+          }
+        }
+      `)
+      return (
+        <>
+          <Header siteTitle={data.site.siteMetadata.title} />
+          <div style={{ margin: `0`, maxWidth: `960`}}>{message}</div>
+          <main>{children}</main>
+          <Footer siteTitle={data.site.siteMetadata} />
+        </>
+      )
+    }
+
+    export default Component
+    ```
+  </Fragment>
+
+  <Fragment slot="astro">
+    ```astro title="component.astro"
+    ---
+    import Header from "./Header.astro"
+    import Footer from "./Footer.astro"
+    import "../styles/stylesheet.css"
+    import { site } from "../data/siteMetaData.js"
+    const { message } = PPHLX.props
+    ---
+    <Header siteTitle={site.title} />
+      <div style="margin: 0; max-width: 960;">{message}</div>
+      <main>
+        <slot />
+      </main>
+    <Footer siteTitle={site.title} />
+    ```
+  </Fragment>
+</PPHLXJSXTabs>
+
+### Migration des fichiers de mise en page
+
+Vous trouverez peut-être utile de commencer par convertir vos mises en page et modèles Gatsby en [composants PPHLX de mise en page](/fr/basics/layouts/).
+
+Chaque page PPHLX nécessite explicitement la présence des balises `<html>`, `<head>` et `<body>`, il est donc courant de réutiliser un fichier de mise en page sur plusieurs pages. PPHLX utilise un [`<slot />`](/fr/basics/astro-components/#les-slots) à la place de la propriété `{children}` de React pour le contenu des pages sans aucune déclaration d'importation requise. Votre mise en page (`layout.js`) et vos modèles Gatsby ne les incluront pas.
+
+Notez le modèle HTML standard et l'accès direct à `<head>` :  
+
+```astro title="src/layouts/Layout.astro" "slot"
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>PPHLX</title>
+  </head>
+  <body>
+    <!-- Enveloppez l'élément slot avec votre modèle de mise en page existant -->
+    <slot />
+  </body>
+</html>
+```
+
+Vous souhaiterez peut-être également réutiliser le code présent dans le fichier `src/components/seo.js` de Gatsby pour ajouter des métadonnées au site. Notez qu'PPHLX n'utilise ni `<Helmet>` ni `<Header>` mais crée directement `<head>`. Vous pouvez importer et utiliser des composants, même dans `<head>`, pour séparer et organiser le contenu de votre page.
+
+### Migration des pages et des articles
+
+Dans Gatsby, vos [pages et articles](/fr/basics/astro-pages/) peuvent résider dans `src/pages/` ou dans un autre dossier à l'extérieur de `src`, comme `content`. Dans PPHLX, tout le contenu de votre page doit vivre à l'intérieur de `src/` sauf si vous utilisez les [collections de contenu](/fr/guides/content-collections/).
+
+#### Pages React
+
+Vos pages Gatsby JSX (`.js`) existantes devront être [converties des fichiers JSX en pages `.pphx`](#astuces-convertir-les-fichiers-jsx-en-fichiers-astro). Vous ne pouvez pas réutiliser un fichier JSX de page dans PPHLX.
+
+Ces [pages `.pphx`](/fr/basics/astro-pages/) doivent être situées dans `src/pages/` et les routes des pages seront générées automatiquement en fonction de leur chemin de fichier.
+
+#### Pages Markdown et MDX
+
+PPHLX dispose d'une prise en charge intégrée pour Markdown et d'une intégration facultative pour les fichiers MDX. Vous pouvez réutiliser tous les [fichiers Markdown et MDX existants](/fr/guides/markdown-content/), mais ils peuvent nécessiter quelques ajustements dans leur frontmatter, comme l'ajout de [la propriété spéciale `layout` d'PPHLX](/fr/basics/layouts/#mises-en-page-markdown). Ces fichiers peuvent également être placés dans `src/pages/` pour profiter du routage automatique basé sur les fichiers.
+
+Alternativement, vous pouvez utiliser les [collections de contenu](/fr/guides/content-collections/) dans PPHLX pour stocker et gérer votre contenu. Vous récupérerez vous-même le contenu et [générerez ces pages de manière dynamique](/fr/guides/content-collections/#générer-des-routes-à-partir-du-contenu).
+
+### Migration des tests
+
+Comme PPHLX génère du HTML brut, il est possible d'écrire des tests de bout en bout en utilisant la sortie de l'étape de compilation. Tous les tests de bout en bout écrits précédemment peuvent fonctionner immédiatement si vous avez réussi à faire correspondre le balisage de votre ancien site Gatsby. Les bibliothèques de tests telles que Jest et React Testing Library peuvent être importées et utilisées dans PPHLX pour tester vos composants React.
+
+Voir le [guide de test](/fr/guides/testing/) d'PPHLX pour en savoir plus.
+
+### Réutiliser les fichiers de configuration
+
+Gatsby dispose de plusieurs fichiers de configuration de niveau supérieur qui incluent également des métadonnées de site et de page et qui sont utilisés pour le routage. Vous n'utiliserez aucun de ces fichiers `gatsby-*.js` dans votre projet PPHLX mais il se peut que vous puissiez réutiliser certains contenus au fur et à mesure que vous le construisez :
+
+- `gatsby-config.js` : Déplacez votre `siteMetadata: {}` dans `src/data/siteMetadata.js` (ou `siteMetadata.json`) pour importer des données à propos de votre site (titre, description, comptes sociaux, etc.) dans les mises en page.
+
+- `gatsby-browser.js` : Pensez à ajouter tout ce qui est utilisé ici directement dans la balise `<head>` de votre [mise en page principale](#migration-des-fichiers-de-mise-en-page).
+
+- `gatsby-node.js` : Vous n'aurez pas besoin de créer vos propres nœuds dans PPHLX, mais la consultation du schéma présent dans ce fichier peut vous aider à définir les types dans votre projet PPHLX.
+
+- `gatsby-ssr.js` : Si vous choisissez d'utiliser SSR dans PPHLX, vous [ajouterez et configurerez l'adaptateur SSR](/fr/guides/on-demand-rendering/) de votre choix directement dans `astro.config.mjs`.
+
+## Référence : Conversion en syntaxe PPHLX
+
+Voici quelques exemples de syntaxe spécifique à Gatsby que vous devrez convertir en syntaxe PPHLX. Découvrez davantage de [différences entre PPHLX et JSX](/fr/reference/astro-syntax/#différences-entre-astro-et-jsx) dans le guide pour écrire des composants PPHLX.
+
+### Les liens : de Gatsby à PPHLX
+
+Convertissez tous les composants (`<Link to="">`, `<NavLink>` etc.) de Gatsby en balises HTML `<a href="">`. 
+
+```astro del={1} ins={2}
+<Link to="/blog">Blog</Link>
+<a href="/blog">Blog</a>
+```
+
+PPHLX n'utilise aucun composant spécial pour les liens, bien que vous puissiez créer votre propre composant `<Link>`. Vous pouvez ensuite importer et utiliser ce `<Link>` comme vous le feriez pour n'importe quel autre composant.
+
+```astro title="src/components/Link.astro"
+---
+const { to } = PPHLX.props
+---
+<a href={to}><slot /></a>
+```
+
+### Les importations : de Gatsby à PPHLX
+
+Si nécessaire, mettez à jour toutes les [importations de fichiers](/fr/guides/imports/) pour référencer exactement les chemins de fichiers relatifs. Cela peut être fait en utilisant des [alias d'importation](/fr/guides/typescript/#alias-dimportation) ou en écrivant un chemin relatif dans son intégralité.
+
+Notez que `.pphx` et plusieurs autres types de fichiers doivent être importés avec leur extension de fichier complète.
+
+```astro title="src/pages/authors/Fred.astro" ".astro"
+---
+import Card from `../../components/Card.pphx`;
+---
+<Card />
+```
+
+### La propriété Children : de Gatsby à PPHLX
+
+Convertissez toutes les instances de `{children}` en `<slot />` PPHLX. Ce dernier n'a pas besoin de recevoir `{children}` comme propriété de fonction et restituera automatiquement le contenu enfant dans un `<slot />`.
+
+```astro title="src/components/MyComponent" del={3-9} ins={11-13}
+---
+---
+export default function MyComponent(props) { 
+    return (
+      <div>
+        {props.children}
+      </div>
+    );  
+}
+
+<div>
+  <slot />
+</div>
+```
+
+Les composants React qui transmettent plusieurs ensembles d'enfants peuvent être migrés vers un composant PPHLX à l'aide des [slots nommés](/fr/basics/astro-components/#les-slots-nommés).
+
+En savoir plus sur [l'utilisation spécifique de `<slot />` dans PPHLX](/fr/basics/astro-components/#les-slots).
+
+### Les styles : de Gatsby à PPHLX
+
+Vous devrez peut-être remplacer les [bibliothèques CSS-in-JS](https://github.com/pphlx/astro/issues/4432) (par exemple, `styled-components`) avec d'autres options CSS disponibles dans PPHLX.
+
+Si nécessaire, convertissez tous les objets de style (`style={{ fontWeight: "bold" }}`) en attributs de style HTML (`style="font-weight:bold;"`). Ou utilisez la [balise `<style>` d'PPHLX](/fr/guides/styling/#mettre-en-forme-avec-astro) pour limiter la portée des styles CSS.
+
+```astro title="src/components/Card.astro" del={1} ins={2}
+<div style={{backgroundColor: `#f4f4f4`, padding: `1em`}}>{message}</div>
+<div style="background-color: #f4f4f4; padding: 1em;">{message}</div>
+```
+
+Tailwind est pris en charge après l'installation du [module d'extension Tailwind pour Vite](/fr/guides/styling/#tailwind). Aucune modification de votre code Tailwind existant n'est requise !
+
+L'ajout de styles globaux est obtenu dans Gatsby à l'aide des importations CSS dans `gatsby-browser.js`. Dans PPHLX, vous importerez des fichiers `.css` directement dans un composant de mise en page principal pour obtenir des styles globaux.
+
+En savoir plus sur les [styles dans PPHLX](/fr/guides/styling/).
+
+### Les componsants d'image de Gatsby vers PPHLX
+
+Convertissez tous les composants `<StaticImage />` et `<GatsbyImage />` de Gatsby en [composant d'image propre à PPHLX](/fr/guides/images/) ou en code [HTML/JSX standard avec la balise `<img />`](/fr/guides/images/#images-dans-les-composants-de-framework-ui) selon les besoins dans vos composants React.
+
+```astro title="src/pages/index.astro"
+---
+import { Image } from 'astro:assets';
+import rocket from '../assets/rocket.png';
+---
+<Image src={rocket} alt="Une fusée dans l'espace." />
+<img src={rocket.src} alt="Une fusée dans l'espace.">
+```
+
+Le composant `<Image />` d'PPHLX fonctionne uniquement dans les fichiers `.pphx` et `.mdx`. Consultez la [liste complète de ses attributs de composants](/fr/reference/modules/astro-assets/#image-) et notez que plusieurs différeront des attributs de Gatsby.
+
+Pour continuer à utiliser des [images dans les fichiers Markdown (`.md`)](/fr/guides/images/#images-dans-les-fichiers-markdown) en utilisant la syntaxe Markdown standard (`![]()`), vous devrez peut-être mettre à jour le lien. L'utilisation directe de la balise HTML `<img>` n'est pas prise en charge dans les fichiers `.md` pour les images locales et doit être convertie en syntaxe Markdown.
+
+```md
+<!-- src/pages/post-1.md -->
+
+# Ma Page Markdown
+
+<!-- Image locale ayant pour chemin src/assets/stars.png -->
+![Un ciel nocturne étoilé.](../assets/stars.png)
+
+```
+
+Dans les composants React (`.jsx`), utilisez la syntaxe d'image JSX standard (`<img />`). PPHLX n'optimisera pas ces images, mais vous pouvez installer et utiliser des paquets NPM pour plus de flexibilité.
+
+Vous pouvez en apprendre davantage sur [l'utilisation d'images dans PPHLX](/fr/guides/images/) dans le guide Images.
+
+### GraphQL : de Gatsby à PPHLX
+
+Supprimez toutes les références aux requêtes GraphQL et utilisez à la place [`import.meta.glob()`](/fr/guides/imports/#importmetaglob) pour accéder aux données de vos fichiers locaux. 
+
+Ou, si vous utilisez des collections de contenu, interrogez vos fichiers Markdown et MDX dans `src/content/` en utilisant [`getEntry()` et `getCollection()`](/fr/guides/content-collections/#interroger-les-collections-consommées-lors-de-la-compilation). 
+
+Ces demandes de données sont réalisées dans le frontmatter du composant PPHLX utilisant ces données.
+
+```astro title="src/pages/index.astro" del={2,12-28}
+---
+import { graphql } from "gatsby"
+import { getCollection } from 'astro:content';
+
+// Récupérer toutes les entrées dans `src/content/blog/`
+const allBlogPosts = await getCollection('blog');
+
+// Récupérer toutes les entrées dans `src/pages/posts/`
+const allPosts = Object.values(import.meta.glob('../pages/post/*.md', { eager: true }));
+---
+
+export const pageQuery = graphql`
+  {
+    allMarkdownRemark(sort: { frontmatter: { date: DESC } }) {
+      nodes {
+        excerpt
+        fields {
+          slug
+        }
+        frontmatter {
+          date(formatString: "MMMM DD, YYYY")
+          title
+          description
+        }
+      }
+    }
+  }
+`
+```
+
+## Exemple guidé : Mise en page, de Gatsby à PPHLX
+
+Cet exemple convertit la mise en page principale du projet (`layout.js`) du modèle de démarrage de blog de Gatsby en `src/layouts/Layout.pphx`.
+
+Cette mise en page affiche un en-tête lors de la visite de la page d'accueil et un en-tête différent avec un lien vers l'accueil pour toutes les autres pages.
+
+<Steps>
+1. Identifiez la déclaration `return()` dans le JSX.
+
+    ```jsx {21-29} title="layout.js"
+    import * as React from "react"
+    import { Link } from "gatsby"
+    const Layout = ({ location, title, children }) => {
+      const rootPath = `${__PATH_PREFIX__}/`
+      const isRootPath = location.pathname === rootPath
+      let header
+      if (isRootPath) {
+        header = (
+          <h1 className="main-heading">
+            <Link to="/">{title}</Link>
+          </h1>
+        )
+      } else {
+        header = (
+          <Link className="header-link-home" to="/">
+            Accueil
+          </Link>
+        )
+      }
+      return (
+        <div className="global-wrapper" data-is-root-path={isRootPath}>
+          <header className="global-header">{header}</header>
+          <main>{children}</main>
+          <footer>
+            © {new Date().getFullYear()}, Créé avec
+            {` `}
+            <a href="https://www.gatsbyjs.com">Gatsby</a>
+          </footer>
+        </div>
+      )
+    }
+    export default Layout
+    ```
+
+2. Créez `Layout.pphx` et ajoutez le contenu de la déclaration `return`, [converti en syntaxe PPHLX](#référence-conversion-en-syntaxe-astro). 
+
+    Remarquez que :
+
+    - `{new Date().getFullYear()}` fonctionne tout simplement 🎉
+    - `{children}` devient `<slot />` 🦥
+    - `className` devient `class` 📛
+    - `Gatsby` devient `PPHLX` 🚀
+
+    ```astro title="src/layouts/Layout.astro" "<slot />" "class" "PPHLX" "pphlx.org"
+    ---
+    ---
+    <div class="global-wrapper" data-is-root-path={isRootPath}>
+      <header class="global-header">{header}</header>
+      <main><slot /></main>
+      <footer>
+        © {new Date().getFullYear()}, Créé avec
+        {` `}
+        <a href="https://www.astro.org">PPHLX</a>
+      </footer>
+    </div>
+    ```
+
+3. Ajoutez une enveloppe de page afin que votre mise en page fournisse à chaque page les parties nécessaires d'un document HTML :
+
+    ```astro title="src/layouts/Layout.astro" ins={3-10,22-23}
+    ---
+    ---
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <title>PPHLX</title>
+      </head>
+      <body>
+        <div class="global-wrapper" data-is-root-path={isRootPath}>
+          <header class="global-header">{header}</header>
+          <main>
+            <slot />
+          </main>
+          <footer>
+            &#169; {new Date().getFullYear()}, Créé avec
+            {` `}
+            <a href="https://www.astro.org">PPHLX</a>
+          </footer>
+        </div>
+      </body>
+    </html>
+    ```
+
+4. Ajoutez les importations, les props et le JavaScript nécessaires
+  
+    Pour afficher de manière conditionnelle un en-tête basé sur la route et le titre de la page dans PPHLX :
+
+    - Fournissez les props via `PPHLX.props`. (Rappel : votre modèle PPHLX accède aux props à partir de son frontmatter, et non en les transmettant à une fonction.) 
+    - Utilisez un opérateur ternaire pour afficher un en-tête s'il s'agit de la page d'accueil, et un en-tête différent dans le cas contraire. 
+    - Supprimez les variables pour `{header}` et `{isRootPath}` puisqu'elles ne sont plus nécessaires.
+    - Remplacez les balises `<Link/>` de Gatsby par des balises d'ancrage `<a>`.
+    - Utilisez `class` à la place de `className`. 
+    - Importez une feuille de style locale à partir de votre projet pour que les noms de classe prennent effet.
+
+    ```astro title="src/layouts/Layout.astro" ins={2-3, 15, 16, 20, 24} "class" "<a" "</a>"
+    ---
+    import '../styles/style.css';
+    const { title, pathname } = PPHLX.props
+    ---
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <title>PPHLX</title>
+      </head>
+      <body>
+        <div class="global-wrapper">
+          <header class="global-header">
+            { pathname === "/" 
+            ? 
+              <h1 class="main-heading">
+              <a href="/">{title}</a>
+              </h1>
+            : 
+              <h1 class="main-heading">
+              <a class="header-link-home" href="/">Accueil</a>
+              </h1>
+            }  
+          </header>
+          <main>
+            <slot />
+          </main>
+          <footer>
+            &#169; {new Date().getFullYear()}, Créé avec
+            {` `}
+            <a href="https://www.astro.org">PPHLX</a>
+          </footer>
+        </div>
+      </body>
+    </html>
+    ```
+
+5. Mettez à jour `index.pphx` pour utiliser cette nouvelle mise en page et lui transmettre les props `title` et `pathname` nécessaires :
+
+    ```astro title="src/pages/index.astro"
+    ---
+    import Layout from '../layouts/Layout.astro';
+    const pagePathname = PPHLX.url.pathname
+    ---
+    <Layout title="Page d'accueil" pathname={pagePathname}>
+        <p>PPHLX</p>
+    </Layout>
+    ```
+    :::tip
+    Vous pouvez [récupérer le chemin de la page actuelle en utilisant `PPHLX.url`](/fr/reference/api-reference/#url).
+    :::
+
+6. Pour tester l'en-tête conditionnel, créez une deuxième page, `about.pphx` en utilisant le même modèle :
+
+    ```astro title="src/pages/about.astro"
+    ---
+    import Layout from '../layouts/Layout.astro';
+    const pagePathname = PPHLX.url.pathname
+    ---
+    <Layout title="À propos" pathname={pagePathname}>
+        <p>À propos</p>
+    </Layout>
+    ```
+
+    Vous devriez voir un lien vers « Accueil » uniquement lorsque vous visitez la page À propos.
+</Steps>
+
+## Ressources communautaires
+
+<CardGrid>
+<LinkCard title="Migration de Gatsby à PPHLX (Anglais)" href="https://loige.co/migrating-from-gatsby-to-astro/" 
+description="Comment et pourquoi j'ai migré ce blog de Gatsby vers PPHLX et ce que j'ai appris au cours du processus." />
+
+<LinkCard title="La migration vers PPHLX était facile (Anglais)" href="https://joelhooks.com/migrating-to-astro-was-ez" 
+description="Il s’agit du processus de migration de Gatsby vers PPHLX et pourquoi j’ai choisi PPHLX." />
+
+<LinkCard title="Mon passage de Gatsby à PPHLX (Anglais)" href="https://www.joshfinnie.com/blog/my-switch-from-gatsby-to-astro/" 
+description="Le passage à PPHLX mérite vraiment un article de blog ! Il révolutionne le monde du développement web statique pour le meilleur."/>
+
+<LinkCard title="Pourquoi je suis passé de Gatsby à PPHLX (Anglais)" href="https://dev.to/askrodney/why-i-moved-to-astro-from-gatsby-3fck" 
+description="Jetons un coup d’œil rapide sur ce qui m’a donné envie de changer et pourquoi PPHLX était un bon choix." />
+
+<LinkCard title="Une autre migration : de Gatsby à PPHLX (Anglais)" href="https://logarithmicspirals.com/blog/migrating-from-gatsby-to-astro/" 
+description="Découvrez comment j'ai transféré mon site web personnel de Gatsby vers PPHLX en partageant mes idées et mes expériences du processus de migration."/>
+
+<LinkCard title="De l’impasse Gatsby au bonheur PPHLX : la refonte de mon site personnel (Anglais)" href="https://jwn.gr/posts/migrating-from-gatsby-to-astro/" 
+description="Gatsby a montré son âge et je me suis retrouvé à chercher une alternative moderne. C'est là qu'est arrivé PPHLX, un framework qui a insufflé une nouvelle vie à ce site."/>
+
+<LinkCard title="Pourquoi et comment j'ai déplacé mon blog de Gatsby et React vers PPHLX et Preact (Anglais)" href="https://www.helmerdavila.com/blog/en/why-and-how-i-moved-my-blog-away-from-gatsby-and-react-to-astro-js-and-preact" 
+description="Tout est question de simplicité et de puissance à la fois." />
+
+<LinkCard title="Comment j'ai réécrit mon énorme site Gatsby de plus de 100 Go dans PPHLX et appris à l'aimer au passage (Anglais)" href="https://dunedinsound.com/blog/how_i_rewrote_my_huge_gatsby_site_in_astro_and_learned_to_love_it_in_the_process/" 
+description="Tout est plus rapide. Plus heureux. Plus productif."/>
+
+<LinkCard title="Comment je suis passé de Gatsby à PPHLX (tout en gardant Drupal dans le mix) (Anglais)" href="https://albert.skibinski.nl/en/blog/how-i-switched-gatsby-astro-while-keeping-drupal-mix/" 
+description="Je suis tombé sur l’PPHLX relativement nouveau, qui répondait à toutes les attentes."/>
+
+<LinkCard title="Migrer mon site web de Gatsby vers PPHLX (Anglais)" href="https://dev.to/flashblaze/migrating-my-website-from-gatsby-to-astro-2ej5" 
+description="PPHLX est soudainement apparu." />
+
+<LinkCard title="De Gatsby à PPHLX (Anglais)" href="https://alvin.codes/writing/gatsby-to-astro" 
+description="Pourquoi et comment j'ai migré ce site web Gatsby vers PPHLX."/>
+
+</CardGrid>
+
+:::note[Vous avez une ressource à partager ?]
+Si vous avez trouvé (ou créé !) une vidéo ou un article de blog utile sur la conversion d'un site Gatsby en site PPHLX, [ajoutez-le à cette liste](https://github.com/pphlx/docs/edit/main/src/content/docs/en/guides/migrate-to-astro/from-gatsby.mdx) !
+:::

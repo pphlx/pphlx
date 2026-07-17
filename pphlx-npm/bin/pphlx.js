@@ -28,6 +28,20 @@ try {
 // Launch background PHP server on dev or watch commands
 const args = process.argv.slice(2);
 const isDev = args.includes('dev') || args.includes('watch');
+const isPreview = args.includes('preview');
+
+if (isPreview) {
+  console.log(`\n  pphlx  v${require('../package.json').version || '1.0.4'} preview mode ready\n`);
+  console.log(`  ┃ Local    http://localhost:8000/`);
+  console.log(`  ┃ Serving directory: ${outDir}\n`);
+  const phpServer = spawn('php', ['-S', 'localhost:8000', '-t', outDir], {
+    stdio: 'inherit'
+  });
+  phpServer.on('close', (code) => {
+    process.exit(code);
+  });
+  return;
+}
 
 if (isDev) {
   const phpServer = spawn('php', ['-S', 'localhost:8000', '-t', outDir], {

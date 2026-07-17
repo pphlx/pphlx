@@ -38,14 +38,14 @@ esac
 
 # 3. Resolve Download URL (GitHub Releases CDN)
 REPO="pphlx/pphlx"
-VERSION="v1.0.0" # Hardcoded specific release version for dev phase
+VERSION="latest" # Dynamically fetch latest release version tag
 
 if [ "$VERSION" = "latest" ]; then
     # Query GitHub API to get the latest tag
     TAG=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep -o '\"tag_name\": \"[^\"]*\"' | head -n 1 | cut -d '"' -f 4)
     if [ -z "$TAG" ]; then
         # Fallback if API rate limited
-        TAG="v1.0.0"
+        TAG="v1.0.5"
     fi
 else
     TAG="$VERSION"

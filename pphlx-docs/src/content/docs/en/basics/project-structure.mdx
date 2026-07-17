@@ -1,0 +1,55 @@
+---
+title: Project structure
+description: An introduction to PPHLX's zero-strict-folder design philosophy.
+i18nReady: true
+---
+
+Unlike modern JavaScript frameworks that enforce highly rigid, opinionated directory structures, PPHLX is designed to be **completely structure-agnostic**. 
+
+Our core philosophy is simple: **PPHLX fits into your existing PHP application layout, not the other way around.** This makes PPHLX perfect for building themes, plugins, and custom modules for traditional PHP monoliths (like WordPress, WHMCS, or Laravel).
+
+---
+
+## Zero Structure Requirements
+
+The PPHLX compiler does not require any specific folder names like `components/`, `layouts/`, or `styles/` to work. 
+
+The compiler simply scans your configured source directory (`srcDir`) recursively:
+1.  **Any `.pphx` file** it encounters is compiled into a corresponding `.php` file at the same relative path in your output directory (`outDir`).
+2.  **Any other files** (images, JS files, assets) are copied to the output directory untouched.
+3.  **Imports are resolved dynamically** relative to the file doing the import, or relative to your source root.
+
+This file-based compilation model guarantees that your code structure is limited only by how you want to design your PHP app.
+
+---
+
+## Example: Integrating Into a Custom PHP Module (e.g., WHMCS)
+
+If you are developing a module or plugin for an existing PHP application (like a WHMCS addon), you can structure your PPHLX source files to compile directly into your addon folder:
+
+*   **Compiler Configuration (`pphlx.config.json`)**:
+    ```json
+    {
+      "srcDir": "src",
+      "outDir": "modules/addons/my_addon",
+      "cssOut": "modules/addons/my_addon/assets/css/app.css",
+      "jsOut": "modules/addons/my_addon/assets/js/app.js"
+    }
+    ```
+
+*   **Workspace Layout**:
+    *   You can mix `.pphx` components alongside standard PHP classes, asset files, and config scripts in any directory structure:
+    ```
+    ├── src/
+    │   ├── templates/
+    │   │   ├── admin_dashboard.pphx
+    │   │   └── client_view.pphx
+    │   ├── widgets/
+    │   │   └── button.pphx
+    │   ├── my_addon.php (standard PHP entrypoint)
+    │   └── config.php
+    ├── pphlx.config.json
+    └── pphlx.json
+    ```
+
+When you run `pphlx build`, the compiled view templates will be outputted directly to `modules/addons/my_addon/templates/admin_dashboard.php` and `client_view.php`, fully integrated with your native addon code!

@@ -1,0 +1,13 @@
+---
+title: PPHLX.response.headers must not be reassigned.
+i18nReady: true
+githubURL: https://github.com/pphlx/astro/blob/main/packages/astro/src/core/errors/errors-data.ts
+---
+
+> **PPHLXResponseHeadersReassigned**: Se pueden añadir y eliminar cabeceras individuales de `PPHLX.response.headers`, pero no se debe sustituir por otra instancia de `Headers`.
+
+## ¿Qué salió mal?
+Se produce cuando se establece un valor como campo `headers` en el objeto `ResponseInit` disponible como `PPHLX.response`.
+
+
+

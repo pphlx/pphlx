@@ -1,0 +1,62 @@
+---
+title: Getting started
+description: Guides, resources, and API references to help you build with PPHLX — the zero-dependency, multi-framework compiler for modern, component-based PHP templates.
+i18nReady: true
+tableOfContents: false
+editUrl: false
+next: false
+hero:
+  title: PPHLX Docs
+  tagline: Guides, resources, and API references to help you build with PPHLX.
+  actions:
+    - text: Install PPHLX
+      icon: rocket
+      link: /en/install-and-setup/
+    - text: Learn about PPHLX’s features
+      icon: right-arrow
+      variant: minimal
+      link: /en/concepts/why-pphlx/
+  facepile:
+    tagline: Powered by PPHLX and our open-source contributors.
+    linkText: Join us!
+    link: /en/contribute/
+---
+
+import { CardGrid } from '@astrojs/starlight/components'
+import Card from '~/components/Landing/Card.astro'
+import ListCard from '~/components/Landing/ListCard.astro'
+import SplitCard from '~/components/Landing/SplitCard.astro'
+import Discord from '~/components/Landing/Discord.astro'
+
+<CardGrid>
+  <Card title="What will you build with PPHLX?" icon="laptop">
+    Explore starter templates for blogs, portfolios, landing pages, multi-framework dashboards, and high-fidelity ecommerce storefronts!
+  </Card>
+
+  <Card title="Take a guided tour" icon="star">
+    Follow along with our playbooks and templates to learn how to structure layout definitions and import component dependencies.
+  </Card>
+
+  <SplitCard title="Start a new project" icon="rocket">
+    ```sh
+    # initialize a new local workspace template
+    npx pphlx init
+    ```
+    
+    Our [installation guide](/en/install-and-setup/) has step-by-step instructions for installing PPHLX using our CLI, setting up editor configurations, and configuring workspace manifests manually.
+  </SplitCard>
+
+  <ListCard title="Learn" icon="open-book">
+    - [PPHLX’s main features](/en/concepts/why-pphlx/)
+    - [Islands architecture](/en/concepts/islands/)
+    - [PPHLX components](/en/basics/pphlx-components/)
+    - [The PPHLX template syntax](/en/reference/pphlx-syntax/)
+  </ListCard>
+
+  <ListCard title="Extend" icon="puzzle">
+    - [Add islands like React, Solid, and Svelte](/en/guides/integrations/)
+    - [Configure custom dev environments](/en/guides/cms/)
+  </ListCard>
+</CardGrid>
+
+<Discord title="Have a question or want to get involved?" cta="Join our Discord"/>

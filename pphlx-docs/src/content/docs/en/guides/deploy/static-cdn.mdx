@@ -1,0 +1,25 @@
+---
+title: Static CDN Hosting
+description: Deploy your static PPHLX projects to Cloudflare Pages, Vercel, or Netlify.
+---
+
+If your PPHLX project is entirely static (e.g., a documentation site or landing page compiled with `"sitemap": true` and no dynamic PHP database/API runtime code), you can host it for free on global static CDNs.
+
+## Supported Platforms
+
+*   **Cloudflare Pages**
+*   **Vercel**
+*   **Netlify**
+*   **GitHub Pages**
+
+## Deployment Steps
+
+1. Configure the build command on your platform:
+   ```bash
+   npm run build
+   ```
+2. Point the deployment output directory to:
+   ```text
+   dist
+   ```
+3. Deploy!

@@ -1,0 +1,27 @@
+---
+title: Headless Content APIs
+description: Fetch headless content from Strapi, Sanity, or Contentful in PPHLX.
+---
+
+PPHLX supports all headless CMS APIs out of the box because templates are parsed as standard PHP. You can fetch JSON data at runtime (dynamic rendering) or compile-time (static builds).
+
+## API Fetch Example
+
+You can retrieve data from any headless API (e.g. Strapi or Sanity) using standard PHP fetch functions:
+
+```pphlx
+{|
+$response = file_get_contents("https://api.example.com/v1/posts");
+$posts = json_decode($response, true);
+|}
+
+<div>
+  <h1>Articles</h1>
+  <?php foreach ($posts as $post): ?>
+    <article>
+      <h2>{|= htmlspecialchars($post['title']) |}</h2>
+      <p>{|= htmlspecialchars($post['excerpt']) |}</p>
+    </article>
+  <?php endforeach; ?>
+</div>
+```

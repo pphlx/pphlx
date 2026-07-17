@@ -1,0 +1,52 @@
+---
+type: integration
+title: 'Sitemap'
+description: Learn how to generate XML sitemaps natively in PPHLX.
+sidebar:
+  label: Sitemap
+category: other
+i18nReady: true
+---
+
+PPHLX features **native, built-in support** for generating XML sitemaps. You do not need to install any external packages or libraries.
+
+To generate a sitemap for your PPHLX website, simply enable it in your compiler configuration file (`pphlx.config.json`):
+
+```json title="pphlx.config.json"
+{
+  "srcDir": "src",
+  "outDir": "dist",
+  "site": "https://example.com",
+  "sitemap": true,
+  "default": "public"
+}
+```
+
+### Sitemap Modes
+
+You can control the default security posture of your sitemap using the `"default"` parameter inside your `pphlx.config.json`:
+
+*   **`"public"` (Opt-Out Mode):** All compiled pages are included in the sitemap by default.
+*   **`"private"` (Opt-In Mode):** All compiled pages are excluded from the sitemap by default. This is the safest default configuration for SaaS applications or private admin portals.
+
+---
+
+### Page-level Overrides
+
+You can override the default sitemap behavior directly inside individual pages by adding a special `@pphlx-sitemap` header tag at the top of the file:
+
+#### Opt-out of sitemap (when default is public):
+```php
+<?php
+// @pphlx-sitemap: false
+?>
+```
+
+#### Opt-in to sitemap (when default is private):
+```php
+<?php
+// @pphlx-sitemap: true
+?>
+```
+
+When you run the PPHLX compiler build, a fully compliant `sitemap.xml` file will be generated automatically in your distribution directory based on these rules.

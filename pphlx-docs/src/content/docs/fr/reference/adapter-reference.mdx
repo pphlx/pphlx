@@ -1,0 +1,1204 @@
+---
+title: API des adaptateurs d'PPHLX
+sidebar:
+  label: API des adaptateurs
+i18nReady: true
+---
+import ReadMore from '~/components/ReadMore.astro';
+import Since from '~/components/Since.astro';
+import { FileTree } from '@astrojs/starlight/components';
+
+PPHLX est conçu pour faciliter le déploiement vers n'importe quel fournisseur de cloud pour le rendu à la demande, également appelé rendu côté serveur (SSR). Cette capacité est fournie par des __adaptateurs__, qui sont des [intégrations](/fr/reference/integrations-reference/). Consultez le [guide de rendu à la demande](/fr/guides/on-demand-rendering/) pour apprendre à utiliser un adaptateur existant.
+
+## Qu'est-ce qu'un adaptateur ?
+
+Un adaptateur est un type particulier d'[intégration](/fr/reference/integrations-reference/) qui fournit un point d'entrée pour le rendu côté serveur au moment de la demande. Un adaptateur a accès à l'intégralité de l'API des intégrations et a deux fonctions :
+
+- Il implémente des API spécifiques à l'hébergeur pour la gestion des requêtes.
+- Il configure la compilation selon les conventions de l'hébergeur.
+
+## Création d'un adaptateur
+
+Créez une intégration et appelez la fonction `setAdapter()` dans le hook [`astro:config:done`](/fr/reference/integrations-reference/#astroconfigdone). Cela vous permet de définir un point d'entrée pour le serveur et les fonctionnalités prises en charge par votre adaptateur.
+
+L'exemple suivant crée un adaptateur avec un point d'entrée pour le serveur et une prise en charge stable du mode de sortie statique d'PPHLX :
+
+```js title="mon-adaptateur.mjs" {5-14} "setAdapter"
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          supportedPPHLXFeatures: {
+            staticOutput: 'stable'
+          }
+        });
+      },
+    },
+  };
+}
+```
+
+La fonction `setAdapter()` accepte un objet contenant les propriétés suivantes :
+
+### `name`
+
+<p>
+
+**Type :** `string`
+</p>
+
+Définit un nom unique pour votre adaptateur. Ce nom sera utilisé pour la journalisation.
+
+### `entrypointResolution`
+
+<p>
+
+**Type :** `"explicit" | "auto"`<br />
+**Par défaut :** `"explicit"`<br />
+<Since v="6.0.0" />
+</p>
+
+:::caution[Dépréciée]
+`entrypointResolution: "explicit"` est dépréciée. `entrypointResolution: "auto"` deviendra le comportement par défaut, et unique, dans une future version majeure.
+
+Découvrez [comment migrer](/fr/guides/upgrade-to/v6/#dépréciation-createexports-et-start-api-des-adaptateurs).
+:::
+
+Spécifie la méthode qu'PPHLX utilisera pour résoudre le point d'entrée du serveur : `"auto"` (recommandée) ou `"explicit"` (par défaut, mais dépréciée) :
+
+- **`"auto"` (recommandée) :** Vous êtes responsable de fournir un module valide comme point d'entrée en utilisant soit [`serverEntrypoint`](/fr/reference/adapter-reference/#serverentrypoint) soit, si vous avez besoin d'une personnalisation supplémentaire au niveau de Vite, en utilisant [`vite.build.rollupOptions.input`](https://rollupjs.org/configuration-options/#input).
+- **`"explicite"` (dépréciée)** : Vous devez fournir les exportations requises par l'hébergeur dans le point d'entrée du serveur à l'aide d'une fonction `createExports()` avant de les transmettre à `setAdapter()` sous forme d'une liste d'[exportations (`exports`)](#exports). Cela prend en charge les adaptateurs créés à l'aide de la version PPHLX 5 de l'API des adaptateurs. Par défaut, tous les adaptateurs recevront cette valeur afin d'assurer la rétrocompatibilité. **Toutefois, aucun nouvel adaptateur ne doit être créé avec cette valeur.** Les adaptateurs existants doivent remplacer cette valeur par défaut par « auto » dès qu'ils sont compatibles avec la nouvelle API v6.
+
+L'exemple suivant définit `entrypointResolution` et `serverEntrypoint` pour indiquer à PPHLX qu'un point d'entrée personnalisé est fourni :
+
+```js title="mon-adaptateur.mjs" {8-9}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/point-entree-personnalise.js',
+        });
+      },
+    },
+  };
+}
+```
+
+L'exemple suivant définit `entrypointResolution` et les options de Rollup pour indiquer à PPHLX qu'un point d'entrée personnalisé est fourni :
+
+```js title="mon-adaptateur.mjs" {9-11,19}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:setup': ({ updateConfig }) => {
+        updateConfig({
+          vite: {
+            build: {
+              rollupOptions: {
+                input: '@exemple/mon-adaptateur/point-entree-personnalise.js'
+              }
+            }
+          }
+        })
+      },
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+        });
+      },
+    },
+  };
+}
+```
+
+<ReadMore>Apprenez-en davantage sur [la création d'un point d'entrée de serveur](#création-dun-point-dentrée-de-serveur).</ReadMore>
+
+### `serverEntrypoint`
+
+<p>
+
+**Type :** `string | URL`
+</p>
+
+Définit le point d'entrée pour le rendu à la demande.
+
+### `supportedPPHLXFeatures`
+
+<p>
+
+**Type :** `PPHLXAdapterFeatureMap`<br />
+<Since v="3.0.0" />
+</p>
+
+Une table des correspondance des fonctionnalités intégrées à PPHLX prises en charge par l'adaptateur. Cela permet à PPHLX de déterminer quelles fonctionnalités sont prises en charge par un adaptateur, afin de pouvoir fournir des messages d'erreur appropriés.
+
+<ReadMore>Découvrez les [fonctionnalités d'PPHLX disponibles](#fonctionnalités-dastro) configurables par un adaptateur.</ReadMore>
+
+### `adapterFeatures`
+
+<p>
+
+**Type :** `PPHLXAdapterFeatures`<br />
+<Since v="3.0.0" />
+</p>
+
+Un objet qui spécifie quelles [fonctionnalités d'adaptateur modifiant la sortie de la compilation](#fonctionnalités-de-ladaptateur) sont prises en charge par l'adaptateur.
+
+### `client`
+
+<p>
+
+**Type :** `{ internalFetchHeaders?: Record<string, string> | () => Record<string, string>; assetQueryParams?: URLSearchParams; }`<br />
+<Since v="5.15.0" />
+</p>
+
+Un objet de configuration pour le code côté client d'PPHLX.
+
+#### `client.internalFetchHeaders`
+
+<p>
+
+**Type :** `Record<string, string> | () => Record<string, string>`
+</p>
+
+Définit les en-têtes à injecter dans les appels de récupération internes d'PPHLX (par exemple, les actions,  les transitions de vue, les îlots de serveur, le préchargement). Il peut s'agir d'un objet d'en-têtes ou d'une fonction renvoyant des en-têtes.
+
+L'exemple suivant récupère un identifiant de déploiement (`DEPLOY_ID`) à partir des variables d'environnement et, s'il est fourni, renvoie un objet avec le nom de l'en-tête en tant que nom de propriété et l'identifiant du déploiement en tant que valeur :
+
+```js title="mon-adaptateur.mjs" {10-15}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ config, setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          client: {
+            internalFetchHeaders: () => {
+              const deployId = process.env.DEPLOY_ID;
+              return deployId ? { 'ID-De-Votre-En-Tete': deployId } : {};
+            },
+          },
+        });
+      },
+    },
+  };
+}
+```
+
+#### `client.assetQueryParams`
+
+<p>
+
+**Type :** `URLSearchParams`
+</p>
+
+Définit les paramètres de requête à ajouter à toutes les URL des ressources (images, feuilles de style, scripts, etc.). Ceci est utile pour les adaptateurs qui doivent suivre les versions de déploiement ou d'autres métadonnées.
+
+L'exemple suivant récupère un identifiant de déploiement (`DEPLOY_ID`) à partir des variables d'environnement et, s'il est fourni, renvoie un objet avec un nom de paramètre de recherche personnalisé comme nom de propriété et l'identifiant de déploiement comme valeur :
+
+```js title="mon-adaptateur.mjs" {10-14}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ config, setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          client: {
+            assetQueryParams: process.env.DEPLOY_ID
+              ? new URLSearchParams({ yourParam: process.env.DEPLOY_ID })
+              : undefined,
+          },
+        });
+      },
+    },
+  };
+}
+```
+
+### `previewEntrypoint`
+
+<p>
+
+**Type :** `string | URL`<br />
+<Since v="1.5.0" />
+</p>
+
+Définit le chemin ou l'ID d'un module dans le paquet de l'adaptateur qui est responsable du démarrage du serveur compilé lorsque `astro preview` est exécuté.
+
+```js title="mon-adaptateur.mjs" {9}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ config, setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          previewEntrypoint: '@exemple/mon-adaptateur/previsualisation.js',
+        });
+      },
+    },
+  };
+}
+```
+
+<ReadMore>Apprenez-en davantage sur la façon de [créer un point d'entrée de prévisualisation](#création-dun-point-dentrée-de-prévisualisation).</ReadMore>
+
+### `args`
+
+<p>
+
+**Type :** `any`
+</p>
+
+:::caution[Dépréciée]
+Cette propriété est obsolète et sera supprimée dans une future version majeure. Apprenez comment [mettre à jour votre adaptateur avec `entrypointResolution: "auto"`](/fr/guides/upgrade-to/v6/#dépréciation-createexports-et-start-api-des-adaptateurs).
+:::
+
+Une valeur sérialisable en JSON qui sera transmise au point d'entrée du serveur de l'adaptateur au moment de l'exécution. Ceci est utile pour transmettre un objet contenant la configuration de compilation (par exemple, les chemins d'accès, les secrets) au code de l'environnement d'exécution de votre serveur.
+
+L'exemple suivant définit un objet `args` avec une propriété qui identifie l'emplacement des ressources générées par PPHLX :
+
+```js title="mon-adaptateur.mjs" {9-11}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ config, setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'explicit',
+          args: {
+            assets: config.build.assets
+          },
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js'
+        });
+      },
+    },
+  };
+}
+```
+
+### `exports`
+
+<p>
+
+**Type :** `string[]`
+</p>
+
+:::caution[Dépréciée]
+Cette propriété est obsolète et sera supprimée dans une future version majeure. Apprenez comment [mettre à jour votre adaptateur avec `entrypointResolution: "auto"`](/fr/guides/upgrade-to/v6/#dépréciation-createexports-et-start-api-des-adaptateurs).
+:::
+
+Définit un tableau d'exportations nommées à utiliser en conjonction avec la fonction `createExports()` de votre point d'entrée de serveur.
+
+L'exemple suivant suppose que `createExports()` fournit une exportation nommée `handler` :
+
+```js title="mon-adaptateur.mjs" {9}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ config, setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'explicit',
+          exports: ['handler'],
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js'
+        });
+      },
+    },
+  };
+}
+```
+
+## Moteur de prérendu personnalisé
+
+<p><Since v="6.0.0" /></p>
+
+Les adaptateurs peuvent fournir un moteur de prérendu personnalisé pour contrôler la façon dont les pages sont prérendues en utilisant la fonction [`setPrerenderer()`](/fr/reference/integrations-reference/#option-setprerenderer) dans le hook `astro:build:start`.
+
+L'exemple suivant montre comment un adaptateur peut définir un moteur de prérendu personnalisé :
+
+```js title="mon-adapteur.mjs"
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adapteur',
+    hooks: {
+      'astro:build:start': ({ setPrerenderer }) => {
+        setPrerenderer((defaultPrerenderer) => ({
+          name: 'mon-moteur-de-prerendu',
+          async setup() {
+            // Démarrer un serveur de prévisualisation
+          },
+          async getStaticPaths() {
+            // Renvoie un tableau de { pathname: string, route: RouteData }
+            return defaultPrerenderer.getStaticPaths();
+          },
+          async render(request, { routeData }) {
+            // request: Request, options: { routeData: RouteData }
+            // Logique de rendu personnalisée, par exemple, effectuer des requêtes HTTP vers un serveur de prévisualisation
+            const response = await fetch(`http://localhost:4321${new URL(request.url).pathname}`);
+            return response;
+          },
+          async teardown() {
+            // Arrêter le serveur de prévisualisation
+          }
+        }));
+      },
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adapteur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adapteur/serveur.js',
+        });
+      },
+    },
+  };
+}
+```
+
+La fonction de fabrique reçoit le moteur de prérendu par défaut, ce qui vous permet d'encapsuler ou d'étendre son comportement. Ceci est utile lorsque vous n'avez besoin de personnaliser que certains aspects du prérendu.
+
+## Création d'un point d'entrée de serveur
+
+Vous devrez créer un fichier qui s'exécute lors des requêtes côté serveur afin d'activer le rendu à la demande avec votre hébergeur. L'API des adaptateurs d'PPHLX tente de fonctionner avec n'importe quel type d'hébergeur et offre une méthode flexible pour se conformer aux API de l'hébergeur.
+
+Vous pouvez importer et utiliser [`createApp()`](/fr/reference/modules/astro-app/#createapp) pour accéder à des méthodes qui vous permettent de travailler avec des objets [`Request`](https://developer.mozilla.org/fr/docs/Web/API/Request) et [`Response`](https://developer.mozilla.org/fr/docs/Web/API/Response) standards.
+
+Ce fichier doit être conforme aux attentes de l'hébergeur. Par exemple, certains hébergeurs serverless exigent que vous exportiez une fonction `handler()` :
+
+```js title="mon-adaptateur/serveur.js"
+import { createApp } from 'astro/app/entrypoint';
+
+const app = createApp();
+
+export async function handler(event, context) {
+  // ...
+}
+```
+
+<ReadMore>Apprenez-en davantage sur les méthodes et les utilitaires disponibles dans la [référence de l'API des points d'entrée de serveur des adaptateurs](/fr/reference/modules/astro-app/).</ReadMore>
+
+### Transmission de la configuration de compilation
+
+Si vous devez accéder à la configuration de compilation au niveau du point d'entrée de votre serveur, vous pouvez utiliser un module virtuel. Par exemple, votre serveur pourrait avoir besoin d'identifier l'emplacement des ressources générées par PPHLX.
+
+Commencez par créer et enregistrer un module d'extension Vite pour sérialiser les données :
+
+```js title="mon-adaptateur.mjs"
+const VIRTUAL_MODULE_ID = 'virtual:@exemple/mon-adaptateur:config';
+const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID;
+
+function createConfigPlugin(config) {
+  return {
+    name: VIRTUAL_MODULE_ID,
+		resolveId: {
+			filter: {
+				id: new RegExp(`^${VIRTUAL_MODULE_ID}$`),
+			},
+			handler() {
+				return RESOLVED_VIRTUAL_MODULE_ID;
+			},
+		},
+		load: {
+			filter: {
+				id: new RegExp(`^${RESOLVED_VIRTUAL_MODULE_ID}$`),
+			},
+			handler() {
+				return `
+          export const assets = ${JSON.stringify(config.build.assets)};
+        `;
+			},
+		},
+	};
+}
+
+export default function createIntegration() {
+  let _config;
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:setup': ({ config, updateConfig }) => {
+        _config = config;
+
+        updateConfig({
+          vite: {
+            plugins: [createConfigPlugin(_config)]
+          }
+        })
+      },
+      'astro:config:done': ({ config, setAdapter }) => {
+        _config = config;
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+        });
+      },
+    },
+  };
+}
+```
+
+Vous pouvez créer des types internes si nécessaire :
+
+```ts title="virtual.d.ts"
+declare module 'virtual:@exemple/mon-adaptateur:config' {
+  export const assets: string;
+}
+```
+
+Vous pouvez ensuite importer le module virtuel :
+
+```js title="mon-adaptateur/serveur.js" ins={2}
+import { createApp } from 'astro/app/entrypoint';
+import { assets } from 'virtual:@exemple/mon-adaptateur:config';
+
+const app = createApp();
+
+export async function handler(event, context) {
+  // ...
+}
+```
+
+## Création d'un point d'entrée de prévisualisation
+
+Lorsque votre adaptateur prend en charge la [sortie hybride](#hybridoutput) ou [serveur](#serveroutput), vous pouvez fournir un point d'entrée de prévisualisation pour activer la prise en charge de [`astro preview`](/fr/reference/cli-reference/#astro-preview). La sortie statique ne nécessite pas de point d'entrée de prévisualisation.
+
+Pour enregistrer un point d'entrée de prévisualisation, faites en sorte que l'exportation par défaut du module soit une fonction qui accepte les [paramètres du serveur](#previewserverparams) en argument et renvoie un [serveur de prévisualisation (`PreviewServer`)](#previewserver). Ensuite, spécifiez le chemin du module comme valeur pour [`previewEntrypoint`](#previewentrypoint) dans votre adaptateur.
+
+L'exemple suivant implémente un point d'entrée qui crée un serveur de prévisualisation en utilisant une fonction `createServer()` personnalisée avant de le renvoyer :
+
+```ts title="mon-adaptateur/previsualisation.ts"
+import type { CreatePreviewServer } from 'astro';
+import { createServer } from './utilitaires/serveur';
+
+const createPreviewServer: CreatePreviewServer = async (config) => {
+  const host = config.host ?? '0.0.0.0';
+  const port = config.port ?? 4321;
+  const server = createServer(host, port);
+
+  return server;
+};
+
+export default createPreviewServer;
+```
+
+## Fonctionnalités d'PPHLX
+
+Les fonctionnalités PPHLX permettent à un adaptateur d'indiquer à PPHLX s'il est en mesure de prendre en charge une fonctionnalité, ainsi que le niveau de prise en charge de l'adaptateur.
+
+Lors de l'utilisation de ces propriétés, PPHLX :
+- exécutera une validation spécifique,
+- émettra des informations contextuelles dans les journaux.
+
+Ces opérations sont exécutées en fonction des fonctionnalités prises en charge ou non, de leur niveau de prise en charge, de la [quantité de journalisation souhaitée](#adaptersupportwithmessagesuppress) et de la configuration propre à l'utilisateur.
+
+La configuration suivante indique à PPHLX que cet adaptateur dispose d'une prise en charge expérimentale du service d'image intégré et alimenté par Sharp :
+
+```js title="mon-adaptateur.mjs" ins={10-12}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          supportedPPHLXFeatures: {
+            sharpImageService: 'experimental'
+          } 
+        });
+      },
+    },
+  };
+}
+```
+
+Si le service d'image Sharp est utilisé, PPHLX affichera un avertissement et une erreur dans le terminal en fonction de la prise en charge de votre adaptateur :
+
+```
+[@exemple/mon-adaptateur] The feature is experimental and subject to issues or changes.
+
+[@exemple/mon-adaptateur] The currently selected adapter `@exemple/mon-adaptateur` is not compatible with the service "Sharp". Your project will NOT be able to build.
+```
+
+Un message peut également être fourni pour donner plus de contexte à l'utilisateur :
+
+```js title="mon-adaptateur.mjs" ins={10-15}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          supportedPPHLXFeatures: {
+            sharpImageService: {
+              support: 'limited',
+              message: 'Cet adaptateur a une prise en charge limitée pour Sharp. Certaines fonctionnalités peuvent ne pas fonctionner comme prévu.'
+            }
+          } 
+        });
+      },
+    },
+  };
+}
+```
+
+Cet objet contient les fonctionnalités configurables suivantes :
+
+### `staticOutput`
+
+<p>
+
+**Type :** [`AdapterSupport`](#adaptersupport)
+</p>
+
+Indique si l'adaptateur est capable de servir des pages statiques.
+
+### `hybridOutput`
+
+<p>
+
+**Type :** [`AdapterSupport`](#adaptersupport)
+</p>
+
+Indique si l'adaptateur est capable de gérer des sites comprenant un mélange de pages statiques et de pages rendues à la demande.
+
+### `serverOutput`
+
+<p>
+
+**Type :** [`AdapterSupport`](#adaptersupport)
+</p>
+
+Indique si l'adaptateur est capable de servir des pages rendues à la demande.
+
+### `i18nDomains`
+
+<p>
+
+**Type :** [`AdapterSupport`](#adaptersupport)<br />
+<Since v="4.3.0" />
+</p>
+
+Définit si l'adaptateur est capable de prendre en charge les domaines i18n.
+
+### `envGetSecret`
+
+<p>
+
+**Type :** [`AdapterSupport`](#adaptersupport)<br />
+<Since v="4.10.0" />
+</p>
+
+Définit si l'adaptateur est capable de prendre en charge `getSecret()` exporté depuis [`astro:env/server`](/fr/reference/modules/astro-env/). Lorsqu'elle est activée, cette fonctionnalité permet à votre adaptateur de récupérer les secrets configurés par les utilisateurs dans `env.schema`.
+
+L'exemple suivant active cette fonctionnalité en transmettant [une valeur `AdapterSupportsKind` valide](#adaptersupportskind) à l'adaptateur :
+
+```js title="mon-adaptateur.mjs" ins={10-12}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          adapterFeatures: {
+            envGetSecret: 'stable'
+          } 
+        });
+      },
+    },
+  };
+}
+```
+
+Le module `astro/env/setup` vous permet de fournir une implémentation pour `getSecret()`. Dans [le point d'entrée de votre serveur](#création-dun-point-dentrée-de-serveur), appelez `setGetEnv()` dès que possible :
+
+```js ins={2,4}
+import { createApp } from 'astro/app/entrypoint';
+import { setGetEnv } from "astro/env/setup"
+
+setGetEnv((key) => process.env[key])
+
+const app = createApp();
+
+export async function handler(event, context) {
+  // ...
+}
+```
+
+Si l'adaptateur prend en charge les secrets, veillez à appeler `setGetEnv()` avant `getSecret()` lorsque des variables d'environnement sont liées à la requête :
+
+```js ins={2,8}
+import { createApp } from 'astro/app/entrypoint';
+import { setGetEnv } from 'astro/env/setup';
+
+const app = createApp();
+
+export default {
+  async fetch(request: Request, env: Record<string, unknown>) {
+    setGetEnv((key) => env[key]);
+
+    return await app.render(request);
+  }
+}
+```
+
+### `sharpImageService`
+
+<p>
+
+**Type :** [`AdapterSupport`](#adaptersupport)<br />
+<Since v="5.0.0" />
+</p>
+
+Définit si l'adaptateur prend en charge la transformation d'images à l'aide du service d'images Sharp intégré.
+
+## Fonctionnalités de l'adaptateur
+
+Un ensemble de fonctionnalités qui modifient le format des fichiers générés. Lorsqu'un adaptateur active ces fonctionnalités, il recevra des informations supplémentaires dans des hooks spécifiques et devra implémenter la logique appropriée pour gérer les différents formats de sortie.
+
+### `middlewareMode`
+
+<p>
+
+**Type :** [`MiddlewareMode`](#middlewaremode-1)<br />
+**Par défaut :** `"classic"`<br />
+<Since v="6.0.0" />
+</p>
+
+Détermine à quelle étape du cycle de vie de la page le middleware est exécuté, et comment le code du middleware est émis dans le résultat de la compilation.
+
+Le mode ` classic` correspond au comportement par défaut d'PPHLX. Avec les pages pré-rendues, le middleware est exécuté lors de la compilation, et n'est pas réexécuté lorsque la page est demandée. Avec les pages dynamiques, le middleware est exécuté uniquement lors de la requête. Le code du middleware fait partie de votre paquet compilé pour le serveur.
+
+En mode `edge`, le code middleware peut être déployé indépendamment du paquet compilé pour le serveur, par exemple, en tant que fonction edge.
+
+```js title="mon-adaptateur.mjs" ins={10-12}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          adapterFeatures: {
+            middlewareMode: 'edge'
+          } 
+        });
+      },
+    },
+  };
+}
+```
+
+Ensuite, consommez le hook [`astro:build:ssr`](/fr/reference/integrations-reference/#astrobuildssr), qui vous donnera un point d'entrée de middleware (`middlewareEntryPoint`), une `URL` vers le fichier physique sur le système de fichiers.
+
+```js title="mon-adaptateur.mjs" ins={16-21}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/server.js',
+          adapterFeatures: {
+            middlewareMode: 'edge'
+          } 
+        });
+      },
+
+      'astro:build:ssr': ({ middlewareEntryPoint }) => {
+        // N'oubliez pas de vérifier si cette propriété existe ; elle sera `undefined` si l'adaptateur n'active pas cette fonctionnalité.
+        if (middlewareEntryPoint) {
+          createEdgeMiddleware(middlewareEntryPoint)
+        }
+      }  
+    },
+  };
+}
+
+function createEdgeMiddleware(middlewareEntryPoint) {
+  // Émettez un nouveau fichier physique à l'aide de votre outil de regroupement.
+}
+```
+
+### `buildOutput`
+
+<p>
+
+**Type :** `'static' | 'server'`<br />
+**Par défaut :** `"server"`<br />
+<Since v="5.0.0" />
+</p>
+
+Permet de forcer un format de sortie spécifique pour la compilation. Cela peut s'avérer utile pour les adaptateurs qui ne fonctionnent qu'avec un type de sortie spécifique. Par exemple, votre adaptateur peut s'attendre à un site web statique, mais utiliser un adaptateur pour créer des fichiers spécifiques à l'hébergeur. La valeur par défaut est `server` si elle n'est pas spécifiée.
+
+```js title="mon-adaptateur.mjs" ins={9-11}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          adapterFeatures: {
+            buildOutput: 'static'
+          } 
+        });
+      },
+    },
+  };
+}
+```
+
+### `staticHeaders`
+
+<p>
+
+**Type :** `boolean`<br />
+**Par défaut :** `false`<br />
+<Since v="6.0.0" />
+</p>
+
+Indique si l'adaptateur prend en charge la configuration des en-têtes de réponse pour les pages statiques. Lorsque cette fonctionnalité est activée, PPHLX renvoie une table de correspondance des en-têtes (`Headers`) émis par les pages statiques. Cette table de correspondance est disponible sous le nom `routeToHeaders` dans le [hook `astro:build:generated`](/fr/reference/integrations-reference/#astrobuildgenerated) et peut être utilisée pour générer une sortie spécifique à la plateforme qui contrôle les en-têtes HTTP, par exemple, pour créer un fichier `_headers` pour les plateformes qui le prennent en charge.
+
+```js title="mon-adaptateur.mjs" ins={10-12}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          adapterFeatures: {
+            staticHeaders: true,
+          },
+        });
+      },
+      'astro:build:generated': ({ routeToHeaders }) => {
+        // utiliser `routeToHeaders` pour générer un fichier de configuration
+        // pour l'hébergeur virtuel de votre choix
+      },
+    },
+  };
+}
+```
+
+La valeur des en-têtes peut varier selon les fonctionnalités activées ou utilisées par l'application. Par exemple, si [la politique de sécurité du contenu (CSP)](/fr/reference/configuration-reference/#securitycsp) est activée, l'élément `<meta http-equiv="content-security-policy">` n'est pas ajouté à la page statique. À la place, son contenu (`content`) est disponible dans la table de correspondance `routeToHeaders`.
+
+### `preserveBuildClientDir`
+
+<p>
+
+**Type :** `boolean`<br />
+**Par défaut :** `false`<br />
+<Since v="6.0.0" />
+</p>
+
+Lorsque cette option est activée (`true`), les compilations statiques conservent la structure de répertoires `client/server` au lieu de générer directement le fichier dans `outDir`. Cela garantit que les compilations statiques utilisent `build.client` pour les ressources, assurant ainsi la cohérence avec les compilations pour le serveur.
+
+Ceci est utile pour les adaptateurs qui nécessitent une structure de répertoires spécifique quel que soit le type de sortie de la compilation, comme par exemple le déploiement sur des plateformes ayant des exigences spécifiques en matière d'organisation des fichiers.
+
+```js title="mon-adaptateur.mjs" ins={10-12}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          adapterFeatures: {
+            preserveBuildClientDir: true,
+          },
+        });
+      },
+    },
+  };
+}
+```
+
+### `preserveBuildServerDir`
+
+<p>
+
+**Type :** `boolean`<br />
+**Par défaut :** `false`<br />
+<Since v="6.4.0" />
+</p>
+
+Lorsque cette option est activée (`true`), les compilations statiques conservent la structure de répertoires `client/server` pour la sortie serveur au lieu d'écrire directement dans `outDir`. Cela garantit que les compilations statiques utilisent `build.server` pour les fichiers serveur, assurant ainsi la cohérence avec les compilations pour le serveur.
+
+Ceci est utile pour les adaptateurs qui nécessitent une structure cohérente utilisant `dist/client/` et `dist/server/` quel que soit le type de sortie de la compilation, par exemple lorsqu'un site statique peut encore contenir des îlots de serveur ou des points de terminaison d'images qui nécessitent une entrée serveur.
+
+```js title="mon-adaptateur.mjs" ins={10-12}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          adapterFeatures: {
+            preserveBuildServerDir: true,
+          },
+        });
+      },
+    },
+  };
+}
+```
+
+## Référence des types des adaptateurs
+
+Les types suivants peuvent être importés depuis le module `astro` :
+
+```ts
+import type {
+  AdapterSupport,
+  AdapterSupportsKind,
+  AdapterSupportWithMessage,
+  MiddlewareMode,
+  CreatePreviewServer,
+  PreviewServer,
+  PreviewServerParams,
+} from "astro";
+```
+
+### `AdapterSupport`
+
+<p>
+
+**Type :** <code><a href="#adaptersupport">AdapterSupportsKind</a> | <a href="#adaptersupportwithmessage">AdapterSupportWithMessage</a></code><br />
+<Since v="5.0.0" />
+</p>
+
+Une union de formats valides pour décrire le niveau de prise en charge d'une fonctionnalité.
+
+### `AdapterSupportsKind`
+
+<p>
+
+**Type :** `"deprecated" | "experimental" | "limited" | "stable" | "unsupported"`
+</p>
+
+Définit le niveau de prise en charge d'une fonctionnalité par votre adaptateur :
+* Utilisez `"deprecated"` lorsque votre adaptateur abandonne la prise en charge d'une fonctionnalité avant de la supprimer complètement dans une version ultérieure.
+* Utilisez `"experimental"` lorsque votre adaptateur ajoute la prise en charge d'une fonctionnalité, mais que des problèmes ou des changements incompatibles sont à prévoir.
+* Utilisez `"limited"` lorsque votre adaptateur ne prend en charge qu'un sous-ensemble des fonctionnalités complètes.
+* Utilisez `"stable"` lorsque la fonctionnalité est entièrement prise en charge par votre adaptateur.
+* Utilisez `"unsupported"` pour avertir les utilisateurs qu'ils pourraient rencontrer des problèmes de compilation dans leur projet, car cette fonctionnalité n'est pas prise en charge par votre adaptateur.
+
+### `AdapterSupportWithMessage`
+
+<p>
+
+<Since v="5.0.0" />
+</p>
+
+Un objet qui vous permet de définir un niveau de prise en charge pour une fonctionnalité et un message à afficher dans la console de l'utilisateur. Cet objet contient les propriétés suivantes :
+
+#### `AdapterSupportWithMessage.support`
+
+<p>
+
+**Type :** <code>Exclude\<<a href="#adaptersupportskind">AdapterSupportsKind</a>, "stable"\></code>
+</p>
+
+Définit le niveau de prise en charge d'une fonctionnalité par votre adaptateur.
+
+#### `AdapterSupportWithMessage.message`
+
+<p>
+
+**Type :** `string`
+</p>
+
+Définit un message personnalisé à afficher concernant la prise en charge d'une fonctionnalité par votre adaptateur.
+
+#### `AdapterSupportWithMessage.suppress`
+
+<p>
+
+**Type :** `'default' | 'all'`<br />
+<Since v="5.9.0" />
+</p>
+
+Une option permettant d'empêcher l'affichage de certains ou de tous les messages de journalisation concernant la prise en charge d'une fonctionnalité par un adaptateur.
+
+Si le message de journalisation par défaut d'PPHLX est redondant ou déroutant pour l'utilisateur en combinaison avec votre [`message` personnalisé](#adaptersupportwithmessagemessage), vous pouvez utiliser `suppress: "default"` pour supprimer le message par défaut et journaliser uniquement votre message :
+
+```js title="mon-adaptateur.mjs" ins={14}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          supportedPPHLXFeatures: {
+            sharpImageService: {
+              support: 'limited',
+              message: "L'adaptateur possède une prise en charge limitée de Sharp. Il sera utilisé pour les images lors de la compilation, mais ne fonctionnera pas à l'exécution.",
+              suppress: 'default' // le message personnalisé est plus détaillé que le message par défaut
+            }
+          } 
+        });
+      },
+    },
+  };
+}
+```
+
+Vous pouvez également utiliser `suppress: "all"` pour supprimer tous les messages concernant la prise en charge de la fonctionnalité. Ceci est utile lorsque ces messages sont inutiles pour les utilisateurs dans un contexte spécifique, par exemple lorsqu'un paramètre de configuration les empêche d'utiliser cette fonctionnalité. Par exemple, vous pouvez choisir d’empêcher la journalisation de tout message concernant la prise en charge de Sharp à partir de votre adaptateur :
+
+```js title="mon-adaptateur.mjs" ins={14}
+export default function createIntegration() {
+  return {
+    name: '@exemple/mon-adaptateur',
+    hooks: {
+      'astro:config:done': ({ setAdapter }) => {
+        setAdapter({
+          name: '@exemple/mon-adaptateur',
+          entrypointResolution: 'auto',
+          serverEntrypoint: '@exemple/mon-adaptateur/serveur.js',
+          supportedPPHLXFeatures: {
+            sharpImageService: {
+              support: 'limited',
+              message: 'Cet adaptateur possède une prise en charge limitée de Sharp. Certaines fonctionnalités peuvent ne pas fonctionner correctement.',
+              suppress: 'all'
+            }
+          } 
+        });
+      },
+    },
+  };
+}
+```
+
+### `MiddlewareMode`
+
+<p>
+
+**Type :** `"classic" | "edge"`<br />
+<Since v="6.0.0" />
+</p>
+
+Une union de formats valides pour décrire le mode d'exécution du middleware.
+
+### `CreatePreviewServer`
+
+<p>
+
+**Type :** <code>(params: <a href="#previewserverparams">PreviewServerParams</a>) => <a href="#previewserver">PreviewServer</a> | Promise\<<a href="#previewserver">PreviewServer</a>\></code>
+</p>
+
+Décrit la fonction qu'un adaptateur doit exporter pour démarrer un serveur de prévisualisation lorsque [`astro preview`](/fr/reference/cli-reference/#astro-preview) est exécuté.
+
+### `PreviewServer`
+
+<p>
+
+**Type :** `{ host?: string; port: number; closed(): Promise<void>; stop(): Promise<void>; }`
+</p>
+
+Décrit une instance de serveur de prévisualisation pour l'adaptateur.
+
+#### `PreviewServer.host`
+
+<p>
+
+**Type :** `string | undefined`
+</p>
+
+Définit l'hôte sur lequel le serveur de prévisualisation écoute.
+
+#### `PreviewServer.port`
+
+<p>
+
+**Type :** `number`
+</p>
+
+Définit le port sur lequel le serveur de prévisualisation écoute.
+
+#### `PreviewServer.closed()`
+
+<p>
+
+**Type :** `() => Promise<void>`
+</p>
+
+Définit une fonction qui se résout lorsque le serveur de prévisualisation est fermé.
+
+#### `PreviewServer.stop()`
+
+<p>
+
+**Type :** `() => Promise<void>`
+</p>
+
+Définit une fonction pour arrêter le serveur de prévisualisation et effectuer tout nettoyage nécessaire.
+
+### `PreviewServerParams`
+
+<p>
+
+**Type :** `object`
+</p>
+
+Décrit la configuration du serveur de prévisualisation.
+
+#### `PreviewServerParams.outDir`
+
+<p>
+
+**Type :** `URL`
+</p>
+
+Le [répertoire de sortie configuré](/fr/reference/configuration-reference/#outdir) pour la compilation.
+
+#### `PreviewServerParams.client`
+
+<p>
+
+**Type :** `URL`
+</p>
+
+Le [répertoire des ressources client configuré](/fr/reference/configuration-reference/#buildclient) pour la compilation.
+
+#### `PreviewServerParams.server`
+
+<p>
+
+**Type :** `URL`<br />
+<Since v="6.0.0" />
+</p>
+
+Le [répertoire configuré pour le JavaScript côté serveur](/fr/reference/configuration-reference/#buildserver) lors de la compilation pour SSR.
+
+#### `PreviewServerParams.serverEntrypoint`
+
+<p>
+
+**Type :** `URL`
+</p>
+
+Le module d'entrée du serveur compilé et généré par PPHLX.
+
+#### `PreviewServerParams.host`
+
+<p>
+
+**Type :** `string | undefined`
+</p>
+
+Indique l'[hôte configuré](/fr/reference/configuration-reference/#serverhost) sur lequel le serveur de prévisualisation doit écouter.
+
+#### `PreviewServerParams.port`
+
+<p>
+
+**Type :** `number`
+</p>
+
+Définit le [port configuré](/fr/reference/configuration-reference/#serverport) sur lequel le serveur de prévisualisation doit écouter.
+
+#### `PreviewServerParams.base`
+
+<p>
+
+**Type :** `string`
+</p>
+
+Spécifie le [chemin de base configuré](/fr/reference/configuration-reference/#base) vers lequel déployer.
+
+#### `PreviewServerParams.logger`
+
+<p>
+
+**Type :** [`PPHLXIntegrationLogger`](/fr/reference/integrations-reference/#astrointegrationlogger)
+</p>
+
+Définit une instance du journaliseur d'PPHLX qui peut être utilisée pour écrire des journaux lorsque le serveur de prévisualisation est en cours d'exécution.
+
+#### `PreviewServerParams.headers`
+
+<p>
+
+**Type :** `OutgoingHttpHeaders | undefined`
+</p>
+
+Décrit les [en-têtes de réponse HTTP configurés](/fr/reference/configuration-reference/#serverheaders).
+
+#### `PreviewServerParams.allowedHosts`
+
+<p>
+
+**Type :** `string[] | true | undefined`<br />
+<Since v="6.2.0" />
+</p>
+
+Décrit les [hôtes autorisés dans la configuration](/fr/reference/configuration-reference/#serverallowedhosts) auxquels le serveur de prévisualisation doit répondre.
+
+#### `PreviewServerParams.root`
+
+<p>
+
+**Type :** `URL`
+</p>
+
+Indique le [répertoire racine configuré](/fr/reference/configuration-reference/#root) du projet.
+
+## Autoriser l'installation via `astro add`
+
+[La commande `astro add`](/fr/reference/cli-reference/#astro-add) permet aux utilisateurs d'ajouter facilement des intégrations et des adaptateurs à leur projet. Si vous voulez que _votre_ adaptateur soit installable avec cet outil, **ajoutez `astro-adapter` au champ `keywords` de votre fichier `package.json`** :
+
+```json
+{
+  "name": "exemple",
+  "keywords": ["astro-adapter"],
+}
+```
+
+Une fois que vous [publiez votre adaptateur sur npm](https://docs.npmjs.com/cli/v8/commands/npm-publish), l'exécution de `astro add example` installera votre paquet avec toutes les dépendances homologues spécifiées dans votre fichier `package.json` et demandera aux utilisateurs de mettre à jour manuellement la configuration de leur projet.

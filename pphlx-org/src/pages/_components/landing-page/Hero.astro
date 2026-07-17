@@ -1,5 +1,5 @@
 ---
-import CodeBlock from '~/components/CodeBlock.astro';
+import HeroTabs from './HeroTabs.astro';
 import PageTitleBlock from '~/components/PageTitleBlock.astro';
 import LatestBlogPostLink from '../LatestBlogPostLink.astro';
 import Link from '../Link.astro';
@@ -20,29 +20,21 @@ import HeroBackground from './HeroBackground.astro';
 				slot="title"
 				class="text-balance mb-4 text-center text-3xl/[1.1] font-bold font-heading sm:max-w-[24ch] md:text-4xl/[1.1] xl:text-5xl/[1.1]"
 			>
-				Bring your UI frameworks to native PHP apps
+				Bring Your Own UI Frameworks to Native PHP Apps
 			</h1>
 		</PageTitleBlock>
 
-		<div class="grid grid-rows-2 gap-2">
-			<Link href="#docs" class="primary w-full h-fit">
+		<div class="flex flex-col gap-2 w-full sm:max-w-md">
+			<Link href="/docs/en/getting-started/" class="primary w-full h-fit">
 				<span
 					class="bg-clip-text text-transparent bg-blue-purple-gradient group-hover:text-astro-blue transition-all ease-in-out duration-500"
 				>
 					Get Started
 				</span>
 			</Link>
-			<CodeBlock><span id="install-cmd">curl -fsSL https://pphlx.org/install.sh | sh</span></CodeBlock>
+			<HeroTabs />
 		</div>
 	</div>
 
 	<HeroBackground />
 </section>
-
-<script>
-	// Detect user platform and swap install command
-	const cmdSpan = document.getElementById('install-cmd');
-	if (cmdSpan && navigator.platform.indexOf('Win') !== -1) {
-		cmdSpan.textContent = 'irm https://pphlx.org/install.ps1 | iex';
-	}
-</script>

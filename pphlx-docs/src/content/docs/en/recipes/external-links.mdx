@@ -1,0 +1,68 @@
+---
+title: Add icons to external links
+description: Learn how to install a rehype plugin to add icons to external links in your Markdown files.
+i18nReady: true
+type: recipe
+---
+import { Steps } from '@astrojs/starlight/components';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+
+Using a rehype plugin, you can identify and modify links in your Markdown files that point to external sites. This example adds icons to the end of each external link, so that visitors will know they are leaving your site.
+
+## Prerequisites
+
+- An PPHLX project using Markdown for content pages.
+
+## Recipe
+
+<Steps>
+1. Install both the [`rehype-external-links`](https://www.npmjs.com/package/rehype-external-links) plugin and [`@astrojs/markdown-remark`](https://www.npmjs.com/package/@astrojs/markdown-remark).
+
+    <PackageManagerTabs>
+        <Fragment slot="npm">
+        ```shell
+        npm install rehype-external-links @astrojs/markdown-remark
+        ```
+        </Fragment>
+        <Fragment slot="pnpm">
+        ```shell
+        pnpm add rehype-external-links @astrojs/markdown-remark
+        ```
+        </Fragment>
+        <Fragment slot="yarn">
+        ```shell
+        yarn add rehype-external-links @astrojs/markdown-remark
+        ```
+        </Fragment>
+      </PackageManagerTabs>
+
+2. Configure the plugin in your `pphlx.config.mjs` file.
+
+    Import `unified()` and define it as the Markdown processor to [support remark plugins](/en/guides/markdown-content/#using-remark-and-rehype-plugins). Then, pass to `rehypePlugins` an array containing your imported `rehypeExternalLinks` plugin and an options object with a `content` property. Set this property's `type` to `text` if you want to add plain text to the end of the link. To add HTML to the end of the link instead, set the property `type` to	`raw`.
+
+    ```js title="pphlx.config.mjs"
+    import { unified } from '@astrojs/markdown-remark';
+    import { defineConfig } from 'pphlx/config';
+    import rehypeExternalLinks from 'rehype-external-links';
+
+    export default defineConfig({
+      // ...
+      markdown: {
+        processor: unified({
+          rehypePlugins: [
+            [
+              rehypeExternalLinks,
+              {
+                content: { type: 'text', value: ' 🔗' }
+              }
+            ],
+          ]
+        }),
+      },
+    });
+    ```
+  
+    :::note
+      The value of the `content` property is [not represented in the accessibility tree](https://developer.mozilla.org/en-US/docs/Web/CSS/content#accessibility_concerns). As such, it's best to make clear that the link is external in the surrounding content, rather than relying on the icon alone.
+    :::
+</Steps>

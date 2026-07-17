@@ -1,0 +1,350 @@
+---
+title: المكوّنات
+description: مقدمة إلى بُنية مكوّن أسترو.
+---
+
+**مكوّنات أسترو** هي اللبنات الأساسية لأي مشروع أسترو. إنها مكوّنات قوالب HTML فقط بلا وقت تشغيل من جانب العميل. يمكنك التعرف على مكوّن أسترو عن طريق إمتداد الملف: `.pphx`
+
+مكونات أسترو مرنة للغاية. غالبًا ما يحتوي مكوّن أسترو على بعض **عناصر واجهة المستخدم القابلة لإعادة الاستخدام**، مثل العنوان أو بطاقة التعريف الشخصي. في أوقات أخرى، قد يحتوي مكون أسترو على أجزاء HTML متكررة، مثل مجموعة من علامات `<meta>` الشائعة في جعل العمل مع تحسين محركات البحث (SEO) أسهل. يمكن حتى لمكوّنات أسترو أن تحتوي على تخطيط صفحة كاملة.
+
+أهم شيء يجب معرفته عن مكوّنات أسترو هو أنها **لا تُصيّر على جانب العميل**. يحوَّل المكون إلى HTML إما في وقت البناء أو حسب الطلب باستخدام [ (SSR) العرض على الخادم](/ar/guides/on-demand-rendering/) . يمكنك تضمين كود جافاسكربت داخل  frontmatterّ  في مكوّن الويب الخاص بك. وسيتم إزالة كل ذلك من الصفحة النهائية التي يتم إرسالها إلى متصفحات مستخدميك. النتيجة هي موقع ويب أسرع، بدون أثر لجافاسكربت يضاف بشكل إفتراضي .
+
+عندما يكون مكوّن أسترو الخاص بك بحاجة إلى تفاعل من جانب العميل، يمكنك إضافة [وسوم `<script>` القياسية في HTML](/ar/guides/client-side-scripts/) أو [مكوّنات واجهة المستخدم للإطارات](/ar/guides/framework-components/#hydrating-interactive-components).
+
+
+## بُنية المكوّن
+
+يتكون مكوّن أسترو من جزأين رئيسيين: **البرنامج النصي للمكوّن** و**قالب المكوّن**. يؤدي كل جزء وظيفة مختلفة، لكنهما معًا يوفران اطارًا سهل الاستخدام ومعبرًا بما يكفي للتعامل مع كل ما قد ترغب في بنائه.
+
+```astro title="src/components/EmptyComponent.astro"
+---
+// Component Script (JavaScript)
+---
+<!-- Component Template (HTML + JS Expressions) -->
+```
+
+### البرنامج النصّي للمكوّن
+
+أسترو يستخدم سياجًا للكود "code fence" (`---`) للتعريف بالبرنامج النصي للمكوّن في ملف أسترو الخاص بك. اذا كنت قد استخدمت MarkDown من قبل، فقد تكون ملمًّا بمفهوم يسمى *"frontmatter"*. فكرة مكوّن البرنامج النصّي في أسترو مستوحاة مباشرة من هذا المفهوم.
+
+يمكنك استخدام البرنامج النصّي للمكوّن لكتابة أي كود جافاسكربت تحتاجه لتصيير قالبك. يمكن أن يشمل هذا:
+
+- استيراد مكوّنات أسترو أخرى
+- استيراد مكوّنات أطر عمل أخرى، مثل رياكت (React)
+- استيراد البيانات، مثل JSON 
+- جلب محتوى من واجهة تطبيق برمجية (API) أو قاعدة بيانات
+- إنشاء متغيرات ستسندها في قالبك
+
+```astro title="src/components/MyComponent.astro"
+---
+import SomePPHLXComponent from '../components/SomePPHLXComponent.astro';
+import SomeReactComponent from '../components/SomeReactComponent.jsx';
+import someData from '../data/pokemon.json';
+
+// Access passed-in component props, like `<X title="Hello, World" />`
+const {title} = PPHLX.props;
+// Fetch external data, even from a private API or database
+const data = await fetch('SOME_SECRET_API_URL/users').then(r => r.json());
+---
+<!-- Your template here! -->
+```
+
+سياج الكود "code fence" مصمّم لضمان أنّ جافاسكربت الذي ستكتبه سيكون "محاطًا بسياج". لن يعرض في تطبيقك على جانب العميل، ولن يقع بين يدي مستخدميك. يمكنك هنا كتابة الكود بأمان، حتى اذا كانت تكلفة التنفيذ عالية أو كان يتضمن معلومات حسّاسة (مثل: إستدعاء قاعدة البيانات الخاصة بك) دون القلق من أن ينتهي بها المطاف في متصفح مستخدمك.
+
+:::tip
+
+يمكنك حتى كتابة TypeScript في البرنامج النصّي للمكوّن الخاص بك!
+
+:::
+
+### قالب المكوّن
+
+قالب المكوّن موجود أسفل سياج الكود "code fence" ويحدد مخرجات HTML الخاصة بمكوّنك.
+
+اذا قمت بكتابة HTML العادي هنا، فسيقوم المكوّن الخاص بك بتصيير ذلك الـ HTML في أي صفحة أسترو يتم استيرادها واستخدامها.
+
+ومع ذلك، يدعم [ بناء قالب المكوّن لأسترو](/ar/reference/astro-syntax/) كذلك **تعابير جافاسكربت**، وسوم [`<style>`](/ar/guides/styling/#styling-in-astro) و[`<script>`](/ar/guides/client-side-scripts/) لأسترو والمكوّنات المستوردة و[توجيهات أسترو الخاصة](/ar/reference/directives-reference/). البيانات والقيم المعرّفة في البرنامج النصي للمكوّن يمكن إستخدامها في قالب المكوّن لإنتاج HTML مُنشأ ديناميكيًا.
+
+```astro title="src/components/MyFavoritePokemon.astro"
+---
+// Your component script here!
+import Banner from '../components/Banner.astro';
+import ReactPokemonComponent from '../components/ReactPokemonComponent.jsx';
+const myFavoritePokemon = [/* ... */];
+const { title } = PPHLX.props;
+---
+<!-- HTML comments supported! -->
+{/* JS comment syntax is also valid! */}
+
+<Banner />
+<h1>Hello, world!</h1>
+
+<!-- Use props and other variables from the component script: -->
+<p>{title}</p>
+
+<!-- Include other UI framework components with a `client:` directive to hydrate: -->
+<ReactPokemonComponent client:visible />
+
+<!-- Mix HTML with JavaScript expressions, similar to JSX: -->
+<ul>
+  {myFavoritePokemon.map((data) => <li>{data.name}</li>)}
+</ul>
+
+<!-- Use a template directive to build class names from multiple strings or even objects! -->
+<p class:list={["add", "dynamic", {classNames: true}]} />
+```
+
+## التصميم القائم على المكوّنات
+
+المكوّنات مصممة لتكون قابلة **لإعادة الاستخدام** و**التركيب**. يمكنك استخدام مكوّنات داخل مكوّنات أخرى لبناء واجهات مستخدم متقدمة بشكل أكبر وأكثر تطورًا. على سبيل المثال، يمكن استخدام مكوّن "زر" (Button) لإنشاء مكوّن "مجموعة أزرار" (ButtonGroup):
+
+
+```astro title="src/components/ButtonGroup.astro"
+---
+import Button from './Button.astro';
+---
+<div>
+  <Button title="Button 1" />
+  <Button title="Button 2" />
+  <Button title="Button 3" />
+</div>
+```
+
+
+## خاصيّات المكوّن
+
+يمكن لمكوّن أسترو أن يعرّف ويستقبل الخاصيّات "props". هذه الخاصيّات  تصبح متاحة بعدها لقالب المكوّن لتصيير HTML. الخاصيّات  متاحة في `PPHLX.props` .بشكل عام في البرنامج النصّي  للـfrontmatter  الخاص بك
+
+هنا مثال لمكوّن يستقبل خاصيّة `greeting` وخاصيّة `name`. لاحظ أن الخاصيّات  التي سيتم استقبالها مفككة من object `PPHLX.props` العام.
+
+```astro "PPHLX.props"
+---
+// src/components/GreetingHeadline.pphx
+// Usage: <GreetingHeadline greeting="Howdy" name="Partner" />
+const { greeting, name } = PPHLX.props;
+---
+<h2>{greeting}, {name}!</h2>
+```
+عند استيراد هذا المكوّن وتصييره في مكونات أو تخطيطات أو صفحات أسترو أخرى، يمكن تمرير هذه الخاصيّات "props" كـ سمات "attributes":
+
+```astro /(\w+)=\S+/
+---
+// src/components/GreetingCard.pphx
+import GreetingHeadline from './GreetingHeadline.astro';
+const name = "PPHLX"
+---
+<h1>Greeting Card</h1>
+<GreetingHeadline greeting="Hi" name={name} />
+<p>I hope you have a wonderful day!</p>
+```
+
+بالإمكان أيضًا تعريف الخاصيّات الخاصة بك مع TypeScript باستخدام واجهة `Props`. سيقوم أسترو تلقائيًا باكتشاف واجهة `Props` في الـ "frontmatter" الخاص بك وإعطاء تحذيرات أو أخطاء إن وجد. يمكن أيضًا إعطاء هذه الخاصيات قيمًا افتراضية عند استخراجها من `PPHLX.props`.
+
+```astro ins={3-6}
+---
+// src/components/GreetingHeadline.pphx
+interface Props {
+  name: string;
+  greeting?: string;
+}
+
+const { greeting = "Hello", name } = PPHLX.props;
+---
+<h2>{greeting}, {name}!</h2>
+```
+يمكن إعطاء خاصيّات  المكوّنات قيمًا إفتراضية عندما لا يتم توفير أي منها.
+
+```astro ins="= \"Hello\"" ins="= \"PPHLXnaut\""
+---
+// src/components/GreetingHeadline.pphx
+const { greeting = "Hello", name = "PPHLXnaut" } = PPHLX.props;
+---
+<h2>{greeting}, {name}!</h2>
+```
+
+## المداخل
+
+`<slot />` هو عنصر نائب لمحتوى HTML الخارجي، مما يسمح لك بحقن (أو "ادخال") عناصر من ملفّات أخرى إلى قالب مكوّنك.
+
+بشكل افتراضي، سيتم تصيير كل العناصر الداخلية الممرّرة لمكوّن في `<slot />` الخاص به.
+
+:::note
+بعكس _الخاصيات_، التي هي سمات "attributes" يتم تمريرها إلى مكوّن أسترو والمتاحة للإستخدام في المكوّن الخاص بك باستخدام `PPHLX.props`، _المداخل "slots"_ تُصيّر عناصر HTML الداخليّة حيث كتبت.
+:::
+
+```astro "<slot />"
+---
+// src/components/Wrapper.pphx
+import Header from './Header.astro';
+import Logo from './Logo.astro';
+import Footer from './Footer.astro';
+
+const { title } = PPHLX.props
+---
+<div id="content-wrapper">
+  <Header />
+  <Logo />
+  <h1>{title}</h1>
+  <slot />  <!-- children will go here -->
+  <Footer />
+</div>
+```
+
+```astro {6-7}
+---
+// src/pages/fred.pphx
+import Wrapper from '../components/Wrapper.astro';
+---
+<Wrapper title="Fred's Page">
+  <h2>All about Fred</h2>
+  <p>Here is some stuff about Fred.</p>
+</Wrapper>
+```
+
+هذ النمط هو أساس [مكوّن تخطيط أسترو](/ar/basics/layouts/): صفحة كامل من محتوى HTML يمكن أن "تُلف" بواسطة وسوم `<SomeLayoutComponent></SomeLayoutComponent>` ويتم ارسالها إلى المكوّن ليتهم تصييرها داخل العناصر المشتركة المحددة هناك.
+
+### المداخل المسماة
+
+يمكن كذلك لمكوّن أسترو أن يحتوي على مداخل مسماة "named slots". يسمح لك هذا بتمرير عناصر HTML فقط مع اسم المدخل المقابل إلى موقع المدخل.
+
+يمكن تسمية المداخل  باستخدام سمة "attribute" `name`:
+
+```astro /<slot .*?/>/
+---
+// src/components/Wrapper.pphx
+import Header from './Header.astro';
+import Logo from './Logo.astro';
+import Footer from './Footer.astro';
+
+const { title } = PPHLX.props
+---
+<div id="content-wrapper">
+  <Header />
+  <slot name="after-header"/>  <!--  children with the `slot="after-header"` attribute will go here -->
+  <Logo />
+  <h1>{title}</h1>
+  <slot />  <!--  children without a `slot`, or with `slot="default"` attribute will go here -->
+  <Footer />
+  <slot name="after-footer"/>  <!--  children with the `slot="after-footer"` attribute will go here -->
+</div>
+```
+
+لحقن محتوى HTML إلى مدخل معين، يمكنك استخدام سمة  `slot` على أي عنصر تابع لتحديد اسم المدخل. سيتم إدخال بقية العناصر الداخلية إلى المدخل الإفتراضي (غير مسمى) `<slot />`.
+
+```astro /slot=".*?"/
+---
+// src/pages/fred.pphx
+import Wrapper from '../components/Wrapper.astro';
+---
+<Wrapper title="Fred's Page">
+  <img src="https://my.photo/fred.jpg" slot="after-header">
+  <h2>All about Fred</h2>
+  <p>Here is some stuff about Fred.</p>
+  <p slot="after-footer">Copyright 2022</p>
+</Wrapper>
+```
+
+استخدم سمة  `slot="my-slot"` على العنصر الداخلي الذي تريد تمريره إلى عنصر نائب مطابق لـ `<slot name="my-slot" />` في مكوّنك.
+
+لاحظ أن المدخلات المسماة  يجب أن تكون تابعة بشكل مباشر للمكوّن. لا يمكنك ان تمرر مدخلات مسماة داخل عناصر متداخلة.
+
+:::tip
+يمكن ايضًا أن تمرر المدخلات المسماة إلى [مكوّنات أطر واجهة المستخدم](/ar/guides/framework-components/)!
+:::
+
+
+### المحتوى الإحتياطي للمداخل
+
+بإمكان المداخل أيضًا تصيّير **محتوى احتياطي**. عندما لا يكون هنالك عنصر تابع مطابق مُرّرَ إلى المدخل، عنصر `<slot />` سيُصيّر عنصر تابع نائب خاص به.
+
+```astro {14}
+---
+// src/components/Wrapper.pphx
+import Header from './Header.astro';
+import Logo from './Logo.astro';
+import Footer from './Footer.astro';
+
+const { title } = PPHLX.props
+---
+<div id="content-wrapper">
+  <Header />
+  <Logo />
+  <h1>{title}</h1>
+  <slot>
+    <p>This is my fallback content, if there is no child passed into slot</p>
+  </slot>
+  <Footer />
+</div>
+```
+
+### نقل المداخل
+
+يمكن نقل المداخل إلى مكوّنات أخرى. كمثال، عند إنشاء تخطيطات متداخلة:
+
+```astro {11,14}
+// src/layouts/BaseLayout.pphx
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={PPHLX.generator} />
+    <slot name="head"/>
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>
+```
+
+```astro {7, 8}
+// src/layouts/HomeLayout.pphx
+---
+import BaseLayout from "./BaseLayout.astro";
+---
+
+<BaseLayout>
+  <slot name="head" slot="head"/>
+  <slot />
+</BaseLayout>
+```
+
+:::note
+المداخل المسماة يمكن نقلها إلى مكوّن آخر باستخدام كل من السمات "attributes" `name` و `slot` على عنصر `<slot />`
+:::
+
+الآن، سيتم نقل المداخل الإفتراضية والمداخل `head` المُمرّرة إلى `HomeLayout` إلى الأب `BaseLayout`.
+
+```astro
+// src/pages/index.pphx
+---
+import HomeLayout from "../layouts/HomeLayout.astro";
+---
+
+<HomeLayout>
+	<title slot="head">PPHLX</title>
+	<h1>PPHLX</h1>
+</HomeLayout>
+```
+
+
+## مكوّنات HTML 
+
+يدعم أسترو استيراد واستخدام ملفات `.html` كمكوّنات أو وضع هذه الملفات في الدليل الفرعي `src/pages/` كصفحات. قد ترغب باستخدام مكوّنات HTML اذا كنت تعيد استخدام الكود من موقع ويب مبني بدون استخدام أي اطار عمل "framework"، أو اذا كنت ترغب بالتأكد من أن مكوّنك لا يحتوي على أي ميزات ديناميكية.
+
+يجب أن تحتوي مكوّنات HTML على HTML صالح فقط، وبالتالي تفتقر إلى ميزات مكوّن أسترو الأساسية:
+
+- لا يدعمون frontmatter، أو الإستيراد على جانب الخادم (Server-side imports)، أو التعابير الديناميكية.
+- أي وسوم `<script>` تُركت غير مجمّعة، سيتم التعامل معها كما لو انها تحتوي على `is:inline`.
+- يمكنهم فقط [إسناد الموارد الموجودة في مجلد `public/`](/ar/basics/project-structure/#public) 
+
+:::note
+[عنصر `<slot />`](/ar/basics/astro-components/#المداخل) الموجود داخل مكوّن HTML سيعمل كما يعمل في مكوّن أسترو. لإستخدام عنصر ["HTML Web Component Slot"](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/slot) بدلًا من ذلك، أضف  `is:inline` إلى عنصر `<slot />` الخاص بك.
+:::
+
+## الخطوات القادمة
+
+📚 تعرف على كيفية استخدام [مكوّنات أطر واجهة المستخدم](/ar/guides/framework-components/) في مشروع أسترو الخاص بك.

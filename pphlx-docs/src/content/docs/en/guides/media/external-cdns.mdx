@@ -1,0 +1,33 @@
+---
+title: External Media CDNs (Cloudinary & Mux)
+description: Optimize images and stream videos using Cloudinary and Mux.
+---
+
+PPHLX integrates with cloud media networks (such as Cloudinary for images and Mux for video streaming) by generating optimized delivery URLs inside templates.
+
+## Cloudinary Image Resizing
+
+You can generate dynamic, cloud-optimized image URLs natively:
+
+```pphlx
+{|
+$imageId = "samples/shoe";
+$cloudinaryUrl = "https://res.cloudinary.com/demo/image/upload/w_500,c_scale/v1/" . $imageId . ".jpg";
+|}
+
+<img src="{|= $cloudinaryUrl |}" alt="Resized Shoe" />
+```
+
+## Mux Video Streaming
+
+To embed low-latency HLS video streaming, pass your Mux Playback ID to standard HTML5 players like Hls.js:
+
+```html
+<!-- index.pphx -->
+@import VideoPlayer from 'components/VideoPlayer.jsx'
+
+<div>
+  <!-- Streams native HLS via Mux playback ID -->
+  <VideoPlayer playbackId="DS00UiUgNp100V68zjhJZff7kZaLFxsT2" client:visible />
+</div>
+```

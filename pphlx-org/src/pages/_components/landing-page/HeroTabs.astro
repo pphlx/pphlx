@@ -1,0 +1,85 @@
+---
+import CodeBlock from '~/components/CodeBlock.astro';
+---
+
+<div class="hero-tabs-container w-full flex flex-col bg-astro-dark-900/55 rounded-xl">
+	<!-- Unified Tab Bar -->
+	<div class="flex bg-astro-dark-950/20 select-none rounded-t-xl">
+		<button 
+			data-tab="npm" 
+			class="flex-1 py-2 text-xs font-semibold text-white bg-astro-dark-900/40 transition-all cursor-pointer text-center outline-none focus:outline-none focus-visible:outline-none active:outline-none rounded-tl-xl"
+		>
+			NPM
+		</button>
+		<button 
+			data-tab="native" 
+			class="flex-1 py-2 text-xs font-semibold text-astro-gray-300 hover:text-white transition-all cursor-pointer text-center outline-none focus:outline-none focus-visible:outline-none active:outline-none"
+		>
+			Native
+		</button>
+		<button 
+			data-tab="composer" 
+			class="flex-1 py-2 text-xs font-semibold text-astro-gray-300 hover:text-white transition-all cursor-pointer text-center outline-none focus:outline-none focus-visible:outline-none active:outline-none rounded-tr-xl"
+		>
+			Composer
+		</button>
+	</div>
+
+	<!-- Unified original CodeBlock component -->
+	<div class="hero-install-tab">
+		<CodeBlock><span class="hero-install-cmd">npm install -g pphlx</span></CodeBlock>
+	</div>
+</div>
+
+<style is:global>
+	/* Make the inner CodeBlock attach seamlessly inside the tab card container */
+	.hero-install-tab [data-code-block] {
+		background: transparent !important;
+		border-radius: 0 !important;
+		text-align: left !important; /* Force left alignment */
+	}
+</style>
+
+<script>
+	// Tab toggling logic for each instance on the page
+	document.querySelectorAll('.hero-tabs-container').forEach(container => {
+		const tabNpm = container.querySelector('[data-tab="npm"]') as HTMLElement | null;
+		const tabNative = container.querySelector('[data-tab="native"]') as HTMLElement | null;
+		const tabComposer = container.querySelector('[data-tab="composer"]') as HTMLElement | null;
+		const cmdSpan = container.querySelector('.hero-install-cmd') as HTMLElement | null;
+
+		// Detect platform for Native tab
+		const isWindows = navigator.platform.indexOf('Win') !== -1;
+		const nativeCmd = isWindows ? 'irm https://pphlx.org/install.ps1 | iex' : 'curl -fsSL https://pphlx.org/install.sh | sh';
+
+		const activeClasses = ['text-white', 'bg-astro-dark-900/40'];
+		const inactiveClasses = ['text-astro-gray-300', 'hover:text-white'];
+
+		function switchTab(activeTab: HTMLElement | null, commandText: string) {
+			[tabNpm, tabNative, tabComposer].forEach(tab => {
+				if (tab) {
+					if (tab === activeTab) {
+						tab.classList.remove(...inactiveClasses);
+						tab.classList.add(...activeClasses);
+					} else {
+						tab.classList.remove(...activeClasses);
+						tab.classList.add(...inactiveClasses);
+					}
+				}
+			});
+			if (cmdSpan) {
+				cmdSpan.textContent = commandText;
+			}
+		}
+
+		if (tabNpm) {
+			tabNpm.addEventListener('click', () => switchTab(tabNpm, 'npm install -g pphlx'));
+		}
+		if (tabNative) {
+			tabNative.addEventListener('click', () => switchTab(tabNative, nativeCmd));
+		}
+		if (tabComposer) {
+			tabComposer.addEventListener('click', () => switchTab(tabComposer, 'composer require pphlx/pphlx'));
+		}
+	});
+</script>

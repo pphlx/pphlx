@@ -1,0 +1,73 @@
+---
+import { englishPages } from '~/content';
+import {
+	type IntegrationCategory,
+	type IntegrationEntry,
+	isIntegrationEntry,
+} from '~/content.config';
+import { isLogoKey } from '~/data/logos';
+import { getLanguageFromURL } from '~/util/path-utils';
+import CardsNav from './NavGrid/CardsNav.astro';
+
+interface Props {
+	category?: IntegrationCategory;
+}
+
+const lang = getLanguageFromURL(Astro.url.pathname);
+
+function categoryLinksFromPages(pages: IntegrationEntry[], category: IntegrationCategory) {
+	return pages
+		.filter((page) => page.data.category === category)
+		.map((page) => {
+			const parts = page.data.title.split('/');
+			const scope = parts.length > 1 ? parts[0] : '';
+			let name = parts.length > 1 ? parts[1] : parts[0];
+			if (name.includes(' (')) {
+				name = name.split(' (')[0];
+			}
+			const pageUrl = page.id.replace('en/', `/${lang}/`) + '/';
+			const displayTitle = scope
+				? '<span class="scope">' + scope + '/</span><wbr>' + name.replaceAll('-', '&#8288;-&#8288;')
+				: name.replaceAll('-', '&#8288;-&#8288;');
+			return {
+				title: displayTitle,
+				href: pageUrl,
+				logo: { brand: isLogoKey(name.toLowerCase().replace('-js', '').replace('css', '')) },
+			};
+		});
+}
+
+const enPages = englishPages.filter(isIntegrationEntry);
+
+const allCategories = {
+	renderer: {
+		title: Astro.locals.t('integrations.renderers'),
+		links: categoryLinksFromPages(enPages, 'renderer'),
+	},
+	other: {
+		title: Astro.locals.t('integrations.others'),
+		links: categoryLinksFromPages(enPages, 'other'),
+	},
+};
+const category = Astro.props.category && Astro.props.category in allCategories
+	? allCategories[Astro.props.category as keyof typeof allCategories]
+	: undefined;
+
+const categories = category ? [category] : allCategories;
+---
+
+{
+	Object.values(categories).map((category) => (
+		<>
+			<h3>{category.title}</h3>
+			<CardsNav size="small" links={category.links} class="integrations-nav" />
+		</>
+	))
+}
+
+<style>
+	.integrations-nav :global(.scope) {
+		font-weight: 400;
+		color: var(--sl-color-text);
+	}
+</style>

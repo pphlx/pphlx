@@ -1,9 +1,30 @@
 ---
 import PlayLayout from '~/layouts/PlayLayout.astro';
 import PPHLXLogo from '~/components/PPHLXLogo.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Find latest vsix version dynamically from public/extensions
+let version = '1.0.5'; // fallback
+try {
+	const extensionsDir = path.join(process.cwd(), 'public', 'extensions');
+	if (fs.existsSync(extensionsDir)) {
+		const files = fs.readdirSync(extensionsDir);
+		const vsixFile = files.find(f => f.startsWith('pphlx-') && f.endsWith('.vsix'));
+		if (vsixFile) {
+			const match = vsixFile.match(/pphlx-(\d+\.\d+\.\d+(?:-\d+)?)\.vsix/);
+			if (match) {
+				version = match[1];
+			}
+		}
+	}
+} catch (e) {
+	console.error("Failed to read extensions version dynamically:", e);
+}
 ---
 
 <PlayLayout title="Playground">
+	<div id="playground-config" data-version={version} class="hidden"></div>
 	<Fragment slot="head">
 		<!-- Google Fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com">
@@ -341,6 +362,13 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 									<input type="range" id="sim-slider-width" min="320" max="1200" step="10" value="1200" class="w-24 h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#4bf3c8]" />
 								</div>
 								<div class="h-4 w-[1px] bg-[#1b1f27]"></div>
+								<button id="sim-btn-download" class="hidden hover:text-white transition-colors flex items-center gap-1 text-[#4bf3c8] bg-transparent border-0 outline-none cursor-pointer" title="Download compiled project ZIP">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+									</svg>
+									Download
+								</button>
+								<div id="sim-btn-download-divider" class="hidden h-4 w-[1px] bg-[#1b1f27]"></div>
 								<a id="sim-btn-popout" href="#" target="_blank" class="hover:text-white transition-colors flex items-center gap-1" title="Open preview in full standalone window">
 									<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
 									Popout
@@ -483,7 +511,9 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 		const STORAGE_KEY = 'pphlx_playground_vfs';
 		const CUSTOM_LANGS_KEY = 'pphlx_playground_custom_langs';
 
-		console.log("%c pphlx %c v1.0.4-1 Play IDE Initialized ", "background:#4bf3c8;color:#000;font-weight:bold;padding:1px 4px;border-radius:3px 0 0 3px;", "background:#0f1115;color:#fff;padding:1px 4px;border-radius:0 3px 3px 0;");
+		const configEl = document.getElementById('playground-config');
+		const latestVersion = configEl ? configEl.getAttribute('data-version') : '1.0.4-1';
+		console.log(`%c PPHLX %c v${latestVersion} Play IDE Initialized `, "background:#4bf3c8;color:#000;font-weight:bold;padding:1px 4px;border-radius:3px 0 0 3px;", "background:#0f1115;color:#fff;padding:1px 4px;border-radius:0 3px 3px 0;");
 
 		// Premium IDE Modal Helper System
 		const modalOverlay = document.getElementById('ide-modal-overlay');
@@ -2509,7 +2539,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 
 			// Automatically preload/preinstall PPHLX vsix extension if not already present
 			if (!cachedLangs.some(l => l.id === 'pphlx')) {
-				loadExtensionFromVsix('/extensions/pphlx-1.0.0.vsix').then(res => {
+				loadExtensionFromVsix(`/extensions/pphlx-${latestVersion}.vsix`).then(res => {
 					if (res && res.length > 0) {
 						console.log("PPHLX vsix extension preinstalled successfully.");
 						// Force theme re-render of active file using the actual registered language ID
@@ -2717,7 +2747,7 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 			});
 		}
 
-		if (simBtnPopout) {
+		if (simBtnPopout && !isDetached) {
 			simBtnPopout.addEventListener('click', (e) => {
 				e.preventDefault();
 				window.open(window.location.origin + window.location.pathname + '?detached=true', '_blank');
@@ -2843,102 +2873,111 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 		const btnDownloadOutput = document.getElementById('btn-download-output');
 		if (btnDownloadOutput) {
 			btnDownloadOutput.addEventListener('click', async () => {
-				if (!outputEditor) return;
+				const phpCode = outputEditor.getValue();
+				const activeCode = inputEditor ? inputEditor.getValue() : '';
+				await triggerZipDownload(phpCode, activeCode, files, activeFile, activePlaybookId);
+			});
+		}
+
+		// Shared helper function to package and download the project ZIP
+		async function triggerZipDownload(phpCode, activeCode, filesData, activeFileId, activePlaybookIdVal) {
+			try {
+				const zip = new JSZip();
 				
+				// 1. Add compiled index.php to dist/index.php
+				zip.file("dist/index.php", phpCode);
+				
+				const excludedPaths = new Set();
+				excludedPaths.add(activeFileId);
+				
+				// Also add active file to zip with current editor content
+				zip.file(activeFileId, activeCode);
+				
+				// 2. Add source and other files to ZIP from VFS
+				for (let path in filesData) {
+					if (path.startsWith("dist/dist/")) continue;
+					
+					// Skip files we are going to write/overwrite dynamically
+					if (path === "index.php" || path === "dist/index.php") continue;
+					if (path === "dist/assets/css/app.css" || path === "dist/assets/js/app.js" || path === "dist/assets/css/tailwind.css") continue;
+					if (path === "assets/css/app.css" || path === "assets/js/app.js" || path === "assets/css/tailwind.css") continue;
+					
+					// Skip the active file since we write it with current editor content above
+					if (path === activeFileId) continue;
+					
+					const content = filesData[path];
+					if (typeof content === 'string' && content.startsWith('data:image/')) {
+						const base64Content = content.split(',')[1];
+						zip.file(path, base64Content, { base64: true });
+					} else {
+						zip.file(path, content);
+					}
+				}
+				
+				// 3. Fetch pre-compiled styling stylesheet and bundle it inside dist/assets/css
+				const tailwindCssResponse = await fetch('/styles/tailwind.css');
+				if (tailwindCssResponse.ok) {
+					const cssContent = await tailwindCssResponse.text();
+					zip.file("dist/assets/css/tailwind.css", cssContent);
+				}
+
+				// 4. Fetch playbook-specific compiled assets (if they exist) and add to dist/assets/
 				try {
-					const zip = new JSZip();
-					
-					// 1. Add compiled index.php
-					const phpCode = outputEditor.getValue();
-					zip.file("index.php", phpCode);
-					
-					// Parse active code to find imported components to exclude from VFS zipping
-					const activeCode = inputEditor ? inputEditor.getValue() : '';
-					const lines = activeCode.split('\n');
-					const excludedPaths = new Set();
-					excludedPaths.add(activeFile);
-					
-					const codeExtensions = ['js', 'jsx', 'ts', 'tsx', 'svelte', 'vue'];
-					
-					for (let line of lines) {
-						const importMatch = line.match(/^\s*@import\s+(\w+)\s+from\s+['"]([^'"]+)['"]/);
-						if (importMatch) {
-							const importPath = importMatch[2];
-							const cleanImportPath = importPath.replace(/^\.\.\//, '').replace(/^\.\//, '');
-							const ext = cleanImportPath.split('.').pop().toLowerCase();
-							if (codeExtensions.includes(ext)) {
-								excludedPaths.add(cleanImportPath);
-							}
-						}
+					const playbookCssResp = await fetch(`/playbooks/${activePlaybookIdVal}/dist/assets/css/app.css`);
+					if (playbookCssResp.ok) {
+						const cssContent = await playbookCssResp.text();
+						zip.file("dist/assets/css/app.css", cssContent);
 					}
-					
-					// 2. Add only assets and non-component files to ZIP
-					for (let path in files) {
-						// Skip active source page and imported development code components
-						if (excludedPaths.has(path)) continue;
-						
-						const ext = path.split('.').pop().toLowerCase();
-						if (codeExtensions.includes(ext)) continue;
-						
-						const content = files[path];
-						if (typeof content === 'string' && content.startsWith('data:image/')) {
-							const base64Content = content.split(',')[1];
-							zip.file(path, base64Content, { base64: true });
-						} else {
-							zip.file(path, content);
-						}
-					}
-					
-					// 3. Fetch pre-compiled styling stylesheet and bundle it
-					const tailwindCssResponse = await fetch('/styles/tailwind.css');
-					if (tailwindCssResponse.ok) {
-						const cssContent = await tailwindCssResponse.text();
-						zip.file("assets/css/tailwind.css", cssContent);
-					}
+				} catch (e) {
+					console.error("Playbook CSS fetch failed:", e);
+				}
 
-					// 4. Fetch playbook-specific compiled assets (if they exist) and add to ZIP
-					try {
-						const playbookCssResp = await fetch(`/playbooks/${activePlaybookId}/dist/assets/css/app.css`);
-						if (playbookCssResp.ok) {
-							const cssContent = await playbookCssResp.text();
-							zip.file("assets/css/app.css", cssContent);
-						}
-					} catch (e) {
-						console.error("Playbook CSS fetch failed:", e);
+				try {
+					const playbookJsResp = await fetch(`/playbooks/${activePlaybookIdVal}/dist/assets/js/app.js`);
+					if (playbookJsResp.ok) {
+						const jsContent = await playbookJsResp.text();
+						zip.file("dist/assets/js/app.js", jsContent);
 					}
+				} catch (e) {
+					console.error("Playbook JS fetch failed:", e);
+				}
+				
+				// Generate zip blob and trigger download
+				const contentBlob = await zip.generateAsync({ type: "blob" });
+				const url = URL.createObjectURL(contentBlob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = "PPHLX-project.zip";
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			} catch (err) {
+				console.error("ZIP Generation failed: ", err);
+				const blob = new Blob([phpCode], { type: 'text/plain' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = "index.php";
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			}
+		}
 
-					try {
-						const playbookJsResp = await fetch(`/playbooks/${activePlaybookId}/dist/assets/js/app.js`);
-						if (playbookJsResp.ok) {
-							const jsContent = await playbookJsResp.text();
-							zip.file("assets/js/app.js", jsContent);
-						}
-					} catch (e) {
-						console.error("Playbook JS fetch failed:", e);
-					}
-					
-					// Generate zip blob and trigger download
-					const contentBlob = await zip.generateAsync({ type: "blob" });
-					const url = URL.createObjectURL(contentBlob);
-					const a = document.createElement('a');
-					a.href = url;
-					a.download = "PPHLX-project.zip";
-					document.body.appendChild(a);
-					a.click();
-					document.body.removeChild(a);
-					URL.revokeObjectURL(url);
-				} catch (err) {
-					console.error("ZIP Generation failed: ", err);
-					const phpCode = outputEditor.getValue();
-					const blob = new Blob([phpCode], { type: 'text/plain' });
-					const url = URL.createObjectURL(blob);
-					const a = document.createElement('a');
-					a.href = url;
-					a.download = activeFile.endsWith('.pphx') ? activeFile.replace('.pphx', '.php') : activeFile + '.php';
-					document.body.appendChild(a);
-					a.click();
-					document.body.removeChild(a);
-					URL.revokeObjectURL(url);
+		// Also bind the preview header download button
+		const simBtnDownload = document.getElementById('sim-btn-download');
+		if (simBtnDownload) {
+			simBtnDownload.addEventListener('click', async () => {
+				if (isDetached) {
+					// Use last synced BroadcastChannel parameters when in detached popout mode
+					await triggerZipDownload(lastPhpCode, lastActiveCode, lastFiles, lastActiveFile, lastActivePlaybookId);
+				} else {
+					// Use main window state
+					const phpCode = (typeof outputEditor !== 'undefined' && outputEditor) ? outputEditor.getValue() : '';
+					const activeCode = (typeof inputEditor !== 'undefined' && inputEditor) ? inputEditor.getValue() : '';
+					await triggerZipDownload(phpCode, activeCode, files, activeFile, activePlaybookId);
 				}
 			});
 		}
@@ -3086,6 +3125,12 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 		// BroadcastChannel Real-time Preview Sync
 		const previewChannel = new BroadcastChannel('pphlx_preview_sync');
 
+		let lastPhpCode = '';
+		let lastActiveCode = '';
+		let lastFiles = {};
+		let lastActiveFile = 'index.pphx';
+		let lastActivePlaybookId = 'ecommerce';
+
 		if (isDetached) {
 			document.documentElement.classList.add('is-detached-preview');
 			
@@ -3102,19 +3147,52 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 				previewContainer.classList.remove('hidden');
 			}
 
+			// Show download option and transform Popout button to Cancel Preview
+			const simBtnDownload = document.getElementById('sim-btn-download');
+			const simBtnDownloadDivider = document.getElementById('sim-btn-download-divider');
+			if (simBtnDownload) simBtnDownload.classList.remove('hidden');
+			if (simBtnDownloadDivider) simBtnDownloadDivider.classList.remove('hidden');
+
+			const simBtnPopout = document.getElementById('sim-btn-popout');
+			if (simBtnPopout) {
+				simBtnPopout.innerHTML = `
+					<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+					Cancel Preview
+				`;
+				simBtnPopout.title = "Close standalone preview and return to workspace";
+				simBtnPopout.removeAttribute('target');
+				simBtnPopout.classList.remove('hover:text-white');
+				simBtnPopout.classList.add('hover:text-[#ff4a4a]');
+				simBtnPopout.addEventListener('click', (e) => {
+					e.preventDefault();
+					try {
+						window.close();
+					} catch (err) {
+						window.location.href = '/play/';
+					}
+				});
+			}
+
 			// Listen to sync messages
 			previewChannel.onmessage = (e) => {
-				if (e.data && e.data.html) {
-					const oldIframe = document.getElementById('preview-iframe');
-					const wrapper = document.getElementById('preview-iframe-wrapper');
-					if (oldIframe && wrapper) {
-						oldIframe.remove();
-						const newIframe = document.createElement('iframe');
-						newIframe.id = 'preview-iframe';
-						newIframe.className = 'w-full h-full border-0 bg-white';
-						wrapper.appendChild(newIframe);
-						writeToIframe(newIframe, e.data.html);
+				if (e.data) {
+					if (e.data.html) {
+						const oldIframe = document.getElementById('preview-iframe');
+						const wrapper = document.getElementById('preview-iframe-wrapper');
+						if (oldIframe && wrapper) {
+							oldIframe.remove();
+							const newIframe = document.createElement('iframe');
+							newIframe.id = 'preview-iframe';
+							newIframe.className = 'w-full h-full border-0 bg-white';
+							wrapper.appendChild(newIframe);
+							writeToIframe(newIframe, e.data.html);
+						}
 					}
+					if (e.data.phpCode !== undefined) lastPhpCode = e.data.phpCode;
+					if (e.data.activeCode !== undefined) lastActiveCode = e.data.activeCode;
+					if (e.data.files !== undefined) lastFiles = e.data.files;
+					if (e.data.activeFile !== undefined) lastActiveFile = e.data.activeFile;
+					if (e.data.activePlaybookId !== undefined) lastActivePlaybookId = e.data.activePlaybookId;
 				}
 			};
 
@@ -3133,7 +3211,14 @@ import PPHLXLogo from '~/components/PPHLXLogo.astro';
 
 		function broadcastIframeContent() {
 			if (lastCompiledHtml) {
-				previewChannel.postMessage({ html: lastCompiledHtml });
+				previewChannel.postMessage({
+					html: lastCompiledHtml,
+					phpCode: typeof outputEditor !== 'undefined' && outputEditor ? outputEditor.getValue() : '',
+					activeCode: typeof inputEditor !== 'undefined' && inputEditor ? inputEditor.getValue() : '',
+					files: typeof files !== 'undefined' ? files : {},
+					activeFile: typeof activeFile !== 'undefined' ? activeFile : 'index.pphx',
+					activePlaybookId: typeof activePlaybookId !== 'undefined' ? activePlaybookId : 'ecommerce'
+				});
 			}
 		}
 	</script>

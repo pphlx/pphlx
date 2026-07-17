@@ -1,0 +1,52 @@
+---
+title: Develop and Build
+description: 'How to run the PPHLX dev compiler, build for production, and preview locally.'
+i18nReady: true
+---
+
+Once you have set up your workspace, you are ready to write code and compile your project with PPHLX!
+
+---
+
+## 🛠️ Development Mode
+
+During development, you want the compiler to watch your `.pphx` files and automatically recompile them whenever you hit save.
+
+### Run the Dev Compiler
+Start the hot-rebuilding development server in your project root:
+
+```shell
+pphlx dev
+```
+
+PPHLX will run in watch-mode, listening for file changes inside your `srcDir` and instantly compiling them into your `outDir`.
+
+---
+
+## 🚀 Production Builds
+
+To compile a optimized, production-ready build of your site, run:
+
+```shell
+pphlx build
+```
+
+This command perform the following operations:
+1.  **Template Compilation**: Parses all `.pphx` pages and components, building clean, standalone `.php` target files.
+2.  **Asset Bundling**: Minifies and aggregates CSS rules into your designated `cssOut` file and compiles framework modules into `jsOut`.
+3.  **Static Copying**: Copies all files from your `public/` folder into the build destination directory untouched.
+
+---
+
+## 🌐 Local Server Preview
+
+Because PPHLX compiles templates directly to native, server-side `.php` files, you need a PHP web server to preview the site locally in your browser. 
+
+You can run the built-in PHP development server pointing to your output directory (typically `dist/`):
+
+```shell
+# Spin up a native PHP server on port 9099
+php -S localhost:9099 -t dist
+```
+
+Now, visit [http://localhost:9099](http://localhost:9099) in your browser to view your compiled application in action!

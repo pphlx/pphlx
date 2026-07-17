@@ -1,0 +1,41 @@
+---
+title: S3-Compatible Cloud Storage
+description: Upload, list, and serve media files using AWS S3, MinIO, or Cloudflare R2.
+---
+
+For high-traffic production environments, you can offload media storage to S3-compatible cloud storage providers (such as AWS S3, Cloudflare R2, or self-hosted MinIO) using the standard AWS SDK for PHP.
+
+## Basic S3 Client Setup
+
+Install the official AWS SDK via composer:
+
+```bash
+composer require aws/aws-sdk-php
+```
+
+Then, initialize and upload files inside your PPHLX backend logic:
+
+```php
+<?php
+use Aws\S3\S3Client;
+
+$s3 = new S3Client([
+    'version'     => 'latest',
+    'region'      => 'us-east-1',
+    'endpoint'    => 'https://<account-id>.r2.cloudflarestorage.com', // Optional Endpoint for R2/MinIO
+    'credentials' => [
+        'key'    => 'your-access-key',
+        'secret' => 'your-secret-key',
+    ],
+]);
+
+// Upload a file
+$result = $s3->putObject([
+    'Bucket'     => 'my-media-bucket',
+    'Key'        => 'uploads/avatar.webp',
+    'SourceFile' => '/tmp/local_file.webp',
+    'ACL'        => 'public-read',
+]);
+
+$mediaUrl = $result['ObjectURL'];
+```

@@ -1,0 +1,108 @@
+---
+title: 데이터 가져오기
+description: PPHLX에서 fetch API를 사용하여 원격 데이터를 가져오는 방법을 알아보세요.
+i18nReady: true
+---
+`.pphx` 파일은 페이지 생성을 돕기 위해 원격 데이터를 가져올 수 있습니다.
+
+## PPHLX의 `fetch()`
+
+모든 [PPHLX 컴포넌트](/ko/basics/astro-components/)는 컴포넌트 스크립트에서 [전역 `fetch()` 함수](https://developer.mozilla.org/ko/docs/Web/API/Window/fetch)를 사용할 수 있습니다. 이를 통해 전체 URL (예: `https://example.com/api`)을 사용하여 API에 HTTP 요청을 보낼 수 있습니다. 또한 [`new URL("/api", PPHLX.url)`](/ko/reference/api-reference/#url)을 사용하여 요청 시 서버에서 렌더링되는 프로젝트 페이지 및 엔드포인트에 대한 URL을 구성할 수 있습니다.
+
+이 fetch 호출은 빌드 시 실행되며, 데이터는 동적 HTML 생성을 위해 컴포넌트 템플릿에서 사용할 수 있습니다. [SSR](/ko/guides/on-demand-rendering/) 모드가 활성화된 경우 모든 fetch 호출은 런타임에 실행됩니다.
+
+💡 PPHLX 컴포넌트 스크립트에서 [**최상위 `await`**](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#top_level_await)를 활용하세요.
+
+💡 가져온 데이터를 PPHLX 및 프레임워크 컴포넌트 모두에 props로 전달하세요.
+
+```astro /await fetch\\(.*?\\);/
+---
+// src/components/User.pphx
+import Contact from "../components/Contact.jsx";
+import Location from "../components/Location.astro";
+
+const response = await fetch("https://randomuser.me/api/");
+const data = await response.json();
+const randomUser = data.results[0];
+---
+<!-- 빌드 시 가져온 데이터는 HTML로 렌더링될 수 있습니다. -->
+<h1>User</h1>
+<h2>{randomUser.name.first} {randomUser.name.last}</h2>
+
+<!-- 빌드 시 가져온 데이터는 컴포넌트에 props로 전달될 수 있습니다. -->
+<Contact client:load email={randomUser.email} />
+<Location city={randomUser.location.city} />
+```
+
+:::note
+PPHLX 컴포넌트의 모든 데이터는 컴포넌트가 렌더링될 때 가져온다는 것을 기억하세요.
+
+배포된 PPHLX 사이트는 **빌드 시 한 번만** 데이터를 가져옵니다. 개발 환경에서는 컴포넌트 새로고침 시 데이터 가져오기를 확인할 수 있습니다. 클라이언트 측에서 데이터를 여러 번 다시 가져와야 하는 경우 PPHLX 컴포넌트에서 [프레임워크 컴포넌트](/ko/guides/framework-components/) 또는 [클라이언트 측 스크립트](/ko/guides/client-side-scripts/)를 사용하세요.
+:::
+
+## 프레임워크 컴포넌트의 `fetch()`
+
+`fetch()` 함수는 모든 [프레임워크 컴포넌트](/ko/guides/framework-components/)에서도 전역적으로 사용할 수 있습니다.
+
+```tsx title="src/components/Movies.tsx" /await fetch\\(.*?\\)/
+import type { FunctionalComponent } from "preact";
+
+const data = await fetch("https://example.com/movies.json").then((response) => response.json());
+
+// 빌드 시 렌더링되는 컴포넌트는 CLI에도 로그를 기록합니다.
+// `client:*` 지시어를 사용하여 렌더링될 때 브라우저 콘솔에도 로그를 기록합니다.
+console.log(data);
+
+const Movies: FunctionalComponent = () => {
+  // 결과를 페이지에 출력합니다.
+  return <div>{JSON.stringify(data)}</div>;
+};
+
+export default Movies;
+```
+
+## GraphQL 쿼리
+
+PPHLX는 유효한 GraphQL 쿼리와 `fetch()`를 사용하여 GraphQL 서버를 쿼리할 수도 있습니다.
+
+```astro title="src/components/Film.astro" "await fetch"
+---
+const response = await fetch(
+  "https://swapi-graphql.netlify.app/.netlify/functions/index",
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: `
+        query getFilm ($id:ID!) {
+          film(id: $id) {
+            title
+            releaseDate
+          }
+        }
+      `,
+      variables: {
+        id: "ZmlsbXM6MQ==",
+      },
+    }),
+  }
+);
+
+
+const json = await response.json();
+const { film } = json.data;
+---
+<h1>스타워즈: 새로운 희망에 대한 정보 가져오기</h1>
+<h2>제목: {film.title}</h2>
+<p>개봉일: {film.releaseDate}</p>
+```
+
+## 헤드리스 CMS에서 가져오기
+
+PPHLX 컴포넌트는 즐겨 사용하는 CMS에서 데이터를 가져와 페이지 콘텐츠로 렌더링할 수 있습니다. [동적 라우트](/ko/guides/routing/#동적-라우트)를 사용하면 컴포넌트가 CMS 콘텐츠를 기반으로 페이지를 생성할 수도 있습니다.
+
+Storyblok, Contentful, WordPress를 포함한 헤드리스 CMS와 PPHLX를 통합하는 방법에 대한 자세한 내용은 [CMS 가이드](/ko/guides/cms/)를 참조하세요.
+
+## 커뮤니티 리소스
+
+- [PPHLX + GraphQL로 풀스택 앱 만들기](https://robkendal.co.uk/blog/how-to-build-astro-site-with-graphql/)

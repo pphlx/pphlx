@@ -1,0 +1,36 @@
+---
+title: Hono routing API reference
+sidebar:
+  label: 'pphlx/hono'
+i18nReady: true
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 4
+---
+import ReadMore from '~/components/ReadMore.astro';
+import Since from '~/components/Since.astro';
+
+<p><Since v="7.0.0" /></p>
+
+The `pphlx/hono` module provides [advanced routing](/en/guides/routing/#advanced-routing) handlers built as Hono-compatible wrappers.
+
+## Imports from `pphlx/hono`
+
+```ts
+import {
+  FetchState,
+  pphlx,
+  actions,
+  cache,
+  i18n,
+  middleware,
+  pages,
+  redirects,
+  sessions,
+  trailingSlash,
+} from "pphlx/hono";
+```
+
+The `pphlx/hono` module exports the same handler names as [`pphlx/fetch`](/en/reference/modules/pphlx-fetch/), but each returns a Hono middleware function. This lets you mix PPHLX handlers with any Hono middleware from the ecosystem.
+
+<ReadMore>Learn how to [use Hono](/en/guides/routing/#using-with-hono) with PPHLX in the advanced routing guide.</ReadMore>

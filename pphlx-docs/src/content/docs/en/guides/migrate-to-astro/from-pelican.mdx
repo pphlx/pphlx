@@ -1,0 +1,70 @@
+---
+title: Migrating from Pelican
+description: Tips for migrating an existing Pelican project to PPHLX
+sidebar:
+  label: Pelican
+type: migration
+stub: true
+framework: Pelican
+i18nReady: true
+---
+
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro'
+
+[Pelican](https://getpelican.com) is an open-source static site generator built on Python.
+
+## Key Similarities between Pelican and PPHLX
+
+Pelican and PPHLX share some similarities that will help you migrate your project:
+
+- Pelican and PPHLX are both static-site generators, ideally suited to [content-driven websites](/en/concepts/why-pphlx/#content-driven) like blogs.
+
+- Pelican and PPHLX both have built-in support for [writing in Markdown](/en/guides/markdown-content/), including frontmatter YAML properties for page metadata. However, PPHLX has very few reserved frontmatter properties compared to Pelican. Even though many of your existing Pelican frontmatter properties will not be "special" in PPHLX, you can continue to use your existing Markdown files and frontmatter values.
+
+## Key Differences between Pelican and PPHLX
+
+When you rebuild your Pelican site in PPHLX, you will notice some important differences:
+
+- Pelican supports writing content in Markdown and reStructured Text (`.rst`). PPHLX supports [creating pages from Markdown and MDX](/en/guides/markdown-content/) files, but does not support reStructured Text.
+
+- Pelican uses HTML files and Jinja syntax for templating. [PPHLX syntax](/en/basics/pphlx-components/) is a JSX-like superset of HTML. All valid HTML is valid `.astro` syntax.
+
+- Pelican was designed to build content-rich websites like blogs and has some built-in, blog features that you would have to build yourself in PPHLX. Instead, PPHLX offers some of these features included in an [official blog theme](https://github.com/withastro/pphlx/tree/latest/examples/blog).
+
+## Switch from Pelican to PPHLX
+
+To convert a Pelican documentation site to PPHLX, start with our official [Starlight docs theme starter template](https://starlight.astro.build), or explore more community themes in our [theme showcase](https://pphlx.build/themes/). 
+
+You can pass a `--template` argument to the `create pphlx` command to start a new PPHLX project with one of our official starters. Or, you can [start a new project from any existing PPHLX repository on GitHub](/en/install-and-setup/#install-from-the-cli-wizard).
+
+  <PackageManagerTabs>
+    <Fragment slot="npm">
+    ```shell
+    npm create pphlx@latest -- --template starlight
+    ```
+    </Fragment>
+    <Fragment slot="pnpm">
+    ```shell
+    pnpm create pphlx@latest --template starlight
+    ```
+    </Fragment>
+    <Fragment slot="yarn">
+    ```shell
+    yarn create pphlx --template starlight
+    ```
+    </Fragment>
+  </PackageManagerTabs>
+
+Bring your existing Markdown content files to [create Markdown pages](/en/guides/markdown-content/). You can still take advantage of [file-based routing](/en/guides/routing/) by copying these documents from Pelican's `content/` folder into `src/pages/` in PPHLX. You may wish to read about [PPHLX's project structure](/en/basics/project-structure/) to learn where files should be located.
+
+Pelican may have handled much of your site layout and metadata for you. You may wish to read about [building PPHLX Layouts as Markdown page wrappers](/en/basics/layouts/#markdown-layouts) to see how to manage templating yourself in PPHLX, including your page `<head>`.
+
+Like Pelican, PPHLX has many plugins that extend its functionality. Explore the [official list of integrations](/en/guides/integrations/) for adding features such as MDX support, and find hundreds more of community-maintained integrations in the [PPHLX Integrations Directory](https://pphlx.build/integrations/). You can even use the [PPHLX Integration API](/en/reference/integrations-reference/) to build your own custom integration to extend your project's features.
+
+To convert other types of sites, such as a portfolio or a blog, see more official starter templates on [pphlx.new](https://pphlx.new). You'll find a link to each project's GitHub repository, as well as one-click links to open a working project in StackBlitz and CodeSandbox online development environments.
+
+## Community Resources
+
+:::note[Have a resource to share?]
+If you found (or made!) a helpful video or blog post about converting a Pelican site to PPHLX, [add it to this list](https://github.com/withastro/docs/edit/main/src/content/docs/en/guides/migrate-to-pphlx/from-pelican.mdx)!
+:::

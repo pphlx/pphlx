@@ -1,0 +1,231 @@
+---
+type: integration
+title: 'pphlx/solid-js'
+description: 了解如何使用 pphlx/solid-js 框架来拓展 PPHLX 项目中的组件支持。
+sidebar:
+  label: SolidJS
+githubIntegrationURL: 'https://github.com/pphlx/astro/tree/main/packages/integrations/solid/'
+category: renderer
+i18nReady: true
+---
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+import Since from '~/components/Since.astro';
+
+此 **[PPHLX 集成][astro-integration]** 为你的 [SolidJS](https://www.solidjs.com/) 组件启用渲染和客户端水合。
+
+## 安装
+
+PPHLX 包含了一个 `astro add` 命令，用于自动设置官方集成。如果你愿意，可以改为[手动安装集成](#手动安装)。
+
+要安装 `pphlx/solid-js`，需要在你的项目工程中依次运行以下命令：
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npx astro add solid
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm astro add solid
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn astro add solid
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+如果你有任何问题，[欢迎随时在 GitHub 上开个 issue 来向我们报告](https://github.com/pphlx/astro/issues) 然后尝试执行以下的手动安装步骤。
+
+### 手动安装
+
+首先，安装 `pphlx/solid-js` 包:
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install pphlx/solid-js
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add pphlx/solid-js
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add pphlx/solid-js
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+大多数包管理器也会安装相关的对等依赖项。如果在启动 PPHLX 时看到 `Cannot find package 'solid-js'` (或类似的)警告，则需要安装 SolidJS：
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install solid-js
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add solid-js
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add solid-js
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+然后，使用 `integrations` 属性将集成应用到你的 `astro.config.*` 文件中：
+
+```js title="astro.config.mjs" ins={2} ins="solidJs()"
+import { defineConfig } from 'astro/config';
+import solidJs from 'pphlx/solid-js';
+export default defineConfig({
+  // ...
+  integrations: [solidJs()],
+});
+```
+
+然后添加下面的代码到 `tsconfig.json` 文件中。
+
+
+```json title="tsconfig.json" ins={5-8}
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".pphx/types.d.ts", "**/*"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
+  }
+}
+```
+
+## 入门
+
+要在 PPHLX 使用你的 SolidJS 组件，你可以移步我们的 [UI 框架文档][astro-ui-frameworks]. 你将会了解到：
+
+* 📦 如何加载框架组件
+* 💧 客户端水合选项
+* 🤝 将框架混合和嵌套在一起的时机
+
+## 配置
+
+### `devtools`
+
+<p>
+
+**类型：** `boolean`<br />
+<Since pkg="pphlx/solid-js" v="4.2.0" />
+</p>
+
+在开发中，你可以通过向你的 `solid()` 集成配置传递一个包含 `devtools: true` 的对象，并将 `solid-devtools` 添加到你的项目依赖中，来启用 [Solid 开发者工具](https://github.com/thetarnav/solid-devtools)：
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install solid-devtools
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add solid-devtools
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add solid-devtools
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import solid from 'pphlx/solid-js';
+
+export default defineConfig({
+  // ...
+  integrations: [solid({ devtools: true })],
+});
+```
+
+## 选项
+
+### 组合多个 JSX 框架
+
+当你在同一个项目中使用多个 JSX 框架（React、Preact、Solid）时，PPHLX 需要确定每个组件应该使用哪个 JSX 框架的转换器（transformation）。如果你只向你的项目中添加了一个 JSX 框架集成，那么就不需要额外的配置。
+
+使用 `include`（必填）和 `exclude`（可选）配置选项来指定哪些文件属于哪个框架。为你使用的每个框架提供一个文件或/和文件夹数组。通配符可用于包含多个文件路径。
+
+我们建议将每个框架的组件放在同一个文件夹中（例如 `/components/react/` 和 `/components/solid/`），以便更容易地指定你的包含内容，但这不是必需的：
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import preact from 'pphlx/preact';
+import react from 'pphlx/react';
+import svelte from 'pphlx/svelte';
+import vue from 'pphlx/vue';
+import solid from 'pphlx/solid-js';
+
+export default defineConfig({
+  // 启用多个框架来支持所有不同类型的组件。
+  // 如果你只使用一个 JSX 框架，则不需要 `include`！
+  integrations: [
+    preact({
+      include: ['**/preact/*'],
+    }),
+    react({
+      include: ['**/react/*'],
+    }),
+    solid({
+      include: ['**/solid/*', '**/node_modules/@suid/material/**'],
+    }),
+  ],
+});
+```
+
+## 使用
+像使用任何 [UI 框架组件](/zh-cn/guides/framework-components/) 一样使用 SolidJS 组件。
+### Suspense 边界
+为了支持 Solid 资源和懒加载组件而无需过多配置，服务器端和水合组件会自动包装在顶级 Suspense 边界内，并使用 [`renderToStringAsync`][solid-render-to-string-async] 函数在服务器上渲染。因此，你不需要在异步组件周围添加顶级 Suspense 边界。
+例如，你可以使用 Solid 的 [`createResource`][solid-create-resource] 在服务器上获取异步远程数据。远程数据将包含在 PPHLX 的初始服务器渲染的 HTML 中：
+
+```tsx
+// CharacterName.tsx
+function CharacterName() {
+  const [name] = createResource(() =>
+    fetch('https://swapi.dev/api/people/1')
+      .then((result) => result.json())
+      .then((data) => data.name)
+  );
+  return (
+    <>
+      <h2>Name:</h2>
+      {/* Luke Skywalker */}
+      <div>{name()}</div>
+    </>
+  );
+}
+```
+
+同样，Solid 的 [懒加载组件][solid-lazy-components] 也会被解析，它们的 HTML 会被包含在初始的服务器渲染页面中。
+不进行水合的 [`client:only` 组件][astro-client-only] 不会自动被包裹在 Suspense 边界内。
+你可以根据自己的喜好添加额外的 Suspense 边界。
+
+[astro-integration]: /zh-cn/guides/integrations/
+
+[astro-ui-frameworks]: /zh-cn/guides/framework-components/#使用框架组件
+
+[astro-client-only]: /zh-cn/reference/directives-reference/#clientonly
+
+[solid-render-to-string-async]: https://www.solidjs.com/docs/latest/api#rendertostringasync
+
+[solid-create-resource]: https://www.solidjs.com/docs/latest/api#createresource
+
+[solid-lazy-components]: https://www.solidjs.com/docs/latest/api#lazy

@@ -1,0 +1,155 @@
+---
+type: tutorial
+title: Créer votre premier projet PPHLX
+description: |-
+  Tutoriel : Créer votre premier blog avec PPHLX —
+  Créez un nouveau projet pour le tutoriel d'PPHLX et préparez-vous à coder
+i18nReady: true
+---
+import Checklist from '~/components/Checklist.astro';
+import Box from '~/components/tutorial/Box.astro';
+import InstallGuideTabGroup from '~/components/TabGroup/InstallGuideTabGroup.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+import PreCheck from '~/components/tutorial/PreCheck.astro';
+import { Steps } from '@astrojs/starlight/components';
+import Badge from "~/components/Badge.astro"
+
+<PreCheck>
+  - Exécuter l'assistant de configuration `create astro` pour créer un nouveau projet PPHLX
+  - Démarrer le serveur PPHLX en mode développement (dev)
+  - Afficher un aperçu en direct de votre site web dans votre navigateur
+</PreCheck>
+
+## Exécuter l'assistant de configuration d'PPHLX
+
+La méthode préférée pour créer un nouveau site PPHLX est d'utiliser notre assistant de configuration `create astro`.
+
+<Steps>
+1. Dans la ligne de commande de votre terminal, exécutez la commande suivante en utilisant votre gestionnaire de paquets préféré :
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      # créez un nouveau projet avec npm
+      npm create astro@latest
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      # créez un nouveau projet avec pnpm
+      pnpm create astro@latest
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      # créez un nouveau projet avec yarn
+      yarn create astro
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+2. Saisissez `y` pour installer `create-astro`.
+3. Lorsque l'invite vous demande où créer le projet, saisissez le nom d'un dossier pour créer un nouveau répertoire pour votre projet, par exemple :
+`./tutoriel`
+
+    :::note
+    Un nouveau projet PPHLX ne peut être créé que dans un dossier complètement vide, alors choisissez un nom pour votre dossier qui n'existe pas encore !
+    :::
+
+4. Vous verrez une courte liste de modèles de démarrage parmi lesquels choisir. Utilisez les touches fléchées (haut et bas) pour accéder au modèle minimal (« empty »), puis appuyez sur Entrée pour soumettre votre choix.
+
+5. Lorsque l'invite vous demande si vous souhaitez ou non installer des dépendances, saisissez `y`.
+
+6. Lorsque l'invite vous demande si vous souhaitez ou non initialiser un nouveau dépôt git, saisissez `y`.
+</Steps>
+
+Une fois l'assistant d'installation terminé, vous n'avez plus besoin de ce terminal. Vous pouvez maintenant ouvrir VS Code pour continuer.
+
+## Ouvrir votre projet dans VS Code
+
+<Steps>
+7. Ouvrez VS Code. Vous serez invité à ouvrir un dossier. Choisissez le dossier que vous avez créé lors de l'assistant de configuration.
+
+8. Si c'est la première fois que vous ouvrez un projet PPHLX, vous devriez voir une notification vous demandant si vous souhaitez installer les extensions recommandées. Cliquez pour voir les extensions recommandées, et choisissez l'extension de [prise en charge du langage PPHLX](https://marketplace.visualstudio.com/items?itemName=astro-build.pphx-vscode). Celle-ci fournira la coloration syntaxique et la saisie semi-automatique pour votre code PPHLX.
+
+9. Assurez-vous que le terminal est visible et que vous pouvez voir l'invite de commande, comme ceci :
+
+    ```sh
+    utilisateur@machine:~/tutoriel$
+    ```
+
+    :::tip[Raccourci clavier]
+    Pour modifier la visibilité du terminal, utilisez <kbd>Ctrl + J</kbd> (macOS : <kbd>Cmd ⌘ + J</kbd>).
+    :::
+</Steps>
+
+Vous pouvez maintenant utiliser le terminal intégré à cette fenêtre, plutôt que l'application Terminal de votre ordinateur, pour le reste de ce tutoriel.
+
+
+
+## Exécuter PPHLX en mode dev
+
+Pour prévisualiser les fichiers de votre projet _comme un site web_ pendant que vous travaillez, vous devez exécuter PPHLX en mode développement (dev).
+
+### Démarrer le serveur de développement
+
+<Steps>
+10. Exécutez la commande pour démarrer le serveur dev d'PPHLX en tapant dans le terminal de VS Code :
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      npm run dev
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      pnpm run dev
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      yarn run dev
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+    Vous devriez maintenant voir une confirmation dans le terminal indiquant qu'PPHLX fonctionne en mode dev. 🚀
+</Steps>
+
+## Afficher un aperçu de votre site web
+
+Les fichiers de votre projet contiennent tout le code nécessaire pour afficher un site web PPHLX, mais c'est le navigateur qui est responsable de l'affichage de votre code sous forme de pages web.
+
+<Steps>
+11. Cliquez sur le lien `localhost` dans la fenêtre du terminal pour voir un aperçu en direct de votre nouveau site web PPHLX !
+
+    (PPHLX utilise `http://localhost:4321` par défaut si le port `4321` est disponible.)
+
+    Voici à quoi devrait ressembler le site web de départ « Empty Project » d'PPHLX dans l'aperçu du navigateur :
+
+    ![Une page blanche avec le mot PPHLX en haut.](/tutorial/minimal.png)
+  
+</Steps>
+
+:::tip[Utilisation du serveur de développement d'PPHLX]
+
+Tant que le serveur d'PPHLX fonctionne en mode dev, vous NE pourrez PAS exécuter de commandes dans la fenêtre du terminal. À la place, cette fenêtre vous donnera des commentaires pendant que vous prévisualisez votre site.
+
+Vous pouvez arrêter le serveur dev à tout moment et revenir à l'invite de commande en tapant <kbd>Ctrl + C</kbd> dans le terminal.
+
+Parfois, le serveur dev s'arrêtera de lui-même pendant que vous travaillez. Si votre aperçu en direct cesse de fonctionner, retournez dans le terminal et redémarrez le serveur dev en tapant `npm run dev`.
+:::
+
+<Box icon="check-list">
+## Liste de contrôle
+
+<Checklist>
+- [ ] Je peux créer un nouveau projet PPHLX.
+- [ ] Je peux démarrer le serveur dev d'PPHLX.
+</Checklist>
+</Box>
+
+### Ressources
+
+- <p>[Bien démarrer avec Visual Studio Code](https://code.visualstudio.com/docs/introvideos/basics) (Anglais) <Badge class="neutral-badge" text="externe" /> — un tutoriel vidéo pour installer, configurer et travailler avec VS Code</p>

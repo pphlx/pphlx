@@ -1,0 +1,67 @@
+---
+title: Layouts
+description: An introduction to layouts in PPHLX.
+i18nReady: true
+---
+
+**Layouts** are `.pphx` components used to define a reusable UI structure or page shell (containing `<html>`, `<head>`, and `<body>` tags) shared across multiple pages on your website.
+
+---
+
+## Layout Structure
+
+A layout template is organized like a standard component, but with a special **`{{slot}}`** marker representing the dynamic content region that will be replaced by the active page body:
+
+```html title="src/layouts/Layout.astro"
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My PPHLX Site</title>
+    <!-- Asset Injection Anchors -->
+    {{PPHLX_CSS}}
+  </head>
+  <body class="bg-[#080a0d] text-white">
+    [header]
+      [nav]
+        [a href="/"]Home[/a]
+        [a href="/about.php"]About[/a]
+      [/nav]
+    [/header]
+    
+    [main]
+      {{slot}}
+    [/main]
+    
+    {{PPHLX_JS}}
+  </body>
+</html>
+```
+
+### Critical Asset Anchors
+
+To ensure stylesheets and interactive Javascript framework bundles compile and load correctly in production, your layout *must* include these two compilation anchors:
+1.  **`{{PPHLX_CSS}}`**: Placed inside the `<head>` block. Automatically resolves to the bundled stylesheet link:
+    ```html
+    <link rel="stylesheet" href="/assets/css/app.css">
+    ```
+2.  **`{{PPHLX_JS}}`**: Placed at the bottom of the `<body>` element. Automatically resolves to the hydration script module bundle:
+    ```html
+    <script src="/assets/js/app.js"></script>
+    ```
+
+---
+
+## Using Layouts in Pages
+
+To wrap a page template in a layout, specify the **`[layout name="LayoutFilename"]`** directive at the very top of your page template:
+
+```html title="src/pages/index.astro"
+[layout name="Layout"]
+
+[div class="welcome"]
+  [h1]Welcome to the Homepage![/h1]
+  [p]This content will replace the {{slot}} tag in Layout.pphx.[/p]
+[/div]
+```

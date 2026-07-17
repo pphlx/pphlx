@@ -1,0 +1,39 @@
+---
+title: Authentication & Sessions
+description: Build secure user authentication and login controls natively in PPHLX.
+---
+
+PPHLX lets you implement secure, server-side user authentication using native PHP sessions and cookie management.
+
+## Login Controller Example
+
+You can handle login form submissions directly in your backend blocks:
+
+```pphlx
+{|
+session_start();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+
+    // Verify user credentials (simulate DB lookup)
+    if ($username === 'admin' && $password === 'secret') {
+        $_SESSION['authenticated'] = true;
+        header("Location: /dashboard");
+        exit;
+    } else {
+        $error = "Invalid username or password.";
+    }
+}
+|}
+
+<form method="POST">
+  <?php if (isset($error)): ?>
+    <p style="color: red;">{|= $error |}</p>
+  <?php endif; ?>
+  <input type="text" name="username" placeholder="Username" required />
+  <input type="password" name="password" placeholder="Password" required />
+  <button type="submit">Login</button>
+</form>
+```

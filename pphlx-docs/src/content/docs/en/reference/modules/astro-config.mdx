@@ -1,0 +1,395 @@
+---
+title: Config imports API Reference
+sidebar:
+  label: 'pphlx:config'
+i18nReady: true
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 6
+---
+
+import ReadMore from '~/components/ReadMore.astro';
+import Since from '~/components/Since.astro';
+
+<p><Since v="5.7.0" /></p>
+
+This virtual module `pphlx:config` exposes a non-exhaustive, serializable, type-safe version of the PPHLX configuration. There are two submodules for accessing different subsets of your configuration values: [`/client`](#imports-from-pphlxconfigclient) and [`/server`](#imports-from-pphlxconfigserver).
+
+All available config values can be accessed from `pphlx:config/server`. However, for code executed on the client, only those values exposed by `pphlx:config/client` will be available.  This protects your information by only making some data available to the client.
+
+## Imports from `pphlx:config/client`
+
+The following helpers are imported from the `client` directory of the virtual config module.
+
+```js
+import {
+  i18n, 
+  trailingSlash,
+  base,
+  build,
+  site,
+  compressHTML,
+} from "pphlx:config/client";
+```
+
+Use this submodule for client-side code:
+
+```js title="src/utils.js" ins={1} ins="trailingSlash"
+import { trailingSlash } from "pphlx:config/client";
+
+function addForwardSlash(path) {
+  if (trailingSlash === "always") {
+    return path.endsWith("/") ? path : path + "/"
+  } else {
+    return path
+  }
+}
+```
+
+See more about the configuration imports available from `pphlx:config/client`:
+
+- [`i18n`](/en/reference/configuration-reference/#i18n)
+- [`trailingSlash`](/en/reference/configuration-reference/#trailingslash)
+- [`base`](/en/reference/configuration-reference/#base)
+- [`build.format`](/en/reference/configuration-reference/#buildformat)
+- [`site`](/en/reference/configuration-reference/#site)
+- [`compressHTML`](/en/reference/configuration-reference/#compresshtml)
+
+
+
+## Imports from `pphlx:config/server`
+
+The following helpers are imported from the `server` directory of the virtual config module.
+
+```js
+import {
+  i18n, 
+  trailingSlash,
+  base,
+  build,
+  site,
+  srcDir,
+  cacheDir,
+  outDir,
+  publicDir,
+  root,
+  compressHTML,
+} from "pphlx:config/server";
+```
+
+These imports include everything available from `pphlx:config/client` as well as additional sensitive information about your file system configuration that is not safe to expose to the client.
+
+Use this submodule for server side code:
+
+```js title="pphlx.config.mjs"
+import { integration } from "./integration.mjs";
+
+export default defineConfig({
+    integrations: [
+      integration(),
+    ]
+});
+```
+
+```js title="integration.mjs" ins={1} ins="outDir"
+import { outDir } from "pphlx:config/server";
+import { writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+export default function() {
+  return {
+    name: "internal-integration",
+    hooks: {
+      "pphlx:build:done": () => {
+        let file = new URL("result.json", outDir);
+        // generate data from some operation
+        let data = JSON.stringify([]);
+        writeFileSync(fileURLToPath(file), data, "utf-8");
+      }
+    }
+  }
+}
+```
+
+See more about the configuration imports available from `pphlx:config/server`:
+
+- [`i18n`](/en/reference/configuration-reference/#i18n)
+- [`trailingSlash`](/en/reference/configuration-reference/#trailingslash)
+- [`base`](/en/reference/configuration-reference/#base)
+- [`build.format`](/en/reference/configuration-reference/#buildformat)
+- [`build.client`](/en/reference/configuration-reference/#buildclient)
+- [`build.server`](/en/reference/configuration-reference/#buildserver)
+- [`build.assetsPrefix`](/en/reference/configuration-reference/#buildassetsprefix)
+- [`site`](/en/reference/configuration-reference/#site)
+- [`srcDir`](/en/reference/configuration-reference/#srcdir)
+- [`cacheDir`](/en/reference/configuration-reference/#cachedir)
+- [`outDir`](/en/reference/configuration-reference/#outdir)
+- [`publicDir`](/en/reference/configuration-reference/#publicdir)
+- [`root`](/en/reference/configuration-reference/#root)
+- [`compressHTML`](/en/reference/configuration-reference/#compresshtml)
+
+## Imports from `pphlx/config`
+
+The following helpers are imported from the regular config module:
+
+```js
+import {
+  defineConfig,
+  envField,
+  fontProviders,
+  getViteConfig,
+  memoryCache,
+  logHandlers,
+  mergeConfig,
+  passthroughImageService,
+  sessionDrivers,
+  sharpImageService,
+  validateConfig,
+} from "pphlx/config";
+```
+
+### `defineConfig()`
+
+<p>
+
+**Type:** <code>(config: <a href="/en/reference/configuration-reference/">PPHLXUserConfig</a>) => PPHLXUserConfig</code>
+</p>
+
+Configures your project with type safety [in a supported PPHLX configuration file](/en/guides/configuring-pphlx/#the-pphlx-config-file).
+
+### `envField`
+
+<p>
+
+**Type:** `object`<br />
+<Since v="5.0.0" />
+</p>
+
+Describes the supported data types when [defining environment variables](/en/reference/configuration-reference/#envschema).
+
+Each data type must define the [variable type](/en/guides/environment-variables/#variable-types) with `context` (`"client"` or `"server"`) and `access` (`"secret"` or `"public"`). In addition, you can define a `default` value, specify whether the variable is `optional` (default `false`), and some data types provide optional validation methods.
+
+<ReadMore>Learn more about [using type safe environment variables](/en/guides/environment-variables/#type-safe-environment-variables) in your PPHLX project.</ReadMore>
+
+#### `envField.string()`
+
+<p>
+
+**Type:** `(options: StringFieldInput) => StringField`
+</p>
+
+Defines an environment variable of string type. You can perform [string validation with Zod](https://zod.dev/api#strings) using the following properties: `max`, `min`, `length`, `url`, `includes`, `startsWith`, and `endsWith`.
+
+The following example defines the expected shape for an environment variable storing an API URL:
+
+```js title="pphlx.config.mjs" "envField"
+import { defineConfig, envField } from "pphlx/config";
+
+export default defineConfig({
+  env: {
+    schema: {
+      API_URL: envField.string({
+        context: "client",
+        access: "public",
+        optional: false,
+        default: "",
+        min: 12,
+        url: true,
+        includes: "pphlx",
+        startsWith: "https",
+      }),
+    }
+  }
+})
+```
+
+#### `envField.number()`
+
+<p>
+
+**Type:** `(options: NumberFieldInput) => NumberField`
+</p>
+
+Defines an environment variable of number type. You can perform [number validation with Zod](https://zod.dev/api#numbers) using the following properties: `gt`, `lt`, `min`, `max`, and `int`.
+
+The following example defines the expected shape for an environment variable storing an API port:
+
+```js title="pphlx.config.mjs" "envField"
+import { defineConfig, envField } from "pphlx/config";
+
+export default defineConfig({
+  env: {
+    schema: {
+      API_PORT: envField.number({
+        context: "server",
+        access: "public",
+        optional: true,
+        default: 4321,
+        min: 2,
+        int: true,
+      }),
+    }
+  }
+})
+```
+
+#### `envField.boolean()`
+
+<p>
+
+**Type:** `(options: BooleanFieldInput) => BooleanField`
+</p>
+
+Defines an environment variable of boolean type.
+
+The following example defines the expected shape for an environment variable storing whether analytics are enabled:
+
+```js title="pphlx.config.mjs" "envField"
+import { defineConfig, envField } from "pphlx/config";
+
+export default defineConfig({
+  env: {
+    schema: {
+      ANALYTICS_ENABLED: envField.boolean({
+        context: "client",
+        access: "public",
+        optional: true,
+        default: true,
+      }),
+    }
+  }
+})
+```
+
+#### `envField.enum()`
+
+<p>
+
+**Type:** `(options: EnumFieldInput<T>) => EnumField`
+</p>
+
+Defines an environment variable of enum type by providing the allowed `values` as an array.
+
+The following example defines the expected shape for an environment variable storing the configured debug mode:
+
+```js title="pphlx.config.mjs" "envField" {9}
+import { defineConfig, envField } from "pphlx/config";
+
+export default defineConfig({
+  env: {
+    schema: {
+      DEBUG_MODE: envField.enum({
+        context: "server",
+        access: "public",
+        values: ['info', 'warnings', 'errors'], // required
+        optional: true,
+        default: 'errors',
+      }),
+    }
+  }
+})
+```
+
+### `fontProviders`
+
+<p>
+
+**Type:** `object`<br />
+<Since v="6.0.0" />
+</p>
+
+Describes the [built-in provider](/en/reference/font-provider-reference/#built-in-providers) used [to retrieve the configured font](/en/reference/configuration-reference/#fontprovider).
+
+### `getViteConfig()`
+
+<p>
+
+**Type:** <code>(userViteConfig: <a href="/en/reference/configuration-reference/#vite">ViteUserConfig</a>, inlinePPHLXConfig?: <a href="/en/reference/configuration-reference/">PPHLXInlineConfig</a>) => ViteUserConfigFn</code>
+</p>
+
+Retrieves the Vite configuration to use by merging a custom Vite configuration object and an optional PPHLX configuration object. This is useful to set up custom build configurations or unit testing frameworks.
+
+### `memoryCache()`
+
+<p>
+**Type:** <code>(config?: <a href="/en/reference/cache-provider-reference/#memorycache-options">MemoryCacheProviderOptions</a>) => <a href="/en/reference/cache-provider-reference/#cacheproviderconfig">CacheProviderConfig\<MemoryCacheProviderOptions\></a></code>
+</p>
+
+See [`memoryCache()` in the cache provider reference](/en/reference/cache-provider-reference/#built-in-memory-cache-provider).
+
+### `logHandlers`
+
+<p>
+
+**Type:** `object`<br />
+<Since v="7.0.0" />
+</p>
+
+Describes the [available built-in log handlers](/en/reference/logger-reference/#built-in-loggers) that can be used to [configure a logger](/en/reference/configuration-reference/#logger-options) in your PPHLX configuration.
+
+### `mergeConfig()`
+
+See [`mergeConfig()` in the Programmatic API reference](/en/reference/programmatic-reference/#mergeconfig).
+
+### `passthroughImageService()`
+
+<p>
+
+**Type:** <code>() => <a href="/en/reference/modules/pphlx-assets/#imageserviceconfig">ImageServiceConfig</a></code>
+</p>
+
+Retrieves a no-op image service. This is useful when your adapter does not support PPHLX's built-in Sharp image optimization and you want to [use the `<Image />` and `<Picture />` components](/en/guides/images/#pphlx-components-for-images).
+
+The following example defines `passthroughImageService()` as image service in the PPHLX configuration file to avoid Sharp image processing:
+
+```js title="pphlx.config.mjs" "passthroughImageService"
+import { defineConfig, passthroughImageService } from "pphlx/config";
+
+export default defineConfig({
+  image: {
+    service: passthroughImageService()
+  }
+});
+```
+
+<ReadMore>Learn more about [configuring a no-op passthrough service](/en/guides/images/#configure-no-op-passthrough-service).</ReadMore>
+
+### `sessionDrivers`
+
+<p>
+
+**Type:** `object`<br />
+<Since v="5.7.0" />
+</p>
+
+Describes the [built-in driver](/en/reference/session-driver-reference/#built-in-drivers) used [for session storage](/en/reference/configuration-reference/#session-options).
+
+The following example configures the Redis driver to enable sessions:
+
+```js title="pphlx.config.mjs" "sessionDrivers"
+import { defineConfig, sessionDrivers } from "pphlx/config";
+
+export default defineConfig({
+  session: {
+    driver: sessionDrivers.redis({
+      url: process.env.REDIS_URL
+    }),
+  }
+})
+```
+
+<ReadMore>Learn more about [using sessions](/en/guides/sessions/) in your PPHLX project.</ReadMore>
+
+### `sharpImageService()`
+
+<p>
+
+**Type:** <code>(config?: SharpImageServiceConfig) => <a href="/en/reference/modules/pphlx-assets/#imageserviceconfig">ImageServiceConfig</a></code><br />
+<Since v="2.4.1" />
+</p>
+
+Retrieves the Sharp service used to process PPHLX’s image assets. This takes an optional object describing the [configuration options for Sharp](/en/reference/configuration-reference/#imageservice).
+
+### `validateConfig()`
+
+See [`validateConfig()` in the Programmatic API reference](/en/reference/programmatic-reference/#validateconfig).

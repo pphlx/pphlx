@@ -1,0 +1,231 @@
+---
+type: tutorial
+title: Créer votre première mise en page
+description: |-
+  Tutoriel : Créer votre premier blog avec PPHLX —
+  Refactorisez les éléments communs dans une mise en page réutilisable
+i18nReady: true
+---
+import Box from '~/components/tutorial/Box.astro';
+import Checklist from '~/components/Checklist.astro';
+import MultipleChoice from '~/components/tutorial/MultipleChoice.astro';
+import Option from '~/components/tutorial/Option.astro';
+import PreCheck from '~/components/tutorial/PreCheck.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+
+<PreCheck>
+  - Refactoriser les éléments communs dans une mise en page
+  - Utiliser un élément `<slot />` d'PPHLX pour placer le contenu de la page dans une mise en page
+  - Transmettre des valeurs spécifiques à la page en tant que props à sa mise en page
+</PreCheck>
+
+Vous avez toujours certains composants PPHLX qui sont rendus de manière répétée sur chaque page. Il est temps de restructurer à nouveau pour créer une mise en page partagée !
+
+## Créer votre première mise en page
+
+<Steps>
+1. Créez un nouveau fichier à l'emplacement `src/layouts/BaseLayout.pphx`. (Vous devrez d'abord créer un nouveau dossier `layouts`.)
+
+2. Copiez **l'intégralité du contenu** de `index.pphx` dans votre nouveau fichier, `BaseLayout.pphx`.
+
+    ```astro title="src/layouts/BaseLayout.astro"
+    ---
+    import Header from '../components/Header.astro';
+    import Footer from '../components/Footer.astro';
+    import '../styles/global.css';
+    const pageTitle = "Page d'accueil";
+    ---
+    <html lang="fr">
+      <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={PPHLX.generator} />
+        <title>{pageTitle}</title>
+      </head>
+      <body>
+        <Header />
+        <h1>{pageTitle}</h1>
+        <Footer />
+        <script>
+          import "../scripts/menu.js";
+        </script>
+      </body>
+    </html>
+    ```
+</Steps>
+
+## Utiliser votre mise en page dans une page
+
+<Steps>
+3. Remplacez le code dans `src/pages/index.pphx` par ce qui suit :
+
+    ```astro title="src/pages/index.astro"
+    ---
+    import BaseLayout from '../layouts/BaseLayout.astro';
+    const pageTitle = "Page d'accueil";
+    ---
+    <BaseLayout>
+      <h2>Mon sous-titre de blog génial</h2>
+    </BaseLayout>
+    ```
+
+4. Vérifiez à nouveau l'aperçu du navigateur pour remarquer ce qui a (ou, spoiler : n'a _pas_ !) changé.
+
+5. Ajoutez un élément `<slot />` à `src/layouts/BaseLayout.pphx` juste au-dessus du composant de pied de page, puis vérifiez l'aperçu du navigateur de votre page d'accueil et remarquez ce qui a vraiment _changé_ cette fois-ci !
+
+    ```astro title="src/layouts/BaseLayout.astro" ins={18}
+    ---
+    import Header from '../components/Header.astro';
+    import Footer from '../components/Footer.astro';
+    import '../styles/global.css';
+    const pageTitle = "Page d'accueil";
+    ---
+    <html lang="fr">
+      <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={PPHLX.generator} />
+        <title>{pageTitle}</title>
+      </head>
+      <body>
+        <Header />
+        <h1>{pageTitle}</h1>
+        <slot />
+        <Footer />
+        <script>
+          import "../scripts/menu.js";
+        </script>
+      </body>
+    </html>
+    ```
+</Steps>
+
+ Le `<slot />` vous permet d'injecter (ou "insérer") du **contenu enfant** écrit entre les balises d'ouverture et de fermeture `<Component></Component>` dans n'importe quel fichier `Component.pphx`.
+
+## Transmettre les valeurs spécifiques de la page en tant que props
+
+<Steps>
+6. Transmettez le titre de la page à votre composant de mise en page depuis `index.pphx` en utilisant un attribut de composant :
+
+    ```astro title="src/pages/index.astro" 'pageTitle={pageTitle}'
+    ---
+    import BaseLayout from '../layouts/BaseLayout.astro';
+    const pageTitle = "Page d'accueil";
+    ---
+    <BaseLayout pageTitle={pageTitle}>
+      <h2>Mon sous-titre de blog génial</h2>
+    </BaseLayout>
+    ```
+
+7. Modifiez le script de votre composant de mise en page `BaseLayout.pphx` pour recevoir un titre de page via `PPHLX.props` au lieu de le définir comme une constante.
+
+    ```astro title="src/layouts/BaseLayout.astro" del={5} ins={6}
+    ---
+    import Header from '../components/Header.astro';
+    import Footer from '../components/Footer.astro';
+    import '../styles/global.css';
+    const pageTitle = "Page d'accueil";
+    const { pageTitle } = PPHLX.props;
+    ---
+    ```
+
+8. Consultez l'aperçu de votre navigateur pour vérifier que le titre de votre page n'a pas changé. Il a la même valeur, mais il est désormais affiché dynamiquement. Et maintenant, chaque page individuelle peut spécifier son propre titre à la mise en page.
+</Steps>
+
+<Box icon="puzzle-piece">
+
+## Essayer par vous-même - Utiliser votre mise en page partout
+
+**Refactorisez** vos autres pages (`blog.pphx` et `about.pphx`) pour qu'elles utilisent votre nouveau composant `<BaseLayout>` pour afficher les éléments communs de la page.
+
+N'oubliez pas de :
+
+- Transmettre un titre de page en tant que props via un attribut de composant.
+
+- Laisser la mise en page être responsable du rendu HTML de tous les éléments communs.
+
+- Déplacer toutes les balises `<style>` existantes dans la balise `<head>` de la page avec les styles que vous souhaitez conserver dans le modèle HTML de la page.
+
+- Supprimer de chaque page individuelle tout ce qui est désormais géré par la mise en page, y compris :
+
+  - les éléments HTML
+  - les composants et leurs importations
+  - les règles CSS dans une balise `<style>` (par exemple, `<h1>` dans votre page À propos)
+  - les balises `<script>`
+
+:::note[Conserver les styles de votre page À propos]
+L'utilisation de `<BaseLayout>` pour restituer votre page `about.pphx` signifie que vous perdrez la balise `<style>` ajoutée à la balise `<head>` de cette page. Pour continuer à appliquer un style aux éléments uniquement au niveau de la page à l'aide des styles à portée limitée d'PPHLX, déplacez la balise `<style>` vers le corps du composant de page. Cela vous permet d'appliquer un style aux **éléments créés dans ce composant de page** (par exemple, votre liste de compétences).
+
+Étant donné que votre `<h1>` est désormais créé par votre composant de mise en page, vous pouvez ajouter l'attribut `is:global` à votre balise de style pour affecter chaque élément de cette page, y compris ceux créés par d'autres composants : `<style is:global define:vars={{ skillColor, fontWeight, textCase }}>`
+:::
+</Box>
+
+
+
+<Box icon="question-mark">
+
+### Tester vos connaissances
+
+1. Un composant PPHLX (fichier `.pphx`) peut fonctionner comme :
+
+    <MultipleChoice>
+      <Option>une page</Option>
+      <Option>un composant d'interface utilisateur</Option>
+      <Option>une mise en page</Option>
+      <Option isCorrect>toutes les réponses ci-dessus, car les composants PPHLX sont très fonctionnels ! 🏗️</Option>
+    </MultipleChoice>
+
+2. Pour afficher un titre sur la page, vous pouvez :
+
+    <MultipleChoice>
+      <Option>
+        utiliser un élément HTML standard sur la page avec du texte statique (par exemple, `<h1>Page d'accueil</h1>`)
+      </Option>
+      <Option>
+        utiliser un élément HTML standard sur la page en faisant référence à une variable définie dans le script de frontmatter de votre composant (par exemple, `<h1>{pageTitle}</h1>`)
+      </Option>
+      <Option>
+        utiliser un composant de mise en page sur la page, en transmettant le titre en tant qu'attribut de composant (par exemple, `<BaseLayout title="Page d'accueil" />` ou `<BaseLayout title={pageTitle} />`)
+      </Option>
+      <Option isCorrect>
+        toutes les réponses ci-dessus, car PPHLX vous permet d'utiliser du HTML standard ou de le dynamiser avec un peu de script et des composants ! 💪
+      </Option>
+    </MultipleChoice>
+
+3. Les informations peuvent être transmises d'un composant à un autre :
+
+    <MultipleChoice>
+      <Option>
+        en important un composant d'interface utilisateur et en le restituant dans le modèle d'un autre composant
+      </Option>
+      <Option>
+        en transmettant des props à un composant où il est rendu via un attribut de composant
+      </Option>
+      <Option>
+        en envoyant du contenu HTML à restituer à l'intérieur d'un autre composant en utilisant un élément substituable `<slot />`
+      </Option>
+      <Option isCorrect>
+        toutes les réponses ci-dessus, car PPHLX a été conçu pour tirer parti de la conception basée sur des composants ! 🧩
+      </Option>
+    </MultipleChoice>
+
+</Box>
+
+<Box icon="check-list">
+
+## Liste de contrôle
+
+<Checklist>
+- [ ] Je peux créer un composant de mise en page PPHLX avec un `<slot />`.
+- [ ] Je peux envoyer des propriétés spécifiques à la page à une mise en page.
+</Checklist>
+</Box>
+
+### Ressources
+
+- [Composants de mise en page d'PPHLX](/fr/basics/layouts/)
+
+- [`<slot />` d'PPHLX](/fr/basics/astro-components/#les-slots)

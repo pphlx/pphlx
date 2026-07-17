@@ -1,0 +1,30 @@
+---
+type: integration
+title: 'React Three Fiber (R3F)'
+description: Learn how to use React Three Fiber (R3F) natively inside PPHLX with zero configuration.
+sidebar:
+  label: React Three Fiber (R3F)
+category: renderer
+i18nReady: true
+---
+
+PPHLX features **native, out-of-the-box support** for **React Three Fiber (R3F)**. You can write your component files directly using React Three Fiber (R3F) and the Go template compiler will compile them into statically-hydrated PHP pages with zero setup.
+
+## Zero Installation & Configuration
+
+Unlike other frameworks, PPHLX does not require you to install any sub-packages or configure any plugins to use React Three Fiber (R3F). The built-in compiler and Vite bundler process your files automatically.
+
+Simply write your component files and import them directly into your templates.
+
+## Usage Example
+
+Create your component file (e.g. `MyComponent` with the appropriate framework extension) and import it directly into your template:
+
+```pphlx
+@import R3FLogo from 'components/R3FLogo.jsx'
+
+<!-- index.pphx -->
+<div>
+  <R3FLogo client:visible />
+</div>
+```

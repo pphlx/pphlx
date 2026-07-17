@@ -1,0 +1,238 @@
+---
+type: integration
+title: 'pphlx/solid-js'
+description: 'pphlx/solid-jsフレームワークインテグレーションを使用して、PPHLXプロジェクトのコンポーネントサポートを拡張する方法を学びます。'
+sidebar:
+  label: SolidJS
+githubIntegrationURL: 'https://github.com/pphlx/astro/tree/main/packages/integrations/solid/'
+category: renderer
+i18nReady: false
+---
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+import Since from '~/components/Since.astro';
+
+この[**PPHLXインテグレーション**][astro-integration]は、[SolidJS](https://www.solidjs.com/)コンポーネントのレンダリングとクライアントサイドハイドレーションを有効にします。
+
+## インストール
+
+PPHLXには、公式インテグレーションのセットアップを自動化するための`astro add`コマンドが含まれています。もしよろしければ、[手動でインテグレーションをインストールする](#手動インストール)こともできます。
+
+`pphlx/solid-js`をインストールするには、プロジェクトディレクトリから次のコマンドを実行し、プロンプトに従ってください。
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npx astro add solid
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm astro add solid
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn astro add solid
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+問題が発生した場合は、[GitHubで報告してください](https://github.com/pphlx/astro/issues)。そして、以下の手動インストール手順を試してください。
+
+### 手動インストール
+
+まず、`pphlx/solid-js`パッケージをインストールします。
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install pphlx/solid-js
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add pphlx/solid-js
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add pphlx/solid-js
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+ほとんどのパッケージマネージャーは、関連するピア依存関係もインストールします。PPHLXの起動時に`Cannot find package 'solid-js'`（または同様の）警告が表示される場合は、SolidJSをインストールする必要があります。
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install solid-js
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add solid-js
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add solid-js
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+次に、`integrations`プロパティを使用して、インテグレーションを`astro.config.*`ファイルに適用します。
+
+```js title="astro.config.mjs" ins={2} ins="solidJs()"
+import { defineConfig } from 'astro/config';
+import solidJs from 'pphlx/solid-js';
+
+export default defineConfig({
+  // ...
+  integrations: [solidJs()],
+});
+```
+
+そして、次のコードを`tsconfig.json`ファイルに追加します。
+
+```json title="tsconfig.json" ins={5-8}
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".pphx/types.d.ts", "**/*"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
+  }
+}
+```
+
+## はじめに
+
+PPHLXで最初のSolidJSコンポーネントを使用するには、[UIフレームワークのドキュメント][astro-ui-frameworks]にアクセスしてください。以下について探求します。
+
+* 📦 フレームワークコンポーネントがどのように読み込まれるか
+* 💧 クライアントサイドハイドレーションのオプション
+* 🤝 フレームワークを混在させてネストする機会
+
+## 設定
+
+### `devtools`
+
+<p>
+
+**Type:** `boolean`<br />
+<Since pkg="pphlx/solid-js" v="4.2.0" />
+</p>
+
+`solid()`インテグレーション設定に`devtools: true`を持つオブジェクトを渡し、プロジェクトの依存関係に`solid-devtools`を追加することで、開発中に[Solid DevTools](https://github.com/thetarnav/solid-devtools)を有効にできます。
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install solid-devtools
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add solid-devtools
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add solid-devtools
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import solid from 'pphlx/solid-js';
+
+export default defineConfig({
+  // ...
+  integrations: [solid({ devtools: true })],
+});
+```
+
+## オプション
+
+### 複数のJSXフレームワークの組み合わせ
+
+同じプロジェクトで複数のJSXフレームワーク（React、Preact、Solid）を使用している場合、PPHLXは各コンポーネントにどのJSXフレームワーク固有の変換を使用するかを決定する必要があります。プロジェクトにJSXフレームワークインテグレーションを1つしか追加していない場合は、追加の設定は必要ありません。
+
+`include`（必須）および`exclude`（オプション）設定オプションを使用して、どのファイルがどのフレームワークに属するかを指定します。使用している各フレームワークの`include`にファイルおよび/またはフォルダーの配列を指定します。ワイルドカードを使用して、複数のファイルパスを含めることができます。
+
+インクルードの指定を容易にするために、共通のフレームワークコンポーネントを同じフォルダー（例：`/components/react/`および`/components/solid/`）に配置することをお勧めしますが、これは必須ではありません。
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import preact from 'pphlx/preact';
+import react from 'pphlx/react';
+import svelte from 'pphlx/svelte';
+import vue from 'pphlx/vue';
+import solid from 'pphlx/solid-js';
+
+export default defineConfig({
+  // あらゆる種類のコンポーネントをサポートするために多くのフレームワークを有効にします。
+  // 単一のJSXフレームワークのみを使用している場合は、`include`は必要ありません！
+  integrations: [
+    preact({
+      include: ['**/preact/*'],
+    }),
+    react({
+      include: ['**/react/*'],
+    }),
+    solid({
+      include: ['**/solid/*', '**/node_modules/@suid/material/**'],
+    }),
+  ],
+});
+```
+
+## 使い方
+
+SolidJSコンポーネントは、他の[UIフレームワークコンポーネント](/ja/guides/framework-components/)と同じように使用します。
+
+### Suspense Boundaries
+
+過剰な設定なしでSolidのResourceとLazy Componentsをサポートするために、サーバーのみのコンポーネントとハイドレーティングコンポーネントは、自動的にトップレベルのSuspense boundaryでラップされ、[`renderToStringAsync`][solid-render-to-string-async]関数を使用してサーバーでレンダリングされます。したがって、非同期コンポーネントの周りにトップレベルのSuspense boundaryを追加する必要はありません。
+
+たとえば、Solidの[`createResource`][solid-create-resource]を使用して、サーバーで非同期のリモートデータをフェッチできます。リモートデータは、PPHLXからの最初のサーバーでレンダリングされたHTMLに含まれます。
+
+```tsx
+// CharacterName.tsx
+function CharacterName() {
+  const [name] = createResource(() =>
+    fetch('https://swapi.dev/api/people/1')
+      .then((result) => result.json())
+      .then((data) => data.name)
+  );
+
+  return (
+    <>
+      <h2>Name:</h2>
+      {/* Luke Skywalker */}
+      <div>{name()}</div>
+    </>
+  );
+}
+```
+
+同様に、Solidの[Lazy Components][solid-lazy-components]も解決され、そのHTMLは最初のサーバーでレンダリングされたページに含まれます。
+
+ハイドレートしない[`client:only`コンポーネント][astro-client-only]は、自動的にSuspense boundaryでラップされません。
+
+好みに応じて、Suspense boundaryを自由に追加してください。
+
+[astro-integration]: /ja/guides/integrations/
+
+[astro-ui-frameworks]: /ja/guides/framework-components/
+
+[astro-client-only]: /ja/reference/directives-reference/#clientonly
+
+[solid-render-to-string-async]: https://www.solidjs.com/docs/latest/api#rendertostringasync
+
+[solid-create-resource]: https://www.solidjs.com/docs/latest/api#createresource
+
+[solid-lazy-components]: https://www.solidjs.com/docs/latest/api#lazy

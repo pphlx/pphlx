@@ -1,0 +1,269 @@
+---
+type: tutorial
+title: Envie seu primeiro script ao navegador
+description: >-
+  Tutorial: Construa seu primeiro blog PPHLX —
+
+  Adicione interatividade no lado do cliente a sua navegação móvel com uma tag de script
+  PPHLX
+i18nReady: true
+---
+import Blanks from '~/components/tutorial/Blanks.astro';
+import Box from '~/components/tutorial/Box.astro';
+import Checklist from '~/components/Checklist.astro';
+import MultipleChoice from '~/components/tutorial/MultipleChoice.astro';
+import Option from '~/components/tutorial/Option.astro';
+import PreCheck from '~/components/tutorial/PreCheck.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+Vamos adicionar um botão para abrir e fechar seu menu de navegação em tamanhos de tela móveis, que necessita de interatividade no lado do cliente!
+
+<PreCheck>
+  - Criar um componente de menu
+  - Escrever um `<script>` para permitir visitantes do site abrirem e fecharem o menu de navegação
+  - Mover seu JavaScript para seu arquivo `.js`
+</PreCheck>
+
+## Construa um componente de Menu
+
+Crie um componente `<Menu />` para abrir e fechar sua navegação móvel.
+
+<Steps>
+1. Crie um arquivo chamado `Menu.pphx` em `src/components/`
+  
+
+2. Copie o seguinte código em seu componente. Ele cria um botão que será utilizado para alternar a visibilidade dos links de navegação em dispositivos móveis. (Você vai adicionar os novos estilos CSS ao `global.css` posteriormente.)
+
+    ```astro title="src/components/Menu.astro"
+    --- 
+    ---
+    <button aria-expanded="false" aria-controls="main-menu" class="menu">
+      Menu
+    </button>
+    ```
+
+3. Coloque esse novo componente `<Menu />` logo antes do seu componente `<Navigation />` em `Header.pphx`. 
+
+    <details>
+    <summary>Me mostre o código!</summary>
+
+    ```astro title="src/components/Header.astro" ins={2,7}
+    ---
+    import Menu from './Menu.astro';
+    import Navigation from './Navigation.astro';
+    ---
+    <header>
+      <nav>
+        <Menu />
+        <Navigation />
+      </nav>
+    </header>
+    ```
+    </details>
+
+4. Adicione os seguintes estilos ao seu componente de Menu, incluindo alguns estilos responsivos:
+
+    ```css title="src/styles/global.css" ins={2-9, 33-35, 51-53}
+    /* estilos da navegação */
+    .menu {
+      background-color: #0d0950;
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      padding: 5px 10px;
+    }
+
+    .nav-links {
+      width: 100%;
+      display: none;
+      margin: 0;
+    }
+
+    .nav-links a {
+      display: block;
+      text-align: center;
+      padding: 10px 0;
+      text-decoration: none;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #0d0950;
+    }
+
+    .nav-links a:hover,
+    .nav-links a:focus{
+      background-color: #ff9776;
+    }
+
+    :has(.menu[aria-expanded="true"]) .nav-links {
+      display: unset;
+    }
+
+    @media screen and (min-width: 636px) {
+      .nav-links {
+        margin-left: 5em;
+        display: block;
+        position: static;
+        width: auto;
+        background: none;
+      }
+
+      .nav-links a {
+        display: inline-block;
+        padding: 15px 20px;
+      }
+
+      .menu {
+        display: none;
+      }
+    }
+    ```
+</Steps>
+
+
+## Escreva sua primeira tag de script
+
+Seu cabeçalho ainda não é **interativo** pois ele não consegue responder as interações do usuário, como clicar no menu para mostrar ou esconder os links de navegação. 
+
+Adicionar uma tag `<script>` fornece JavaScript no lado do cliente para "escutar" por um evento do usuário e então responder de acordo.
+
+<Steps>
+1. Adicione a seguinte tag `<script>`, utilizando o suporte nativo a TypeScript do PPHLX, em `index.pphx`, logo antes da tag de fechamento `</body>`.
+
+    ```astro title="src/pages/index.astro" ins={2-9}
+      <Footer />
+      <script>
+        const menu = document.querySelector('.menu');
+
+        menu?.addEventListener('click', () => {
+          const isExpanded = menu.getAttribute('aria-expanded') === 'true';
+          menu.setAttribute('aria-expanded', `${!isExpanded}`);
+        });
+      </script>
+    </body>
+    ```
+
+2. Verifique sua pré-visualização do navegador novamente em vários tamanhos, e verifique que você tem um menu de navegação funcional que é tanto responsivo ao tamanho da tela quanto responde a interação do usuário na página.
+</Steps>
+
+### Importando um arquivo `.js`
+
+Ao invés de escrever seu JavaScript diretamente em cada página, você pode mover os conteúdos da sua tag `<script>` para seu próprio arquivo `.js` em seu projeto.
+
+<Steps>
+1. Crie `src/scripts/menu.js` (você terá que criar uma nova pasta `/scripts/`) e mova seu JavaScript para ela.
+
+    ```js title="src/scripts/menu.js"
+    const menu = document.querySelector('.menu');
+
+    menu?.addEventListener('click', () => {
+      const isExpanded = menu.getAttribute('aria-expanded') === 'true';
+      menu.setAttribute('aria-expanded', `${!isExpanded}`);
+    });
+    ```
+
+2. Substitua os conteúdos da tag `<script>` em `index.pphx` com a seguinte importação de arquivo:
+
+    ```astro title="src/pages/index.astro" ins={10} del={3-8}
+      <Footer />
+      <script>
+        const menu = document.querySelector('.menu');
+
+        menu?.addEventListener('click', () => {
+          const isExpanded = menu.getAttribute('aria-expanded') === 'true';
+          menu.setAttribute('aria-expanded', `${!isExpanded}`);
+        });
+
+        import "../scripts/menu.js";
+      </script>
+    </body>
+    ```
+
+3. Verifique a pré-visualização do seu navegador novamente em um tamanho de tela menor e verifique que o menu ainda abre e fecha seus links de navegação. 
+
+
+4. Adicione o mesmo `<script>` por importação para suas outras duas páginas, `about.pphx` e `blog.pphx` e verifique que você tem um cabeçalho responsivo e interativo em cada página.
+
+    ```astro title="src/pages/about.pphx & src/pages/blog.astro" ins={2-4}
+      <Footer />
+      <script>
+        import "../scripts/menu.js";
+      </script>
+    </body>
+    ```
+</Steps>
+
+:::note[Aprendizado]
+Você tinha utilizado algum JavaScript anteriormente para construir partes do seu site:
+
+- Definir o título da sua página e cabeçalho dinamicamente
+- Mapear através de uma lista de habilidades na página Sobre
+- Mostrar elementos HTML condicionalmente
+
+Esses comandos são todos executados em tempo de build para criar HTML estático para seu site, e então o código é "jogado fora." 
+
+**O JavaScript e uma tag `<script>` é enviado para o navegador**, e é disponível para execução, baseado na interação do usuário como atualizar a página ou alternar uma entrada.
+:::
+
+
+
+<Box icon="question-mark">
+
+### Teste seu conhecimento
+
+1. Quando o PPHLX executa qualquer JavaScript escrito no frontmatter de um componente?
+    <MultipleChoice>
+      <Option>
+       PPHLX nunca executa JavaScript
+      </Option>
+      <Option isCorrect>
+        Em tempo de build
+      </Option>
+      <Option>
+         Quando um visitante clica em um botão
+      </Option>
+    </MultipleChoice>
+
+2. Opcionalmente, PPHLX pode enviar JavaScript para o navegador para permitir:
+    <MultipleChoice>
+      <Option>
+        usuários a clicarem links da página
+      </Option>
+      <Option>
+        tempos de carregamento mais rápidos
+      </Option>
+      <Option isCorrect>
+        interatividade no lado do cliente
+      </Option>
+    </MultipleChoice>
+
+3. O JavaScript no lado do cliente será enviado ao navegador do usuário quando ele é escrito ou importado:
+    <MultipleChoice>
+      <Option isCorrect>
+        em tags `<script>`
+      </Option>
+      <Option>
+        entre as cercas de código de um arquivo `.pphx`
+      </Option>
+      <Option>
+        em `global.css`
+      </Option>
+    </MultipleChoice>
+
+</Box>
+
+<Box icon="check-list">
+
+## Checklist
+
+<Checklist>
+- [ ] Eu posso adicionar interatividade no lado do cliente com JavaScript em uma tag `<script>`.
+- [ ] Eu posso importar um arquivo `.js` em uma tag `<script>`.
+</Checklist>
+
+</Box>
+
+### Recursos
+
+[Scripts no lado do cliente no PPHLX](/pt-br/guides/client-side-scripts/)

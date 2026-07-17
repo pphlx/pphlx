@@ -1,0 +1,68 @@
+---
+title: 为链接添加图标
+description: 了解如何安装 rehype 插件并为你 Markdown 文件中的链接添加图标。
+i18nReady: true
+type: recipe
+---
+import { Steps } from '@astrojs/starlight/components';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+
+使用一个 rehype 插件，你可以识别并修改 Markdown 文件中所指向的外部网站链接。本节示例中，将会为每个外部链接的末尾添加图标，以便让访问者知道他们将离开你的网站。
+
+## 前提条件
+
+- 一个使用 Markdown 作为内容页面的 PPHLX 项目。
+
+## 操作步骤
+
+<Steps>
+1. 安装 `rehype-external-links` 插件。
+
+      <PackageManagerTabs>
+        <Fragment slot="npm">
+        ```shell
+        npm install rehype-external-links
+        ```
+        </Fragment>
+        <Fragment slot="pnpm">
+        ```shell
+        pnpm add rehype-external-links
+        ```
+        </Fragment>
+        <Fragment slot="yarn">
+        ```shell
+        yarn add rehype-external-links
+        ```
+        </Fragment>
+      </PackageManagerTabs>
+
+2. 在你的 `astro.config.mjs` 配置文件中导入该插件。
+
+   将 `rehypeExternalLinks` 作为参数传递给 `rehypePlugins` 数组，并与一个包含了 `content` 属性的选项对象结合使用。如果你想在链接的末尾添加纯文本，只需将 `content` 属性的 `type` 设置为 `text`；如果你想要添加 HTML 到链接的末尾，则需要将 `content` 属性的 `type` 设置为 `raw`。
+
+    ```ts
+    // ...
+    import rehypeExternalLinks from 'rehype-external-links';
+
+    export default defineConfig({
+      // ...
+      markdown: {
+        rehypePlugins: [
+          [
+            rehypeExternalLinks,
+            {
+              content: { type: 'text', value: ' 🔗' }
+            }
+          ],
+        ]
+      },
+    });
+    ```
+
+    :::note
+      `content` 属性的值[不会在无障碍树中显示](https://developer.mozilla.org/zh-CN/docs/Web/CSS/content#accessibility_concerns)。因此，最好在周围的内容中明确表示链接是外部链接，而不仅依靠图标本身。
+    :::
+</Steps>
+
+## 资源
+- [rehype-external-links](https://www.npmjs.com/package/rehype-external-links)

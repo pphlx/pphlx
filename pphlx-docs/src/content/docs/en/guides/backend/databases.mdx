@@ -1,0 +1,33 @@
+---
+title: Databases (SQL & ORMs)
+description: Query PostgreSQL, MySQL, or SQLite databases natively in PPHLX.
+---
+
+Because PPHLX compiled pages execute as standard PHP, you can connect directly to any SQL database using PHP's built-in **PDO (PHP Data Objects)** extension or lightweight ORMs like **Eloquent**.
+
+## Native PDO Connection
+
+Write database queries directly inside your template's backend blocks (`{| ... |}`):
+
+```pphlx
+{|
+try {
+    $db = new PDO("mysql:host=localhost;dbname=my_app", "username", "password");
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $stmt = $db->query("SELECT id, title, price FROM products LIMIT 10");
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Database Connection Error: " . $e->getMessage());
+}
+|}
+
+<div>
+  <h1>Store Products</h1>
+  <ul>
+    <?php foreach ($products as $product): ?>
+      <li>{|= htmlspecialchars($product['title']) |} - ${|= $product['price'] |}</li>
+    <?php endforeach; ?>
+  </ul>
+</div>
+```

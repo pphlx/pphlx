@@ -1,5 +1,6 @@
 ---
 import { Image } from 'astro:assets';
+import HeroTabs from "./HeroTabs.astro";
 import CodeBlock from '~/components/CodeBlock.astro';
 import bg from '../../_assets/final-cta.png';
 import Link from '../Link.astro';
@@ -20,24 +21,16 @@ import Link from '../Link.astro';
 				Start building with <br /> PPHLX today
 			</h2>
 
-			<div class="grid grid-rows-2 gap-2">
-				<Link href="#docs" class="primary w-full h-fit">
+			<div class="flex flex-col gap-2 w-full sm:max-w-md">
+				<Link href="/docs/en/getting-started/" class="primary w-full h-fit">
 					<span
 						class="bg-clip-text text-transparent bg-blue-purple-gradient group-hover:text-astro-blue transition-all ease-in-out duration-500"
 					>
 						Get Started
 					</span>
 				</Link>
-				<CodeBlock><span id="install-cmd-cta">curl -fsSL https://pphlx.org/install.sh | sh</span></CodeBlock>
+				<HeroTabs/>
 			</div>
 		</div>
 	</div>
 </section>
-
-<script>
-	// Detect user platform and swap install command
-	const cmdSpan = document.getElementById('install-cmd-cta');
-	if (cmdSpan && navigator.platform.indexOf('Win') !== -1) {
-		cmdSpan.textContent = 'irm https://pphlx.org/install.ps1 | iex';
-	}
-</script>

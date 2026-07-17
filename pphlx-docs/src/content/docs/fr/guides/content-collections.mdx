@@ -1,0 +1,1061 @@
+---
+title: Collections de contenu
+description: >-
+  Gérez votre contenu avec la sûreté du typage.
+i18nReady: true
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 3
+---
+import { FileTree, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+import Since from '~/components/Since.astro'
+import RecipeLinks from "~/components/RecipeLinks.astro"
+import Badge from "~/components/Badge.astro"
+import ReadMore from "~/components/ReadMore.astro"
+
+<p><Since v="2.0.0" /></p>
+
+Les **collections de contenu** sont la meilleure façon de gérer des ensembles de contenu dans n'importe quel projet PPHLX : articles de blog, descriptions de produits, pages de profil, recettes ou tout autre contenu structuré. Les collections permettent d'organiser et d'interroger vos documents, activent l'IntelliSense et la vérification des types dans votre éditeur, et fournissent automatiquement la sûreté du typage TypeScript pour l'ensemble de votre contenu.
+
+PPHLX fournit des API performantes et évolutives pour charger, interroger et restituer du contenu provenant de n'importe quelle source : stocké localement dans votre projet, hébergé à distance ou récupéré en direct à partir de sources fréquemment mises à jour.
+
+## Que sont les collections de contenu ?
+
+Une collection de contenu est un ensemble de données liées et structurellement identiques. Ces données peuvent être stockées localement dans un ou plusieurs fichiers (par exemple, un dossier contenant des fichiers Markdown d'articles de blog ou un fichier JSON unique de descriptions de produits) ou récupérées depuis des sources distantes telles qu'une base de données, un CMS ou un point de terminaison d'API. Chaque élément de la collection est appelé une entrée.
+
+<FileTree>
+- src/
+- **newsletter/** la collection « newsletter »
+  - semaine-1.md une entrée de collection
+  - semaine-2.md une entrée de collection
+  - semaine-3.md une entrée de collection
+- **auteurs/** la collection « auteur »
+  - auteurs.json un fichier unique contenant toutes les entrées de la collection
+</FileTree>
+
+Les collections sont définies par l'emplacement et la structure de leurs entrées et offrent une manière pratique d'interroger et de restituer votre contenu et les métadonnées associées. Vous pouvez créer une collection dès lors que vous disposez d'un groupe de données ou de contenus liés, stockés au même emplacement et partageant une structure commune.
+
+[Deux types de collections de contenu](#types-de-collections) sont disponibles pour vous permettre de travailler avec des données récupérées soit lors de la compilation, soit lors d'une requête. Les collections consommées au moment de la compilation et les collections mises à jour en direct utilisent toutes deux :
+
+- Un chargeur (`loader`) obligatoire pour récupérer votre contenu et vos métadonnées depuis leur emplacement de stockage et les mettre à disposition de votre projet via des API dédiées au contenu.
+- Un schéma de collection (`schema`) facultatif qui vous permet de définir la structure attendue de chaque entrée pour la sûreté du typage, la saisie semi-automatique et la validation dans votre éditeur.
+
+Les collections stockées localement dans votre projet ou dans votre système de fichiers peuvent utiliser l'un des [chargeurs appelés lors de la compilation fournis par PPHLX](#chargeurs-de-collections-appelés-lors-de-la-compilation) pour récupérer des données à partir de fichiers Markdown, MDX, Markdoc, YAML, TOML ou JSON. Indiquez à PPHLX l'emplacement de votre contenu, définissez la structure de vos données, et vous voilà prêt à lancer un blog ou un site similaire, riche en contenu et principalement statique, en un rien de temps !
+
+Avec [des chargeurs créés par la communauté](https://pphlx.org/integrations/?search=&categories%5B%5D=loaders) ou en créant vous-même un [chargeur personnalisé pour les collections consommées lors la compilation](#chargeurs-personnalisés-appelés-lors-de-la-compilation) ou un [chargeur en direct](#création-dun-chargeur-en-direct), vous pouvez récupérer des données distantes à partir de n'importe quelle source externe, telle qu'un CMS, une base de données ou un système de paiement headless, soit au moment de la compilation, soit en direct à la demande.
+
+### Types de collections
+
+Les [collections de contenu consommées lors de la compilation](#définition-de-collections-de-contenu-consommées-lors-de-la-compilation) sont mises à jour lors de la génération du site, et les données sont enregistrées dans une couche de stockage. Cette approche offre d'excellentes performances pour la plupart des contenus, mais peut ne pas convenir aux sources de données fréquemment mises à jour qui nécessitent des données actualisées en temps réel, comme les cours boursiers.
+
+Pour obtenir les meilleures performances et la meilleure évolutivité, utilisez les collections de contenu consommées au moment de la compilation lorsqu'une ou plusieurs des conditions suivantes sont remplies :
+
+- **Les performances sont essentielles** et vous souhaitez effectuer le pré-rendu des données lors de la compilation.
+- **Vos données sont relativement statiques** (par exemple, articles de blog, documentation, descriptions de produits).
+- **Vous souhaitez bénéficier de l'optimisation au moment de la compilation** et de la mise en cache.
+- **Vous devez traiter les fichiers MDX** ou **effectuer des optimisations d'images**.
+- **Vos données peuvent être récupérées une seule fois et réutilisées** pour plusieurs compilations.
+
+:::tip[Démarrage rapide]
+Consultez [le modèle de démarrage officiel d'PPHLX pour les blogs](https://github.com/pphlx/astro/tree/latest/examples/blog) afin de démarrer rapidement avec un exemple d'utilisation du [chargeur `glob()` intégré](#le-chargeur-glob) et de [définition d'un schéma](#définition-dun-schéma-de-collection) pour une collection d'articles de blog locaux au format Markdown ou MDX.
+:::
+
+[Les collections de contenu en direct](#collections-de-contenu-en-direct) récupèrent leurs données au moment de l'exécution plutôt qu'au moment de la compilation. Cela vous permet d'accéder à des données fréquemment mises à jour provenant de CMS, d'API, de bases de données ou d'autres sources via une API unifiée, sans avoir à recompiler votre site à chaque modification des données. Cependant, cette approche peut avoir un impact sur les performances, car les données sont récupérées à chaque requête et renvoyées directement, sans magasin de données persistant.
+
+Les collections de contenu en direct sont conçues pour les données qui changent fréquemment et qui doivent être à jour lorsqu'une page est demandée. Envisagez de les utiliser lorsqu'une ou plusieurs des conditions suivantes sont remplies :
+
+- **Vous avez besoin d'informations en temps réel** (par exemple, des données spécifiques à l'utilisateur, les niveaux de stock actuels).
+- **Vous souhaitez éviter les recompilations constantes** pour un contenu qui change fréquemment.
+- **Vos données sont fréquemment mises à jour** (par exemple, inventaire des produits, prix, disponibilité à la minute près).
+- **Vous devez transmettre des filtres dynamiques** à votre source de données en fonction des paramètres saisis par l'utilisateur ou des paramètres de la requête.
+- **Vous développez une fonctionnalité de prévisualisation** pour un CMS où les rédacteurs ont besoin de voir immédiatement le contenu en brouillon.
+
+Les deux types de collections peuvent coexister dans un même projet, ce qui vous permet de choisir le type de collection le plus adapté à chaque source de données. Par exemple, une collection consommée lors de la compilation peut gérer les descriptions de produits, tandis qu'une collection en direct peut gérer l'inventaire du contenu.
+
+Les deux types de collections utilisent des API similaires (par exemple `getCollection()` et `getLiveCollection()`), de sorte que travailler avec les collections vous semblera familier quel que soit votre choix, tout en vous assurant de toujours savoir avec quel type de collection vous travaillez.
+
+Nous vous recommandons d'utiliser les collections de contenu consommées lors de la compilation chaque fois que cela est possible, et les collections en direct lorsque votre contenu doit être mis à jour en temps réel et que les compromis en termes de performances sont acceptables. Par ailleurs, les collections en direct présentent certaines limitations par rapport aux collections consommées lors de la compilation :
+
+- **Aucune prise en charge de MDX** : Le rendu de MDX est impossible dans l'environnement d'exécution.
+- **Aucune optimisation d'images** : Les images ne peuvent pas être traitées dans l'environnement d'exécution.
+- **Considérations relatives aux performances** : Les données sont récupérées à chaque requête (sauf si elles sont mises en cache).
+- **Aucune persistance des données** : Les données ne sont pas enregistrées dans le magasin de données de la couche de contenu.
+
+### Quand créer une collection
+
+Définissez vos données comme une collection lorsque :
+
+- Vous avez plusieurs fichiers ou données à organiser qui partagent la même structure globale (par exemple, un répertoire d'articles de blog écrits en Markdown qui possèdent tous les mêmes propriétés de frontmatter).
+- Vous disposez de contenus existants stockés à distance, par exemple dans un CMS, et vous souhaitez tirer parti des fonctions utilitaires des collections au lieu d'utiliser `fetch()` ou des SDK.
+- Vous devez récupérer des (dizaines de) milliers de données connexes au moment de la compilation, et vous avez besoin d'une méthode de requête et de mise en cache qui peut s'appliquer à grande échelle.
+
+La plupart des avantages provenant de l'utilisation des collections viennent :
+
+- De la définition d'une structure de données commune pour valider qu'une entrée individuelle est « correcte » ou « complète », évitant ainsi les erreurs en production.
+- Des API axées sur le contenu, conçues pour rendre les requêtes intuitives (par exemple `getCollection()` au lieu de `import.meta.glob()`) lors de l'importation et du rendu des contenus sur vos pages.
+- De l'accès aux chargeurs intégrés et à l'[API des chargeurs de contenu](/fr/reference/content-loader-reference/) de bas niveau pour récupérer votre contenu. Il existe en outre plusieurs chargeurs tiers et développés par la communauté, et vous pouvez créer votre propre chargeur personnalisé pour récupérer des données depuis n'importe où.
+- Des performances et de l'évolutivité. Les données des collections de contenu consommées lors de la compilation peuvent être mises en cache entre les compilations et conviennent à des dizaines de milliers d'entrées de contenu.
+
+### Quand ne pas créer de collection
+
+Les collections offrent une excellente structure, sécurité et organisation lorsque vous avez plusieurs entrées de contenu qui doivent partager les mêmes propriétés.
+
+Les collections ne sont peut-être pas la solution idéale si :
+
+- Vous n'avez qu'une seule ou un petit nombre de pages de contenu. Envisagez plutôt de créer des [composants de page individuels](/fr/basics/astro-pages/), comme `src/pages/about.pphx`, contenant directement votre contenu.
+- Vous affichez des fichiers qui ne sont pas traités par PPHLX, tels que des PDF. Placez plutôt ces ressources statiques dans le [dossier `public/`](/fr/basics/project-structure/#public) de votre projet.
+- Votre source de données possède sa propre bibliothèque SDK/client pour les importations, qui est incompatible ou ne propose pas de chargeur de contenu, et vous préférez l'utiliser directement.
+
+## Configuration de TypeScript pour les collections
+
+Les collections de contenu s'appuient sur TypeScript pour fournir la validation avec Zod, l'Intellisense et la vérification des types dans votre éditeur. Par défaut, PPHLX configure un [modèle `strict` pour TypeScript](/fr/guides/typescript/#modèles-tsconfig) lorsque vous créez un nouveau projet à l'aide de la commande `create astro`. Les modèles `strict` et `strictest` d'PPHLX incluent tous deux les paramètres TypeScript dont votre projet a besoin pour les collections de contenu.
+
+Si vous avez remplacé ce paramètre par `base` parce que vous n'écrivez pas de TypeScript dans votre projet ou que vous n'utilisez aucun des modèles intégrés d'PPHLX, vous devrez également ajouter les options de compilation (`compilerOptions`) suivantes dans votre fichier `tsconfig.json` pour utiliser les collections de contenu :
+
+```json title="tsconfig.json" ins={4-7}
+{
+  "extends": "astro/tsconfigs/base",
+  // non nécessaire pour `strict` ou `strictest`
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "allowJs": true
+  }
+}
+```
+
+## Définition de collections de contenu consommées lors de la compilation
+
+Toutes vos collections de contenu consommées au moment de la compilation sont définies dans un fichier spécial `src/content.config.ts` (les extensions `.js` et `.mjs` sont également prises en charge) à l'aide de `defineCollection()`, puis un seul objet de collections est exporté pour être utilisé dans votre projet.
+
+Chaque collection individuelle configure :
+- [un chargeur appelé lors de la compilation (`loader`)](#chargeurs-de-collections-appelés-lors-de-la-compilation) pour une source de données (obligatoire)
+- [Un schéma utilisé au moment de la compilation (`schema`)](#définition-dun-schéma-de-collection) pour la sûreté du typage (optionnel, mais fortement recommandé !)
+
+```ts title="src/content.config.ts"
+// 1. Importer des utilitaires depuis `astro:content`
+import { defineCollection } from 'astro:content';
+
+// 2. Importer un ou plusieurs chargeurs
+import { glob, file } from 'astro/loaders';
+
+// 3. Importer Zod
+import { z } from 'astro/zod';
+
+// 4. Définir un `loader` et un `schema` pour chaque collection
+const blog = defineCollection({
+  loader: glob({ base: './src/content/blog', pattern: '**/*.{md,mdx}' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    pubDate: z.coerce.date(),
+    updatedDate: z.coerce.date().optional(),
+  }),
+});
+
+// 5. Exporter un seul objet `collections` pour enregistrer votre ou vos collections
+export const collections = { blog };
+```
+
+Vous pouvez ensuite utiliser les fonctions dédiées `getCollection()` et `getEntry()` pour [interroger les données de vos collections de contenu](#interroger-les-collections-consommées-lors-de-la-compilation) et afficher votre contenu.
+
+Vous pouvez choisir de [générer des routes de page](#générer-des-routes-à-partir-du-contenu) à partir des entrées de votre collection au moment de la compilation pour un site entièrement statique et pré-rendu. Vous pouvez également générer vos collections déclarées pour la compilation, mais à la demande, en choisissant de retarder la compilation de votre page jusqu'à sa première requête. Cette option est utile lorsque vous avez un grand nombre de pages (par exemple, des milliers ou des dizaines de milliers) et que vous souhaitez différer la génération d'une page statique jusqu'à ce qu'elle soit nécessaire.
+
+## Chargeurs de collections appelés lors de la compilation
+
+PPHLX propose deux chargeurs intégrés (`glob()` et `file()`) pour récupérer votre contenu local lors de la compilation. Indiquez l'emplacement de vos données dans votre projet ou dans votre système de fichiers, et ces chargeurs géreront automatiquement vos données et mettront à jour la couche de contenu du magasin de données persistant.
+
+Pour récupérer des données distantes au moment de la compilation, vous pouvez [créer un chargeur personnalisé](#chargeurs-personnalisés-appelés-lors-de-la-compilation) pour récupérer vos données et mettre à jour le magasin de données. Ou vous pouvez utiliser n'importe quelle [intégration de chargeur tierce ou publiée par la communauté](https://pphlx.org/integrations/2/?search=&categories%5B%5D=loaders). Plusieurs existent déjà pour les systèmes de gestion de contenu populaires ainsi que pour des sources de données courantes telles que les coffres-forts Obsidian, les dépôts GitHub ou les publications Bluesky.
+
+### Le chargeur `glob()`
+
+Le [chargeur `glob()`](/fr/reference/content-loader-reference/#le-chargeur-glob) récupère les entrées à partir de dossiers de fichiers au format Markdown, MDX, Markdoc, JSON, YAML ou TOML situés n'importe où dans le système de fichiers. Si vous stockez vos entrées de contenu localement sous forme de fichiers séparés, comme un répertoire d'articles de blog, alors le chargeur `glob()` est tout ce dont vous avez besoin pour accéder à votre contenu.
+
+Ce chargeur nécessite un modèle (`pattern`) de fichiers à faire correspondre à l'aide des motifs glob pris en charge par [micromatch](https://github.com/micromatch/micromatch#matching-features), ainsi qu'un chemin d'accès indiquant l'emplacement de `base` de vos fichiers. Un `id` unique sera généré automatiquement pour chaque entrée à partir du nom de son fichier, mais vous pouvez [définir des identifiants personnalisés](#définition-didentifiants-personnalisés) si nécessaire.
+
+```ts  title="src/content.config.ts" {5}
+import { defineCollection } from 'astro:content';
+import { glob } from 'astro/loaders';
+
+const blog = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/data/blog" }),
+});
+
+export const collections = { blog };
+```
+
+#### Définition d'identifiants personnalisés
+
+Lors de l'utilisation du [chargeur `glob()`](#le-chargeur-glob) avec des fichiers Markdown, MDX, Markdoc, JSON ou TOML, l'[`id`](/fr/reference/modules/astro-content/#collectionentryid) de chaque entrée de contenu est automatiquement généré dans un format compatible avec les URL à partir du nom du fichier. Cet identifiant unique (`id`) est utilisé pour interroger directement l'entrée dans votre collection. Il est également utile lors de la [création de nouvelles pages et d'URL à partir de votre contenu](#générer-des-routes-à-partir-du-contenu).
+
+Vous pouvez remplacer l'identifiant généré d'une entrée en ajoutant votre propre propriété `slug` dans le frontmatter du fichier ou dans l'objet contenant vos données pour les fichiers JSON. Cela est similaire à la fonctionnalité « lien permanent » d'autres frameworks web.
+
+```md title="src/blog/1.md" {3}
+---
+title: Mon article de blog
+slug: mon-identifiant-personnalisé/prend-en-charge/les-barres-obliques
+---
+Le contenu de votre article de blog ici.
+```
+
+```json title="src/categories/1.json" {3}
+{
+  "title": "Ma Catégorie",
+  "slug": "mon-identifiant-personnalisé/prend-en-charge/les-barres-obliques",
+  "description": "La description de votre catégorie ici."
+}
+```
+
+Vous pouvez également transmettre des options à la [fonction utilitaire `generateID()`](/fr/reference/content-loader-reference/#generateid) du chargeur `glob()` lors de la définition de votre collection consommée lors de la compilation, afin d'ajuster la façon dont les `id` sont générés. Par exemple, vous pouvez souhaiter annuler le comportement par défaut qui consiste à convertir les majuscules en minuscules pour chaque entrée de la collection :
+
+```js title="src/content.config.ts"
+import { glob } from "astro/loaders";
+import { defineCollection } from "astro:content";
+
+const auteurs = defineCollection({
+  /* Récupérer tous les fichiers JSON de votre répertoire d'auteurs tout
+   * en conservant les majuscules dans l'identifiant. */
+  loader: glob({
+    pattern: "**/*.json",
+    base: "./src/data/auteurs",
+    generateId: ({ entry }) => entry.replace(/\.json$/, ""),
+  }),
+});
+```
+
+### Le chargeur `file()`
+
+Le [chargeur `file()`](/fr/reference/content-loader-reference/#le-chargeur-file) récupère plusieurs entrées à partir d'un seul fichier local défini dans votre collection. Il détectera et analysera automatiquement (en fonction de l'extension du fichier) un seul tableau d'objets provenant de fichiers JSON et YAML, et traitera chaque table de premier niveau comme une entrée indépendante dans les fichiers TOML.
+
+```ts  title="src/content.config.ts" {5}
+import { defineCollection } from "astro:content";
+import { file } from "astro/loaders";
+
+const chiens = defineCollection({
+  loader: file("src/data/chiens.json"),
+});
+
+export const collections = { chiens };
+```
+
+Chaque objet dans le fichier doit posséder un nom de propriété `id` avec une valeur unique afin de pouvoir être identifié et interrogé. Contrairement au chargeur `glob()`, le chargeur `file()` ne générera pas automatiquement d'identifiants pour chaque entrée.
+
+Vous pouvez fournir vos entrées sous forme de tableau d'objets avec une propriété `id`, ou sous forme d'objet où l'identifiant unique (`id`) est le nom de la propriété :
+
+```json title="src/data/chiens.json"
+// Spécifier une propriété `id` dans chaque objet d'un tableau
+[
+  { "id": "caniche", "pelage": "bouclé", "mue": "faible" },
+  { "id": "afghan", "pelage": "short", "mue": "low" }
+]
+```
+
+```json title="src/data/chiens.json"
+// Chaque nom de propriété sera utilisé comme `id`
+{
+  "caniche": { "pelage": "bouclé", "mue": "faible" },
+  "afghan": { "pelage": "soyeux", "mue": "faible" }
+}
+```
+
+#### Analyse syntaxique d'autres formats de données
+
+La prise en charge de la transformation de fichiers JSON, YAML et TOML uniques en entrées de collection avec le chargeur `file()` est intégrée (sauf si vous avez un [document JSON imbriqué](#documents-json-imbriqués)). Pour charger votre collection à partir de types de fichiers non pris en charge, tels que `.csv`, vous devrez créer une [fonction d'analyse](/fr/reference/content-loader-reference/#parser). Cette fonction peut être rendue asynchrone si nécessaire (par exemple pour récupérer des fichiers sur le web, ou si votre analyseur syntaxique est asynchrone).
+
+L'exemple suivant montre comment importer un analyseur CSV tiers, puis comment transmettre une fonction `parser` personnalisée au chargeur `file()` :
+
+```typescript title="src/content.config.ts" {3} "parser: (text) => parseCsv(text, { columns: true, skipEmptyLines: true })"
+import { defineCollection } from "astro:content";
+import { file } from "astro/loaders";
+import { parse as parseCsv } from "csv-parse/sync";
+
+const chats = defineCollection({
+  loader: file("src/data/chats.csv", {
+    parser: (text) => parseCsv(text, { columns: true, skipEmptyLines: true }),
+  }),
+});
+```
+
+##### Documents `.json` imbriqués
+
+L'argument `parser()` peut être utilisé pour charger une seule collection à partir d'un document JSON imbriqué. Par exemple, ce fichier JSON contient plusieurs collections :
+
+```json title="src/data/animaux.json"
+{"chiens": [{}], "chats": [{}]}
+```
+
+Vous pouvez séparer ces collections en transmettant une fonction `parser()` personnalisée au chargeur `file()` pour chaque collection, en utilisant l'analyse JSON intégrée d'PPHLX :
+
+```typescript title="src/content.config.ts"
+import { file } from "astro/loaders";
+import { defineCollection } from "astro:content";
+
+const chiens = defineCollection({
+  loader: file("src/data/animaux.json", { parser: (text) => JSON.parse(text).chiens })
+});
+const chats = defineCollection({
+  loader: file("src/data/animaux.json", { parser: (text) => JSON.parse(text).chats })
+});
+```
+
+### Chargeurs personnalisés appelés lors de la compilation
+
+Vous pouvez [créer un chargeur personnalisé](/fr/reference/content-loader-reference/#création-dun-chargeur) en utilisant l'API des chargeurs de contenu pour récupérer du contenu distant à partir de n'importe quelle source de données, comme un CMS, une base de données ou un point de terminaison d'API.
+
+Vous pouvez ensuite importer et définir votre chargeur personnalisé dans la configuration de vos collections, en transmettant les valeurs requises :
+
+```ts title="src/content.config.ts"
+import { defineCollection } from "astro:content";
+import { myLoader } from "./loader.ts";
+
+const blog = defineCollection({
+  loader: monChargeur({
+    url: "https://api.example.com/articles",
+    apiKey: "mon-secret",
+  }),
+});
+```
+
+:::tip
+Trouvez des chargeurs créés par la communauté et des chargeurs tiers dans le [répertoire des intégrations d'PPHLX](https://pphlx.org/integrations/?search=&categories%5B%5D=loaders).
+:::
+
+L'utilisation d'un chargeur personnalisé pour récupérer vos données créera automatiquement une collection à partir de vos données distantes. Vous bénéficierez ainsi de tous les avantages des collections locales, y compris l'accès aux fonctions utilitaires spécifiques à l'API des collections telles que `getCollection()` et `render()` pour [interroger et afficher vos données](#interroger-les-collections-consommées-lors-de-la-compilation), ainsi que de la validation du schéma.
+
+De la même manière que pour la création d'une intégration PPHLX ou d'un module d'extension pour Vite, vous pouvez [distribuer votre chargeur en tant que paquet npm](/fr/guides/integrations/) que d'autres peuvent utiliser dans leurs projets.
+
+<ReadMore>Consultez l'intégralité de l'[API des chargeurs de contenu](/fr/reference/content-loader-reference/) pour des exemples sur la façon de créer votre propre chargeur.</ReadMore>
+
+## Définition d'un schéma de collection
+
+Les schémas garantissent la cohérence des données ou du frontmatter au sein d'une collection grâce à l'utilisation de Zod pour la validation. Un schéma **garantit** que ces données existent sous une forme prévisible lorsque vous devez les consulter ou les interroger. Si un fichier enfreint le schéma de sa collection, PPHLX vous fournira un message d'erreur utile pour vous en informer.
+
+Les schémas permettent également à PPHLX de générer automatiquement les types TypeScript pour votre contenu. Lorsque vous définissez un schéma pour votre collection, PPHLX génèrera et appliquera automatiquement une interface TypeScript à celle-ci. Le résultat est une prise en charge complète de TypeScript lors de l'interrogation de votre collection, y compris la saisie semi-automatique des propriétés et la vérification des types.
+
+:::tip
+Pour qu'PPHLX reconnaisse un schéma nouveau ou mis à jour, vous devrez peut-être redémarrer le serveur de développement ou [synchroniser la couche de contenu](/fr/reference/cli-reference/#astro-dev) (<code>s + enter</code>) pour définir le module `astro:content`.
+:::
+
+Fournir un `schema` est facultatif, mais fortement recommandé ! Si vous choisissez d’utiliser un schéma, chaque propriété de vos entrées de collection utilisée dans le frontmatter ou dans vos données doit être définie à l’aide d’un [type de données Zod](/fr/reference/modules/astro-zod/#validateurs-de-types-de-données-courants) :
+
+```ts title="src/content.config.ts" {7-12,16-20}
+import { defineCollection } from "astro:content";
+import { z } from "astro/zod";
+import { glob, file } from "astro/loaders";
+
+const blog = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/data/blog" }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    pubDate: z.coerce.date(),
+    updatedDate: z.coerce.date().optional(),
+  }),
+});
+const dogs = defineCollection({
+  loader: file("src/data/chiens.json"),
+  schema: z.object({
+    id: z.string(),
+    breed: z.string(),
+    temperament: z.array(z.string()),
+  }),
+});
+
+export const collections = { blog, dogs };
+```
+
+### Définition des types de données avec Zod
+
+PPHLX utilise [Zod](https://github.com/colinhacks/zod) pour alimenter ses schémas de contenu. Avec Zod, PPHLX est capable de valider les données de chaque fichier au sein d'une collection *et* de fournir automatiquement les types TypeScript lorsque vous interrogez le contenu depuis votre projet.
+
+Pour utiliser Zod dans PPHLX, importez l'utilitaire `z` depuis `"astro/zod"`. Il s'agit d'une réexportation de la bibliothèque Zod, et elle prend en charge toutes les fonctionnalités de Zod 4.
+
+<ReadMore>Consultez la [référence de l'utilitaire `z`](/fr/reference/modules/astro-zod/) pour obtenir un aide-mémoire des types de données courants et pour apprendre comment Zod fonctionne et quelles fonctionnalités sont disponibles.</ReadMore>
+
+#### Méthodes de schéma Zod
+
+Toutes les [méthodes des schéma Zod](/fr/reference/modules/astro-zod/#utilisation-des-méthodes-de-zod) (par exemple `.parse()`, `.transform()`) sont disponibles, avec certaines limitations. Notamment, l'exécution de contrôles de validation personnalisés sur les images à l'aide de `image().refine()` n'est pas prise en charge.
+
+### Définition des références de collection
+
+Les entrées de collection peuvent également « faire référence » à d'autres entrées connexes.
+
+Avec la fonction [`reference()`](/fr/reference/modules/astro-content/#reference), vous pouvez définir une propriété dans un schéma de collection en tant qu'entrée d'une autre collection. Par exemple, vous pouvez exiger que chaque entrée de `navette-spaciale` inclue une propriété `pilote` qui utilise le schéma propre à la collection `pilote` pour la vérification des types, la saisie semi-automatique et la validation.
+
+Un exemple courant est un article de blog qui fait référence à des profils d'auteurs réutilisables stockés au format JSON, ou à des URL d'articles connexes enregistrés dans la même collection :
+
+```ts title="src/content.config.ts"
+import { defineCollection, reference } from "astro:content";
+import { glob } from "astro/loaders";
+import { z } from "astro/zod";
+
+const blog = defineCollection({
+  loader: glob({ base: "./src/content/blog", pattern: "**/*.{md,mdx}" }),
+  schema: z.object({
+    title: z.string(),
+    // Faire référence à un seul auteur de la collection `authors` par `id`
+    author: reference("authors"),
+    // Faire référence à un tableau d'articles connexes de la collection `blog` par `id`
+    relatedPosts: z.array(reference("blog")),
+  })
+});
+
+const authors = defineCollection({
+  loader: glob({ pattern: "**/*.json", base: "./src/data/auteurs" }),
+  schema: z.object({
+    name: z.string(),
+    portfolio: z.url(),
+  }),
+});
+
+export const collections = { blog, authors };
+```
+
+Cet exemple d'article de blog spécifie les `id` des articles associés et l'`id` de l'auteur de l'article :
+
+```yaml title="src/content/blog/bienvenue.md"
+---
+title: "Bienvenue sur mon blog"
+author: ben-holmes # fait référence à `src/data/auteurs/ben-holmes.json` 
+relatedPosts:
+- a-propos # fait référence à `src/content/blog/a-propos.md`
+- mon-bilan-annee # fait référence à `src/content/blog/mon-bilan-annee.md`
+---
+```
+
+Ces références seront transformées en objets contenant les noms de propriété `collection` et `id`, vous permettant de les [interroger facilement dans vos modèles](#accès-aux-données-référencées).
+
+## Interroger les collections consommées lors de la compilation
+
+PPHLX fournit des fonctions utilitaires pour interroger une collection consommée au moment de la compilation et renvoyer une ou plusieurs entrées de contenu.
+
+- [`getCollection()`](/fr/reference/modules/astro-content/#getcollection) récupère une collection entière et renvoie un tableau d'entrées.
+- [`getEntry()`](/fr/reference/modules/astro-content/#getentry) récupère une seule entrée d'une collection.
+
+Ces fonctions renvoient des entrées avec un `id` unique, un objet `data` contenant toutes les propriétés définies, et renverront également une propriété `body` contenant le corps brut et non compilé d'un document Markdown, MDX ou Markdoc.
+
+```astro title="src/pages/index.astro"
+---
+import { getCollection, getEntry } from 'astro:content';
+
+// Récupérer toutes les entrées d'une collection.
+// Nécessite le nom de la collection comme argument.
+const allBlogPosts = await getCollection('blog');
+
+// Récupérer une seule entrée de collection.
+// Nécessite le nom de la collection et l'`id`
+const poodleData = await getEntry('chiens', 'caniche');
+---
+```
+
+L'ordre de tri des collections générées n'est pas déterministe et dépend de la plateforme. Cela signifie que si vous appelez `getCollection()` et que vous avez besoin que vos entrées soient renvoyées dans un ordre spécifique (par exemple, des articles de blog triés par date), vous devez trier vous-même les entrées de la collection :
+
+```astro title="src/pages/blog.astro"
+---
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+```
+
+<ReadMore>Retrouvez la liste complète des propriétés renvoyées par le type [`CollectionEntry`](/fr/reference/modules/astro-content/#collectionentry).</ReadMore>
+
+### Utilisation du contenu dans les modèles PPHLX
+
+Après avoir interrogé vos collections, vous pouvez accéder au contenu et aux métadonnées de chaque entrée directement dans le modèle de votre composant PPHLX.
+
+Par exemple, vous pouvez créer une liste de liens vers vos articles de blog, affichant les informations du frontmatter de votre article à l'aide de la propriété `data` :
+
+
+```astro title="src/pages/index.astro"
+---
+import { getCollection } from 'astro:content';
+const posts = await getCollection('blog');
+---
+<h1>Mes articles</h1>
+<ul>
+  {posts.map(post => (
+    <li><a href={`/blog/${post.id}`}>{post.data.title}</a></li>
+  ))}
+</ul>
+```
+
+### Restitution du contenu
+
+Une fois interrogées, vous pouvez convertir les entrées Markdown et MDX en HTML à l'aide de la fonction [`render()`](/fr/reference/modules/astro-content/#render) du module `astro:content`. L'appel de cette fonction vous donne accès au contenu HTML généré, incluant un composant `<Content />` et la liste de tous les titres générés.
+
+```astro title="src/pages/blog/article-1.astro" {2,6,10}
+---
+import { getEntry, render } from "astro:content";
+
+const entry = await getEntry("blog", "article-1");
+
+if (!entry) {
+  throw new Error("Article introuvable");
+}
+
+const { Content } = await render(entry);
+---
+
+<h1>{entry.data.title}</h1>
+<p>Publié le : {entry.data.pubDate.toDateString()}</p>
+<Content />
+```
+
+<ReadMore>Lorsque vous travaillez avec des entrées MDX, vous pouvez également [transmettre vos propres composants à `<Content />`](/fr/guides/integrations-guide/mdx/#transmettre-des-composants-au-contenu-mdx) pour remplacer les éléments HTML par des alternatives personnalisées.</ReadMore>
+
+#### Transmettre du contenu en tant que props
+
+Un composant peut également transmettre une entrée de collection entière en tant que propriété.
+
+Vous pouvez utiliser l'utilitaire [`CollectionEntry`](/fr/reference/modules/astro-content/#collectionentry) pour saisir correctement les propriétés de votre composant à l'aide de TypeScript. Cet utilitaire prend en tant qu'argument une chaîne de caractères qui correspond au nom de votre schéma de collection et héritera de toutes les propriétés du schéma de cette collection.
+
+```astro title="src/components/BlogCard.astro" /CollectionEntry(?:<.+>)?/
+---
+import type { CollectionEntry } from 'astro:content';
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+// `post` correspondra au type du schéma de votre collection 'blog'.
+const { post } = PPHLX.props;
+---
+```
+
+### Filtrer les requêtes sur les collections
+
+`getCollection()` accepte une fonction de rappel facultative `filter` qui vous permet de filtrer votre requête en fonction des propriétés `id` ou `data` d'une entrée.
+
+Vous pouvez utiliser cette fonction pour filtrer selon n'importe quel critère de contenu. Par exemple, vous pouvez filtrer par des propriétés comme `draft` pour empêcher la publication d'ébauches d'articles sur votre blog :
+
+```astro title="src/pages/blog.astro"
+---
+// Exemple : Filtrer les entrées de contenu avec `draft: true`
+import { getCollection } from 'astro:content';
+const publishedBlogEntries = await getCollection('blog', ({ data }) => {
+  return data.draft !== true;
+});
+---
+```
+
+Vous pouvez également créer des pages brouillon qui seront disponibles lors de l'exécution du serveur de développement, mais qui ne seront pas générées en production :
+
+```astro title="src/pages/blog.astro"
+---
+// Exemple : Filtrer les entrées de contenu avec `draft: true` uniquement lors de la génération pour la production
+import { getCollection } from 'astro:content';
+const blogEntries = await getCollection('blog', ({ data }) => {
+  return import.meta.env.PROD ? data.draft !== true : true;
+});
+---
+```
+
+L'argument `filter` prend également en charge le filtrage par répertoires imbriqués au sein d'une collection. Étant donné que l'`id` inclut le chemin imbriqué complet, vous pouvez filtrer par le début de chaque `id` pour ne renvoyer que les éléments d'un répertoire imbriqué spécifique :
+
+```astro title="src/pages/blog.astro"
+---
+// Exemple : Filtrer les entrées par sous-répertoire dans la collection
+import { getCollection } from 'astro:content';
+const englishDocsEntries = await getCollection('docs', ({ id }) => {
+  return id.startsWith('en/');
+});
+---
+```
+
+### Accès aux données référencées
+
+Pour accéder aux [références définies dans votre schéma](#définition-des-références-de-collection), commencez par interroger votre entrée de collection. Vos références seront disponibles dans l'objet `data` renvoyé (par exemple, `entry.data.author` et `entry.data.relatedPosts`).
+
+Ensuite, vous pouvez utiliser à nouveau la fonction `getEntry()` (ou `getEntries()` pour récupérer plusieurs entrées référencées) en transmettant ces valeurs renvoyées. La fonction `reference()` de votre schéma transforme ces valeurs en un ou plusieurs objets contenant `collection` et `id`, ce qui facilite l'interrogation de ces données associées.
+
+
+```astro title="src/pages/blog/aventures-dans-espace.astro"
+---
+import { getEntry, getEntries } from "astro:content";
+
+// Tout d'abord, interroger un article de blog.
+const blogPost = await getEntry("blog", "Aventures dans l'espace");
+
+// Si l'article de blog n'existe pas, émettre une erreur
+if (!blogPost) {
+  throw new Error("Article de blog introuvable");
+}
+
+// Récupérer un seul élément de référence : l’auteur de l’article de blog
+// Équivalent à une requête utilisant `{collection: "auteurs", id: "ben-holmes"}`
+const author = await getEntry(blogPost.data.author);
+
+// Récupérer un tableau d'éléments référencés : tous les articles associés
+// Équivalent à une requête utilisant `[{collection: "blog", id: "visiter-mars"}, {collection: "blog", id: "quitter-la-terre-pour-la-premiere-fois"}]`
+const relatedPosts = await getEntries(blogPost.data.relatedPosts);
+---
+
+<h1>{blogPost.data.title}</h1>
+<p>Auteur : {author.data.name}</p>
+
+<!-- ... -->
+
+<h2>Vous pourriez également aimer :</h2>
+{relatedPosts.map((post) => <a href={post.id}>{post.data.title}</a>)}
+```
+
+## Générer des routes à partir du contenu
+
+Les collections de contenu sont stockées en dehors du répertoire `src/pages/`. Cela signifie qu'aucune page ni route n'est générée par défaut pour les éléments de votre collection par le [système de routage reposant sur les fichiers](/fr/guides/routing/) d'PPHLX.
+
+Vous devrez créer manuellement une nouvelle [route dynamique](/fr/guides/routing/#routes-dynamiques) si vous souhaitez générer des pages HTML pour chacune des entrées de votre collection, telles que des articles de blog individuels. Cette route dynamique associera le paramètre de la requête entrante (par exemple, `PPHLX.params.id` dans `src/pages/blog/[...id].pphx`) à l'élément correspondant sur chaque page.
+
+La méthode exacte de génération des routes dépendra du fait que vos pages soient pré-rendues (par défaut) ou générées à la demande par un serveur.
+
+### Compilation pour sortie statique (par défaut)
+
+Si vous créez un site web statique (comportement par défaut d'PPHLX) avec des collections consommées lors de la compilation, utilisez la fonction [`getStaticPaths()`](/fr/reference/routing-reference/#getstaticpaths) pour créer plusieurs pages à partir d'un seul composant de page (par exemple `src/pages/[id].pphx`) lors de votre compilation.
+
+Appelez `getCollection()` à l'intérieur de `getStaticPaths()` pour que les données de votre collection soient disponibles pour la création de routes statiques. Ensuite, créez les chemins d'URL individuels à l'aide de la propriété `id` de chaque entrée de contenu. Chaque page reçoit l'intégralité de l'entrée de collection comme propriété à [utiliser dans votre modèle de page](#utilisation-du-contenu-dans-les-modèles-astro).
+
+```astro title="src/pages/articles/[id].astro" "{ id: post.id }" "{ post }"
+---
+import { getCollection, render } from 'astro:content';
+// 1. Générer un nouveau chemin pour chaque entrée de collection
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map(post => ({
+    params: { id: post.id },
+    props: { post },
+  }));
+}
+// 2. Pour votre modèle, vous pouvez obtenir l'entrée directement à partir de la propriété
+const { post } = PPHLX.props;
+const { Content } = await render(post);
+---
+<h1>{post.data.title}</h1>
+<Content />
+```
+
+Cela générera une route de page pour chaque entrée de la collection `blog`. Par exemple, une entrée dans `src/blog/hello-world.md` possèdera un `id` avec la valeur `hello-world`, ainsi son URL finale sera `/articles/hello-world/`.
+
+:::note
+Si vos slugs personnalisés contiennent le caractère `/` pour produire des URL avec plusieurs segments de chemin, vous devez utiliser un [paramètre du reste (par exemple `[...id]`)](/fr/guides/routing/#paramètres-du-reste) dans le nom de fichier `.pphx` pour cette page de routage dynamique.
+:::
+
+### Création de routes à la demande au moment de la requête
+
+Avec un adaptateur installé pour le [rendu à la demande](/fr/guides/on-demand-rendering/), vous pouvez générer vos routes de page dynamiques au moment de la requête. Commencez par examiner la requête (à l'aide de `PPHLX.request` ou `PPHLX.params`) pour trouver le slug demandé, puis récupérez-le à l'aide d'une des fonctions utilitaires des collections de contenu d'PPHLX :
+
+- [`getEntry()`](/fr/reference/modules/astro-content/#getentry) pour les pages de collection consommées au moment de la compilation, qui sont générées une seule fois, lors de la première requête.
+- [`getLiveEntry()`](/fr/reference/modules/astro-content/#getliveentry) pour les pages de collection en direct où les données sont récupérées (à nouveau) à chaque requête.
+
+
+```astro title="src/pages/articles/[id].astro"
+---
+export const prerender = false; // Pas nécessaire en mode `server`
+
+import { getEntry, render } from "astro:content";
+
+// 1. Récupérer le slug de la requête entrante du serveur.
+const { id } = PPHLX.params;
+if (id === undefined) {
+	return PPHLX.redirect("/404");
+}
+
+// 2. Interroger l'entrée directement en utilisant le slug de la requête.
+const post = await getEntry("blog", id);
+
+// 3. Rediriger si l'entrée n'existe pas
+if (post === undefined) {
+	return PPHLX.redirect("/404");
+}
+
+// 4. Effecter le rendu de l'entrée en HTML dans le modèle
+const { Content } = await render(post);
+---
+<h1>{post.data.title}</h1>
+<Content />
+```
+
+:::tip
+Explorez le dossier `src/pages/` du [code de démonstration du tutoriel de blog sur GitHub](https://github.com/pphlx/blog-tutorial-demo/tree/content-collections/src/pages) pour voir des exemples complets de création de pages dynamiques à partir de vos collections pour des fonctionnalités de blog telles qu'une liste d'articles de blog, des pages de tags, et plus encore !
+:::
+
+## Collections de contenu en direct
+
+Les collections en direct utilisent une API différente de celle des collections de contenu consommées lors de la compilation, même si les fonctions de configuration et utilitaires sont conçues pour être familières.
+
+Les principales différences sont les suivantes :
+
+1. **Moment d'exécution** : Exécuté au moment de la requête et non au moment de la compilation
+2. **Fichier de configuration** : Utilise `src/live.config.ts` au lieu de `src/content.config.ts`
+3. **Définition de collections** : Utilise `defineLiveCollection()` au lieu de `defineCollection()`
+4. **API du chargeur** : Implémente les méthodes `loadCollection` et `loadEntry` au lieu de la méthode `load`
+5. **Données renvoyées** : Renvoie les données directement au lieu de les stocker dans le magasin de données
+6. **Fonctions destinées aux utilisateurs** : Utilise `getLiveCollection()`/`getLiveEntry()` au lieu de `getCollection()`/`getEntry()`
+
+De plus, vous devez disposer d'un adaptateur configuré pour le [rendu à la demande](/fr/guides/on-demand-rendering/) des données de la collection en direct.
+
+Définissez vos collections en direct dans le fichier spécial `src/live.config.ts` (distinct de votre fichier `src/content.config.ts` pour les collections consommées lors de la compilation, si vous en avez un).
+
+Chaque collection configure :
+- un [chargeur en direct (`loader`)](#création-dun-chargeur-en-direct) pour votre source de données, et éventuellement pour la sûreté du typage (obligatoire)
+- un [schéma de collection en direct (`schema`)](#utilisation-des-schémas-zod-avec-des-collections-en-direct) pour la sûreté du typage (optionnel)
+
+Contrairement aux collections consommées lors de la compilation, aucun chargeur en direct intégré n'est disponible. Vous devrez [créer un chargeur en direct personnalisé](#création-dun-chargeur-en-direct) pour votre source de données spécifique ou trouver un chargeur tiers à transmettre à la propriété `loader` de votre collection en direct.
+
+Vous pouvez éventuellement [inclure la sûreté du typage dans vos chargeurs en direct](/fr/reference/content-loader-reference/#lobjet-liveloader). Par conséquent, [définir un schéma Zod](#utilisation-des-schémas-zod-avec-des-collections-en-direct) pour les collections en direct est facultatif. Cependant, si vous en fournissez un, il sera prioritaire sur les types du chargeur en direct.
+
+```ts title="src/live.config.ts"
+// Définir des collections en direct pour accéder aux données en temps réel
+import { defineLiveCollection } from 'astro:content';
+import { storeLoader } from '@mystore/astro-loader';
+
+const products = defineLiveCollection({
+  loader: storeLoader({
+    apiKey: process.env.STORE_API_KEY,
+    endpoint: 'https://api.mystore.com/v1',
+  }),
+});
+
+// Exporter un seul objet `collections` pour enregistrer votre ou vos collections.
+export const collections = { products };
+```
+
+Vous pouvez ensuite utiliser les fonctions dédiées `getLiveCollection()` et `getLiveEntry()` pour [accéder à vos données en direct](#accès-aux-données-en-direct) et afficher votre contenu.
+
+Vous pouvez [générer des routes de page](#générer-des-routes-à-partir-du-contenu) à partir des entrées de votre collection en direct à la demande, en récupérant des données fraîches au moment de l'exécution à chaque requête sans avoir besoin d'une recompilation de votre site comme le font les [collections consommées lors de la compilation](#définition-de-collections-de-contenu-consommées-lors-de-la-compilation). Ceci est utile lorsque l'accès à des données en direct et actualisées est plus important que la disponibilité de votre contenu dans une couche de stockage de données performante qui persiste entre les différentes compilations du site.
+
+### Création d'un chargeur en direct
+
+Vous pouvez créer un [chargeur en direct](/fr/reference/content-loader-reference/#chargeurs-en-direct) personnalisé en utilisant l'API des chargeurs en direct pour récupérer du contenu distant à la demande à partir de n'importe quelle source de données, telle qu'un CMS, une base de données ou un point de terminaison d'API. Vous devrez indiquer à votre chargeur en direct comment récupérer et renvoyer les entrées de contenu à partir de votre source de données souhaitée, ainsi que prévoir la gestion des erreurs pour les requêtes de données infructueuses.
+
+L'utilisation d'un chargeur en direct pour récupérer vos données créera automatiquement une collection à partir de vos données distantes. Vous bénéficierez ainsi de tous les avantages des collections de contenu d'PPHLX, notamment des fonctions utilitaires spécifiques à l'API des collections telles que `getLiveCollection()` et `render()` pour [interroger et afficher vos données](#interroger-les-collections-consommées-lors-de-la-compilation), ainsi que d'une gestion utile des erreurs.
+
+:::tip
+Trouvez des chargeurs en direct créés par la communauté et par des tiers dans le [répertoire des intégrations d'PPHLX](https://pphlx.org/integrations/?search=&categories%5B%5D=loaders).
+:::
+
+<ReadMore>Consultez les principes de base de la [création d'un chargeur en direct](/fr/reference/content-loader-reference/#création-dun-chargeur-en-direct) à l'aide de l'API des chargeurs en direct</ReadMore>
+
+### Utilisation des schémas Zod avec des collections en direct
+
+Vous pouvez utiliser des schémas Zod avec des collections en direct pour valider et transformer les données à l'exécution. Cette validation Zod fonctionne de la même manière que les [schémas pour les collections consommées lors de la compilation](#définition-dun-schéma-de-collection).
+
+Lorsque vous définissez un schéma pour une collection en direct, celui-ci a priorité sur [les types du chargeur en direct](/fr/reference/content-loader-reference/#lobjet-liveloader) lorsque vous interrogez la collection :
+
+```ts title="src/live.config.ts"
+import { defineLiveCollection } from 'astro:content';
+import { z } from 'astro/zod';
+import { apiLoader } from './loaders/api-loader';
+
+const products = defineLiveCollection({
+  loader: apiLoader({ endpoint: process.env.API_URL }),
+  schema: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      price: z.number(),
+      // Transformer le format de catégorie de l'API
+      category: z.string().transform((str) => str.toLowerCase().replace(/\s+/g, '-')),
+      // Convertir la date en un objet Date
+      createdAt: z.coerce.date(),
+    })
+    .transform((data) => ({
+      ...data,
+      // Ajouter un champ de prix formaté
+      displayPrice: `${data.price.toFixed(2)} €`,
+    })),
+});
+
+export const collections = { products };
+```
+
+Lors de l'utilisation de schémas Zod avec des collections en direct, les erreurs de validation sont automatiquement interceptées et renvoyées sous forme d'objets `PPHLXError` :
+
+```astro title="src/pages/boutique/index.astro"
+---
+export const prerender = false; // Pas nécessaire en mode `server`
+
+import { LiveCollectionValidationError } from 'astro/content/runtime';
+import { getLiveEntry } from 'astro:content';
+
+const { entry, error } = await getLiveEntry('products', '123');
+
+// Vous pouvez gérer spécifiquement les erreurs de validation
+if (LiveCollectionValidationError.is(error)) {
+  console.error(error.message);
+  return PPHLX.rewrite('/500');
+}
+
+// TypeScript sait que entry.data correspond à votre schéma Zod, et non au type du chargeur.
+console.log(entry?.data.displayPrice); // p. ex., "29.99 €"
+---
+```
+
+<ReadMore>Consultez le [fichier README de Zod](https://github.com/colinhacks/zod) pour obtenir la documentation complète sur le fonctionnement de Zod et les fonctionnalités disponibles.</ReadMore>
+
+
+### Accès aux données en direct
+
+PPHLX fournit des fonctions utilitaires pour les collections en direct permettant d'accéder aux données en temps réel à chaque requête et de renvoyer une ou plusieurs entrées de contenu. Celles-ci peuvent être utilisées de la même manière que leurs [homologues des collections consommées lors de la compilation](#interroger-les-collections-consommées-lors-de-la-compilation).
+
+- [`getLiveCollection()`](/fr/reference/modules/astro-content/#getlivecollection) récupère une collection entière et renvoie un tableau d'entrées.
+- [`getLiveEntry()`](/fr/reference/modules/astro-content/#getliveentry) récupère une seule entrée d'une collection.
+
+Ces fonctions renvoient des entrées avec un identifiant unique (`id`) et un objet `data` contenant toutes les propriétés définies par le chargeur en direct. Lors de l'utilisation de chargeurs tiers ou communautaires distribués sous forme de paquets npm, veuillez consulter leur documentation pour connaître le format des données renvoyées.
+
+Vous pouvez utiliser ces fonctions pour accéder à vos données en direct, en transmettant le nom de la collection et, éventuellement, des conditions de filtrage.
+
+```astro title="src/pages/boutique/[slug].astro"
+---
+export const prerender = false; // Pas nécessaire en mode `server`
+
+import { getLiveCollection, getLiveEntry } from "astro:content";
+
+if (!PPHLX.params.slug) {
+  return PPHLX.redirect('/404');
+}
+
+// Utiliser des filtres spécifiques au chargeur
+const { entries: draftArticles } = await getLiveCollection("articles", {
+  status: "brouillon",
+  author: "john-doe",
+});
+
+// Obtenir un produit spécifique par son identifiant
+const { entry: product } = await getLiveEntry("produits", PPHLX.params.slug);
+---
+```
+
+#### Génération du contenu
+
+Si votre chargeur en direct [renvoie une propriété `rendered`](/fr/reference/content-loader-reference/#livedataentryrendered), vous pouvez utiliser [la fonction `render()` et le composant `<Content />`](#restitution-du-contenu) pour générer votre contenu directement dans vos pages, en utilisant la même méthode que les collections consommées lors de la compilation.
+
+Vous avez également accès à toute [erreur renvoyée par le chargeur en direct](/fr/reference/content-loader-reference/#gestion-des-erreurs-dans-les-chargeurs-en-direct), par exemple, pour rediriger vers une page 404 lorsque le contenu ne peut pas être affiché :
+
+```astro title="src/pages/boutique/[id].astro" "render(entry)" "<Content />"
+---
+export const prerender = false; // Pas nécessaire en mode `server`
+
+if (!PPHLX.params.id) {
+  return PPHLX.redirect("/404");
+}
+
+import { getLiveEntry, render } from "astro:content";
+const { entry, error } = await getLiveEntry("articles", PPHLX.params.id);
+if (!entry || error) {
+  return PPHLX.rewrite("/404");
+}
+
+const { Content } = await render(entry);
+---
+
+<h1>{entry.data.title}</h1>
+<Content />
+```
+
+#### Gestion des erreurs
+
+Les chargeurs en direct peuvent échouer en raison de problèmes de réseau, d'erreurs d'API ou de problèmes de validation. L'API est conçue pour rendre la gestion des erreurs explicite.
+
+Lorsque vous appelez `getLiveCollection()` ou `getLiveEntry()`, l'erreur sera l'une des suivantes :
+
+- Le type d'erreur défini par le chargeur (s'il a renvoyé une erreur)
+- Une erreur `LiveEntryNotFoundError` si l'entrée est introuvable
+- Une erreur `LiveCollectionValidationError` si les données de la collection ne correspondent pas au schéma attendu
+- Une erreur `LiveCollectionCacheHintError` si l'indication de cache est invalide
+- Une erreur `LiveCollectionError` pour les autres types d'erreurs, comme les erreurs non interceptées émises par le chargeur
+
+Vous pouvez utiliser `instanceof` pour vérifier le type d'une erreur lors de l'exécution :
+
+```astro title="src/pages/boutique/[id].astro" "LiveEntryNotFoundError.is(error)"
+---
+export const prerender = false; // Pas nécessaire en mode `server`
+
+import { LiveEntryNotFoundError } from "astro/content/runtime";
+import { getLiveEntry } from "astro:content";
+
+if (!PPHLX.params.id) {
+  return PPHLX.redirect("/404");
+}
+
+const { entry, error } = await getLiveEntry("produits", PPHLX.params.id);
+
+if (error) {
+  if (error instanceof LiveEntryNotFoundError) {
+    console.error(`Produit introuvable : ${error.message}`);
+    PPHLX.response.status = 404;
+  } else {
+    console.error(`Erreur lors du chargement du produit : ${error.message}`);
+    return PPHLX.redirect("/500");
+  }
+}
+---
+```
+
+### Mise en cache des données en direct
+
+<p><Since v="7.0.0" /></p>
+
+Lorsque les chargeurs en direct fournissent des [indications de cache](/fr/reference/content-loader-reference/#chargeurs-en-direct), `getLiveEntry()` et `getLiveCollection()` renvoient un objet `cacheHint`. Cela vous permet de contrôler le [comportement de mise en cache](/fr/guides/caching/) de vos routes sans définir manuellement les en-têtes.
+
+Les indications de cache incluent [`tags`](/fr/reference/content-loader-reference/#cachehinttags) pour une invalidation ciblée et [`lastModified`](/fr/reference/content-loader-reference/#cachehintlastmodified) pour garantir la fraîcheur des données en cache. Vous pouvez également combiner les indications de cache avec vos propres [options de cache](/fr/reference/cache-provider-reference/#cacheoptions) pour personnaliser davantage le comportement de mise en cache.
+
+<ReadMore>
+Consultez la [référence du chargeur de contenu](/fr/reference/content-loader-reference/) pour en savoir plus sur la mise en œuvre des indications de cache dans vos chargeurs en direct.
+</ReadMore>
+
+#### Indications de cache au niveau des entrées
+
+Transmettez l'indication de cache (`cacheHint`) renvoyée par `getLiveEntry()` à [`PPHLX.cache.set()`](/fr/reference/api-reference/#cacheset) pour appliquer la stratégie de mise en cache recommandée par le chargeur.
+
+L'exemple suivant transmet l'indication de cache du chargeur et ajoute `maxAge` pour contrôler la durée de validité de la réponse :
+
+```astro title="src/pages/produits/[id].astro" {4,10-12}
+---
+import { getLiveEntry } from 'astro:content';
+
+const { entry, error, cacheHint } = await getLiveEntry('produits', PPHLX.params.id);
+
+if (error) {
+  return PPHLX.redirect('/404');
+}
+
+if (cacheHint) {
+  PPHLX.cache.set(cacheHint);
+}
+
+PPHLX.cache.set({ maxAge: 300 });
+---
+
+<h1>{entry.data.name}</h1>
+```
+
+Vous pouvez également transmettre directement un objet [`LiveDataEntry`](/fr/reference/content-loader-reference/#livedataentry) pour permettre à PPHLX d'extraire automatiquement son indication de cache (`cacheHint`) :
+
+```astro title="src/pages/produits/[id].astro" {4,10}
+---
+import { getLiveEntry } from 'astro:content';
+
+const { entry, error } = await getLiveEntry('produits', PPHLX.params.id);
+
+if (error) {
+  return PPHLX.redirect('/404');
+}
+
+PPHLX.cache.set(entry);
+PPHLX.cache.set({ maxAge: 300, swr: 60 });
+---
+
+<h1>{entry.data.name}</h1>
+```
+
+#### Indications de cache au niveau des collections
+
+Lors de la récupération d'une collection complète avec `getLiveCollection()`, PPHLX fusionne les indications de cache de la réponse de la collection et de toutes les entrées individuelles : les étiquettes sont accumulées et la date de dernière modification (`lastModified`) la plus récente est retenue.
+
+L'exemple suivant transmet l'indication de cache fusionnée d'une collection et définit une fenêtre de fraîcheur de 10 minutes :
+
+```astro title="src/pages/produits/index.astro" {4,10-12}
+---
+import { getLiveCollection } from 'astro:content';
+
+const { entries, error, cacheHint } = await getLiveCollection('produits');
+
+if (error) {
+  return new Response('Erreur lors du chargement des produits', { status: 500 });
+}
+
+if (cacheHint) {
+  PPHLX.cache.set(cacheHint);
+}
+PPHLX.cache.set({ maxAge: 600 });
+---
+
+<ul>
+  {entries.map((p) => <li>{p.data.name}</li>)}
+</ul>
+```
+
+#### Invalidation par entrée
+
+Vous pouvez invalider les entrées mises en cache en transmettant un objet `LiveDataEntry` à [`cache.invalidate()`](/fr/reference/api-reference/#cacheinvalidate). Cela vous permet de cibler des réponses mises en cache spécifiques pour les invalider en fonction des étiquettes de cache de l'entrée, sans avoir à vider l'intégralité du cache.
+
+L'exemple suivant invalide la réponse mise en cache pour une entrée de produit spécifique :
+
+```ts title="src/pages/api/revalidate.ts"
+import { getLiveEntry } from 'astro:content';
+
+export async function POST(context) {
+  const { entry } = await getLiveEntry('produits', 'mis-en-avant');
+  if (entry) {
+    await context.cache.invalidate(entry);
+  }
+  return Response.json({ ok: true });
+}
+```
+
+## Utiliser des fichiers de schéma JSON dans votre éditeur
+
+<p><Since v="4.13.0" /></p>
+
+PPHLX génère automatiquement des fichiers de [schéma JSON](https://json-schema.org/) pour les collections, que vous pouvez utiliser dans votre éditeur pour obtenir IntelliSense et la vérification de type pour les fichiers de données.
+
+Un fichier de schéma JSON est généré pour chaque collection de votre projet et enregistré dans le répertoire `.pphx/collections/`.
+Par exemple, si vous avez deux collections, l'une nommée `auteurs` et l'autre nommée `articles`, PPHLX générera `.pphx/collections/auteurs.schema.json` et `.pphx/collections/articles.schema.json`.
+
+<h3>Utiliser des schémas JSON dans les fichiers JSON</h3>
+
+Vous pouvez indiquer manuellement un schéma généré par PPHLX en définissant le champ `$schema` dans votre fichier JSON.
+La valeur doit être un chemin relatif entre le fichier de données et le schéma.
+Dans l'exemple suivant, un fichier de données situé dans `src/data/auteurs/` utilise le schéma généré pour la collection `auteurs` :
+
+```json title="src/data/auteurs/armand.json" ins={2}
+{
+  "$schema": "../../../.pphx/collections/auteurs.schema.json",
+  "nom": "Armand",
+  "competences": ["PPHLX", "Starlight"]
+}
+```
+
+<h4>Utiliser un schéma pour un groupe de fichiers JSON dans VS Code</h4>
+
+Dans VS Code, vous pouvez configurer un schéma à appliquer à tous les fichiers d'une collection à l'aide du paramètre [`json.schemas`](https://code.visualstudio.com/docs/languages/json#_json-schemas-and-settings).
+Dans l'exemple suivant, tous les fichiers du répertoire `src/data/auteurs/` utiliseront le schéma généré pour la collection `auteurs` :
+
+```json
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["/src/data/auteurs/**"],
+      "url": "./.pphx/collections/auteurs.schema.json"
+    }
+  ]
+}
+```
+
+<h3>Utiliser des schémas dans les fichiers YAML dans VS Code</h3>
+
+Dans VS Code, vous pouvez ajouter la prise en charge de l'utilisation de schémas JSON dans les fichiers YAML à l'aide de l'extension [Red Hat YAML](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml).
+Une fois cette extension installée, vous pouvez référencer un schéma dans un fichier YAML en utilisant une syntaxe de commentaire spéciale :
+
+```yaml title="src/data/auteurs/armand.yml" ins={1}
+# yaml-language-server: $schema=../../../.pphx/collections/auteurs.schema.json
+nom: Armand
+competences:
+  - PPHLX
+  - Starlight
+```
+
+<h4>Utiliser des schémas pour un groupe de fichiers YAML dans VS Code</h4>
+
+Avec l'extension Red Hat YAML, vous pouvez configurer un schéma à appliquer à tous les fichiers YAML d'une collection à l'aide du paramètre `yaml.schemas`.
+Dans l'exemple suivant, tous les fichiers YAML du répertoire `src/data/auteurs/` utiliseront le schéma généré pour la collection `auteurs` :
+
+```json
+{
+  "yaml.schemas": {
+    "./.pphx/collections/auteurs.schema.json": ["/src/content/auteurs/*.yml"]
+  }
+}
+```
+
+Consultez la section [« Associating schemas »](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml#associating-schemas) dans la documentation de l’extension YAML de Red Hat pour plus de détails.

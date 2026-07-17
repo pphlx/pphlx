@@ -1,6 +1,6 @@
 ---
 import siteInfo from '~/data/site-info.js';
-import AstroLogo from './PPHLXLogo.astro';
+import PPHLXLogo from './PPHLXLogo.astro';
 import HeaderDropDown from './HeaderDropDown.astro';
 import SocialLinks from './SocialLinks.astro';
 
@@ -10,7 +10,7 @@ const socialLinks = siteInfo.socialLinks.filter((link) => link.showInHeader);
 <nav class="w-full flex items-center justify-between">
 	<a href="/" data-astro-prefetch title="Home" data-home-link>
 		<span class="sr-only">PPHLX Logo</span>
-		<AstroLogo aria-hidden="true" />
+		<PPHLXLogo aria-hidden="true" />
 	</a>
 
 	<div class="hidden shrink flex-row items-center gap-12 lg:flex text-base">

@@ -1173,7 +1173,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/alpinejs",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/alpinejs",
 		"official": true,
 		"downloads": 71522,
@@ -1188,7 +1188,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/cloudflare",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/cloudflare/",
 		"official": true,
 		"downloads": 2172157,
@@ -1202,7 +1202,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/deno",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/deno/",
 		"official": true,
 		"downloads": 2863,
@@ -1218,7 +1218,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/lit",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/lit/",
 		"official": true,
 		"downloads": 11034,
@@ -1233,7 +1233,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/markdoc",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/markdoc/",
 		"official": true,
 		"downloads": 112673,
@@ -1247,7 +1247,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/markdown-component",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/migrate/#markdown--component-removed",
 		"official": true,
 		"downloads": 2239,
@@ -1261,7 +1261,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/mdx",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/mdx/",
 		"official": true,
 		"downloads": 4824751,
@@ -1276,7 +1276,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/netlify",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/netlify/",
 		"official": true,
 		"downloads": 314809,
@@ -1291,7 +1291,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/node",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/node/",
 		"official": true,
 		"downloads": 2803568,
@@ -1307,7 +1307,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/partytown",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/partytown/",
 		"official": true,
 		"downloads": 437527,
@@ -1323,7 +1323,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/preact",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/preact/",
 		"official": true,
 		"downloads": 284721,
@@ -1338,7 +1338,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/prism",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/reference/api-reference/#prism-",
 		"official": true,
 		"downloads": 14172472,
@@ -1353,7 +1353,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/react",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/react/",
 		"official": true,
 		"downloads": 4796102,
@@ -1368,7 +1368,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/sitemap",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/sitemap/",
 		"official": true,
 		"downloads": 7180426,
@@ -1384,7 +1384,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/solid-js",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/solid-js/",
 		"official": true,
 		"downloads": 246013,
@@ -1415,7 +1415,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/svelte",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/svelte/",
 		"official": true,
 		"downloads": 456828,
@@ -1430,7 +1430,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/tailwind",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/tailwind/",
 		"official": true,
 		"downloads": 1661615,
@@ -1445,7 +1445,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/vercel",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/vercel/",
 		"official": true,
 		"downloads": 779993,
@@ -1461,7 +1461,7 @@
 			"official"
 		],
 		"npmUrl": "https://www.npmjs.com/package/@astrojs/vue",
-		"repoUrl": "https://github.com/withastro/astro",
+		"repoUrl": "https://github.com/pphlx/pphlx",
 		"homepageUrl": "https://docs.astro.build/en/guides/integrations-guide/vue/",
 		"official": true,
 		"downloads": 363431,

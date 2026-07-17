@@ -1,0 +1,31 @@
+export default {
+	tutorial: 'Tutorial',
+
+	guides: 'Guide',
+	'guides.welcome': 'Welcome, world!',
+	'guides.newProject': 'Start a new project',
+	'guides.config': 'Configuration',
+	'guides.routing': 'Routing and navigation',
+	'guides.ui': 'Build your UI',
+	'guides.content': 'Add content to your site',
+	'guides.serverRendering': 'Server rendering',
+	'guides.upgrade': 'Upgrade',
+	'guides.upgrade.major': 'Major upgrade guides',
+	'guides.recipes': 'How-to recipes',
+	'guides.migrate': 'Migrate to PPHLX',
+
+	reference: 'Reference',
+	'reference.runtime': 'Runtime API',
+	'reference.other': 'Other development APIs',
+	'reference.syntax': 'PPHLX Template Syntax',
+	'reference.experimental': 'Experimental features',
+
+	ecosystem: 'Ecosystem',
+	'ecosystem.integrations.ui': 'UI frameworks',
+	'ecosystem.integrations.adapters': 'Adapters',
+	'ecosystem.integrations.other': 'Other official integrations',
+	'ecosystem.deployment': 'Deployment guides',
+	'ecosystem.cms': 'Content management systems',
+	'ecosystem.backend': 'Backend services',
+	'ecosystem.media': 'Image and video hosting',
+};

@@ -115,50 +115,50 @@ $vanillaStartBg = "#1e293b"; ?>
 
             <!-- 3. React Interactive Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-feedbackcard-1784211290069804400" class="pphlx-island" data-component="FeedbackCard" data-framework="react" data-hydrate="load"></div>
+                <div id="pphlx-feedbackcard-1784272609501052800" class="pphlx-island" data-component="FeedbackCard" data-framework="react" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-feedbackcard-1784211290069804400"] = {"title": "<?php echo $reactTitle; ?>"};
+  window.pphlxProps["pphlx-feedbackcard-1784272609501052800"] = {"title": "<?php echo $reactTitle; ?>"};
 </script>
 
             </div>
 
             <!-- 4. Vue 3 Converter SFC Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-tempconverter-1784211290071896400" class="pphlx-island" data-component="TempConverter" data-framework="vue" data-hydrate="load"></div>
+                <div id="pphlx-tempconverter-1784272609503097000" class="pphlx-island" data-component="TempConverter" data-framework="vue" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-tempconverter-1784211290071896400"] = {"label": "<?php echo $vueLabel; ?>","initialValue": "<?php echo $vueDefaultTemp; ?>"};
+  window.pphlxProps["pphlx-tempconverter-1784272609503097000"] = {"label": "<?php echo $vueLabel; ?>","initialValue": "<?php echo $vueDefaultTemp; ?>"};
 </script>
 
             </div>
 
             <!-- 5. Svelte 4 Interest Calculator Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-interestcalculator-1784211290087120300" class="pphlx-island" data-component="InterestCalculator" data-framework="svelte" data-hydrate="load"></div>
+                <div id="pphlx-interestcalculator-1784272609491523000" class="pphlx-island" data-component="InterestCalculator" data-framework="svelte" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-interestcalculator-1784211290087120300"] = {"principal": "<?php echo $sveltePrincipal; ?>","rate": "<?php echo $svelteRate; ?>","years": "<?php echo $svelteYears; ?>","label": "<?php echo $svelteLabel; ?>"};
+  window.pphlxProps["pphlx-interestcalculator-1784272609491523000"] = {"rate": "<?php echo $svelteRate; ?>","years": "<?php echo $svelteYears; ?>","label": "<?php echo $svelteLabel; ?>","principal": "<?php echo $sveltePrincipal; ?>"};
 </script>
 
             </div>
 
             <!-- 6. SolidJS High-Fidelity Timer Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-solidstopwatch-1784211290073973600" class="pphlx-island" data-component="SolidStopwatch" data-framework="solid" data-hydrate="load"></div>
+                <div id="pphlx-solidstopwatch-1784272609504607500" class="pphlx-island" data-component="SolidStopwatch" data-framework="solid" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-solidstopwatch-1784211290073973600"] = {"label": "<?php echo $solidLabel; ?>"};
+  window.pphlxProps["pphlx-solidstopwatch-1784272609504607500"] = {"label": "<?php echo $solidLabel; ?>"};
 </script>
 
             </div>
 
             <!-- 7. Preact Class Component Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-preactcart-1784211290089164800" class="pphlx-island" data-component="PreactCart" data-framework="preact" data-hydrate="load"></div>
+                <div id="pphlx-preactcart-1784272609493608400" class="pphlx-island" data-component="PreactCart" data-framework="preact" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-preactcart-1784211290089164800"] = {"price": "<?php echo $preactPrice; ?>"};
+  window.pphlxProps["pphlx-preactcart-1784272609493608400"] = {"price": "<?php echo $preactPrice; ?>"};
 </script>
 
             </div>
@@ -202,30 +202,30 @@ $vanillaStartBg = "#1e293b"; ?>
 
             <!-- 11. React Three Fiber (R3F) Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-r3flogo-1784211290066115000" class="pphlx-island" data-component="R3FLogo" data-framework="react" data-hydrate="load"></div>
+                <div id="pphlx-r3flogo-1784272609495169900" class="pphlx-island" data-component="R3FLogo" data-framework="react" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-r3flogo-1784211290066115000"] = {};
+  window.pphlxProps["pphlx-r3flogo-1784272609495169900"] = {};
 </script>
 
             </div>
 
             <!-- 12. Svelte Threlte 3D Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-threltelogo-1784211290076124700" class="pphlx-island" data-component="ThrelteLogo" data-framework="svelte" data-hydrate="load"></div>
+                <div id="pphlx-threltelogo-1784272609507612100" class="pphlx-island" data-component="ThrelteLogo" data-framework="svelte" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-threltelogo-1784211290076124700"] = {};
+  window.pphlxProps["pphlx-threltelogo-1784272609507612100"] = {};
 </script>
 
             </div>
 
             <!-- 13. Vue TresJS 3D Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-tresjslogo-1784211290067666300" class="pphlx-island" data-component="TresJSLogo" data-framework="vue" data-hydrate="load"></div>
+                <div id="pphlx-tresjslogo-1784272609509630600" class="pphlx-island" data-component="TresJSLogo" data-framework="vue" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-tresjslogo-1784211290067666300"] = {};
+  window.pphlxProps["pphlx-tresjslogo-1784272609509630600"] = {};
 </script>
 
             </div>
@@ -241,8 +241,7 @@ $vanillaStartBg = "#1e293b"; ?>
                     <div class="w-full bg-gray-950 p-1 rounded-lg border border-gray-800 flex items-center justify-center mb-3">
                         <div id="threejs-container" class="w-full h-64 rounded overflow-hidden bg-black"></div>
                     </div>
-                    <button class="w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded text-xs transition" onclick="showModal('Three.js Engine', 'Vanilla Three.js WebGL renderer initialized successfully!')">Inspect WebGL</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 15. Next.js Card -->
@@ -268,8 +267,7 @@ $vanillaStartBg = "#1e293b"; ?>
                             </div>
                         </div>
                     </div>
-                    <button class="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition" onclick="showModal('Next.js Routing', 'Dynamic Next.js server routing simulates perfectly in our virtual framework island!')">Inspect Server State</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 16. Nuxt Card -->
@@ -296,8 +294,7 @@ $vanillaStartBg = "#1e293b"; ?>
                             <p class="text-[11px] text-gray-400">Settings loaded dynamically.</p>
                         </div>
                     </div>
-                    <button class="w-full py-1.5 bg-[#00DC82] hover:bg-[#00c575] text-black font-bold rounded text-xs transition" onclick="showModal('Nuxt SSR', 'Nuxt directory hydration module executed successfully in 1.4ms!')">Inspect Nuxt Module</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 17. Qwik Card -->
@@ -338,8 +335,7 @@ $vanillaStartBg = "#1e293b"; ?>
                         <div id="lit-sphere" class="w-10 h-10 rounded-full transition-colors duration-200 shadow-lg" style="background-color: #324FFF;"></div>
                         <input type="range" min="0" max="360" value="230" class="w-full mt-2.5 accent-[#324FFF]" oninput="updateLitSphere(this.value)" />
                     </div>
-                    <button class="w-full py-1.5 bg-[#324FFF] hover:bg-[#253ee0] text-white rounded text-xs font-bold transition" onclick="showModal('Lit Component', 'Lit template compiled and rendered inside the standard Web Components registry!')">Verify Shadow Root</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 19. Mithril Card -->
@@ -362,8 +358,7 @@ $vanillaStartBg = "#1e293b"; ?>
                             <li class="bg-gray-900 px-2 py-0.5 rounded border border-gray-800 flex justify-between"><span>vue-runtime</span><span class="text-gray-500">v3</span></li>
                         </ul>
                     </div>
-                    <button class="w-full py-1.5 bg-[#00E5FF] hover:bg-[#00c5db] text-black font-bold rounded text-xs transition" onclick="showModal('Mithril VDOM', 'Mithril m() engine mounted the virtual array elements instantly in 0.5ms!')">Verify VDOM</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 20. Elm Card -->
@@ -383,8 +378,7 @@ $vanillaStartBg = "#1e293b"; ?>
                             <button onclick="updateElm(-1)" class="bg-gray-800 hover:bg-gray-700 text-[#60B5CC] border border-gray-700 px-2 py-0.5 rounded text-[10px] uppercase">Decrement</button>
                         </div>
                     </div>
-                    <button class="w-full py-1.5 bg-gray-800 hover:bg-gray-700 text-[#60B5CC] rounded text-xs font-bold border border-[#60B5CC]/20 transition" onclick="showModal('Elm Architecture', 'Elm-style strict state update loop is fully validated!')">Verify Architecture</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 21. Ember Card -->
@@ -407,8 +401,7 @@ $vanillaStartBg = "#1e293b"; ?>
                             <div onclick="selectEmberNode('dashboard')" class="ember-node cursor-pointer p-1 rounded hover:bg-gray-800 flex justify-between"><span>│  ├─ dashboard</span><span class="text-gray-500">Idle</span></div>
                         </div>
                     </div>
-                    <button class="w-full py-1.5 bg-[#E04E39] hover:bg-[#ce422e] text-white rounded text-xs font-bold transition" onclick="showModal('Ember MVC', 'Ember controller-router layout hydrated successfully via Glimmer engine!')">Inspect Controller</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 22. Ziko Card -->
@@ -432,8 +425,7 @@ $vanillaStartBg = "#1e293b"; ?>
                             <input id="ziko-brush-slider" type="range" min="4" max="32" value="8" class="flex-1 accent-[#FFD54F]" oninput="updateZikoBrush(this.value)" />
                         </div>
                     </div>
-                    <button class="w-full py-1.5 bg-[#FFD54F] hover:bg-[#f3ca47] text-black font-bold rounded text-xs transition" onclick="showModal('Ziko.js', 'Canvas vector graphics dynamically initialized via Ziko reactive API!')">Verify Context</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 23. MDX Card -->
@@ -460,8 +452,7 @@ $vanillaStartBg = "#1e293b"; ?>
                             <div class="mt-1 bg-blue-600/20 text-blue-400 p-1.5 rounded border border-blue-500/20 text-[10px] font-bold text-center">Buy Now - $34.99</div>
                         </div>
                     </div>
-                    <button class="w-full py-1.5 bg-gray-800 hover:bg-gray-700 text-[#FCB900] rounded text-xs font-bold border border-[#FCB900]/20 transition" onclick="showModal('MDX Engine', 'MDX document AST parsing module is fully ready!')">Inspect AST</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 24. Markdoc Card -->
@@ -483,8 +474,7 @@ $vanillaStartBg = "#1e293b"; ?>
                             System initialized successfully.
                         </div>
                     </div>
-                    <button class="w-full py-1.5 bg-[#635BFF] hover:bg-[#5249fa] text-white rounded text-xs font-bold transition" onclick="showModal('Markdoc Schema', 'Markdoc schema node mappings compiled successfully!')">Inspect Node Map</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 25. Bootstrap Card -->
@@ -505,8 +495,7 @@ $vanillaStartBg = "#1e293b"; ?>
                             <button onclick="toggleBsTheme('warning', 'bg-yellow-500')" class="w-4 h-4 rounded-full bg-yellow-500"></button>
                         </div>
                     </div>
-                    <button class="w-full py-1.5 bg-[#7952B3] hover:bg-[#66409e] text-white rounded text-xs font-bold transition" onclick="showModal('Bootstrap CSS', 'Bootstrap class bindings successfully evaluated!')">Inspect CSS Classes</button>
-                </div>
+                    </div>
             </div>
 
             <!-- 26. UnoCSS Card -->
@@ -524,8 +513,7 @@ $vanillaStartBg = "#1e293b"; ?>
                         <div class="text-[#FFB300] text-[10px] leading-tight select-none">ma-4 text-center rounded-xl</div>
                         <div class="text-[9px] text-gray-500 mt-2">Compiled in: <span class="text-green-400 font-bold">&lt; 0.8ms</span></div>
                     </div>
-                    <button class="w-full py-1.5 bg-[#FFB300] hover:bg-[#e09e00] text-black font-bold rounded text-xs transition" onclick="showModal('UnoCSS Compiler', 'UnoCSS utility scanner successfully compiled styles in 0.74ms!')">Inspect Compiler</button>
-                </div>
+                    </div>
             </div>
 
         </div>

@@ -1,0 +1,120 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+import Default from '@astrojs/starlight/components/PageTitle.astro';
+import Version from '../Version.astro';
+
+const { data } = Astro.locals.starlightRoute.entry;
+
+const officialMappings: Record<string, { npm: string; github: string; changelog?: string }> = {
+	'React': { npm: 'react', github: 'https://github.com/react/react', changelog: 'https://github.com/react/react/blob/main/CHANGELOG.md' },
+	'Vue': { npm: 'vue', github: 'https://github.com/vuejs/core', changelog: 'https://github.com/vuejs/core/blob/main/CHANGELOG.md' },
+	'Preact': { npm: 'preact', github: 'https://github.com/preactjs/preact', changelog: 'https://github.com/preactjs/preact/blob/main/CHANGELOG.md' },
+	'Svelte': { npm: 'svelte', github: 'https://github.com/sveltejs/svelte', changelog: 'https://github.com/sveltejs/svelte/blob/main/CHANGELOG.md' },
+	'SolidJS': { npm: 'solid-js', github: 'https://github.com/solidjs/solid', changelog: 'https://github.com/solidjs/solid/blob/main/CHANGELOG.md' },
+	'Angular': { npm: '@angular/core', github: 'https://github.com/angular/angular', changelog: 'https://github.com/angular/angular/blob/main/CHANGELOG.md' },
+	'Alpine.js': { npm: 'alpinejs', github: 'https://github.com/alpinejs/alpine', changelog: 'https://github.com/alpinejs/alpine/blob/main/CHANGELOG.md' },
+	'Lit': { npm: 'lit', github: 'https://github.com/lit/lit', changelog: 'https://github.com/lit/lit/blob/main/packages/lit/CHANGELOG.md' },
+	'Three.js': { npm: 'three', github: 'https://github.com/mrdoob/three.js', changelog: 'https://github.com/mrdoob/three.js/blob/dev/CHANGELOG.md' },
+	'React Three Fiber (R3F)': { npm: '@react-three/fiber', github: 'https://github.com/pmndrs/react-three-fiber', changelog: 'https://github.com/pmndrs/react-three-fiber/blob/master/packages/fiber/CHANGELOG.md' },
+	'Threlte': { npm: '@threlte/core', github: 'https://github.com/threlte/threlte', changelog: 'https://github.com/threlte/threlte/blob/main/CHANGELOG.md' },
+	'TresJS': { npm: '@tresjs/core', github: 'https://github.com/Tresjs/tres', changelog: 'https://github.com/Tresjs/tres/blob/main/CHANGELOG.md' },
+	'Next.js': { npm: 'next', github: 'https://github.com/vercel/next.js', changelog: 'https://github.com/vercel/next.js/blob/canary/CHANGELOG.md' },
+	'Nuxt': { npm: 'nuxt', github: 'https://github.com/nuxt/nuxt', changelog: 'https://github.com/nuxt/nuxt/blob/main/CHANGELOG.md' },
+	'Qwik': { npm: '@builder.io/qwik', github: 'https://github.com/BuilderIO/qwik', changelog: 'https://github.com/BuilderIO/qwik/blob/main/CHANGELOG.md' },
+	'Mithril': { npm: 'mithril', github: 'https://github.com/MithrilJS/mithril.js', changelog: 'https://github.com/MithrilJS/mithril.js/blob/multipage/CHANGELOG.md' },
+	'Elm': { npm: 'elm', github: 'https://github.com/elm/compiler' },
+	'Ember': { npm: 'ember-source', github: 'https://github.com/emberjs/ember.js', changelog: 'https://github.com/emberjs/ember.js/blob/master/CHANGELOG.md' },
+	'Ziko': { npm: 'ziko', github: 'https://github.com/zikojs/ziko', changelog: 'https://github.com/zikojs/ziko/blob/main/CHANGELOG.md' },
+	'Bootstrap': { npm: 'bootstrap', github: 'https://github.com/twbs/bootstrap', changelog: 'https://github.com/twbs/bootstrap/blob/main/CHANGELOG.md' },
+	'UnoCSS': { npm: 'unocss', github: 'https://github.com/unocss/unocss', changelog: 'https://github.com/unocss/unocss/blob/main/CHANGELOG.md' },
+	'Tailwind CSS': { npm: 'tailwindcss', github: 'https://github.com/tailwindlabs/tailwindcss', changelog: 'https://github.com/tailwindlabs/tailwindcss/blob/master/CHANGELOG.md' },
+	'MDX': { npm: '@mdx-js/mdx', github: 'https://github.com/mdx-js/mdx', changelog: 'https://github.com/mdx-js/mdx/blob/main/packages/mdx/CHANGELOG.md' },
+	'Markdoc': { npm: '@stripe/markdoc', github: 'https://github.com/stripe/markdoc', changelog: 'https://github.com/stripe/markdoc/blob/master/CHANGELOG.md' },
+};
+
+const mapping = officialMappings[data.title] || { 
+	npm: 'pphlx', 
+	github: 'https://github.com/pphlx-community/pphlx',
+	changelog: 'https://github.com/pphlx-community/pphlx/blob/main/CHANGELOG.md'
+};
+---
+
+{
+	data.type === 'integration' ? (
+		<div class="wrapper">
+			<h1 id="_top">
+				{
+					data.title.includes('/') ? (
+						<>
+							<span class="scope">{data.title.split('/')[0]}/</span>
+							<span>{data.title.split('/')[1]}</span>
+						</>
+					) : (
+						<span>{data.title}</span>
+					)
+				}
+			</h1>
+			<div class="integration-metadata">
+				<Version pkgName={mapping.npm} />
+				<a href={mapping.github}>
+					<Icon size="1rem" name="github" /> GitHub
+				</a>
+				<a href={'https://www.npmjs.com/package/' + mapping.npm}>
+					<svg width="16" height="16" viewBox="0 0 576 512" fill="currentColor" aria-hidden="true">
+						<path d="M288 288h-32v-64h32v64zm288-128v192H288v32H160v-32H0V160h576zm-416 32H32v128h64v-96h32v96h32V192zm160 0H192v160h64v-32h64V192zm224 0H352v128h64v-96h32v96h32v-96h32v96h32V192z" />
+					</svg>
+					npm
+				</a>
+				{mapping.changelog && (
+					<a href={mapping.changelog}>
+						<Icon size="1rem" name="list-format" /> {Astro.locals.t('integrations.changelog')}
+					</a>
+				)}
+			</div>
+		</div>
+	) : (
+		<Default>
+			<slot />
+		</Default>
+	)
+}
+
+<style>
+	.wrapper {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	h1 {
+		display: flex;
+		flex-wrap: wrap;
+		color: var(--sl-color-white);
+		font-size: var(--sl-text-h1);
+		font-weight: 600;
+		line-height: var(--sl-line-height-headings);
+	}
+	.scope {
+		color: var(--sl-color-text);
+		font-weight: 400;
+	}
+	.integration-metadata {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 1rem;
+		font-size: var(--sl-text-xs);
+	}
+	.integration-metadata a {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		text-decoration: none;
+		color: var(--sl-color-text-accent);
+	}
+	.integration-metadata a:hover {
+		color: var(--sl-color-white);
+	}
+	.integration-metadata svg {
+		width: 1.5rem;
+	}
+</style>

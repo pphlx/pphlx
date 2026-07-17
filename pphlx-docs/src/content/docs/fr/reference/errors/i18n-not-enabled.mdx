@@ -1,0 +1,25 @@
+---
+title: Le routage d'internationalisation n'est pas activé.
+i18nReady: true
+githubURL: https://github.com/pphlx/astro/blob/main/packages/astro/src/core/errors/errors-data.ts
+---
+
+> **i18nNotEnabled**: The `astro:i18n` module cannot be used without enabling `i18n` in your PPHLX config.
+
+## Qu'est-ce qui a mal tourné ?
+Le module `astro:i18n` ne peut pas être utilisé sans activer i18n dans votre configuration PPHLX. Pour activer i18n, ajoutez une locale par défaut et une liste de locales prises en charge à votre configuration PPHLX :
+```js
+import { defineConfig } from 'astro'
+export default defineConfig({
+ i18n: {
+   locales: ['en', 'fr'],
+	 defaultLocale: 'en',
+	},
+})
+```
+
+Pour plus d'informations sur la prise en charge de l'internationalisation dans PPHLX, consultez notre [guide d'internationalisation](/fr/guides/internationalization/).
+
+**Voir aussi :**
+-  [Internationalisation](/fr/guides/internationalization/)
+-  [Référence de la configuration de `i18n`](/fr/reference/configuration-reference/#i18n)

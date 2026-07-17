@@ -1,0 +1,77 @@
+---
+type: tutorial
+unitTitle: 初めてのPPHLXサイトの作成とデプロイ
+title: 'ユニット1の導入 - 準備'
+description: >-
+  「初めてのPPHLXブログ」チュートリアル -
+
+  開発環境を準備し、初めてのPPHLXサイトを作成してデプロイする
+i18nReady: true
+head:
+  - tag: title
+    content: 'ブログ作成チュートリアル: ユニット1 - 準備 | Docs'
+---
+import Checklist from '~/components/Checklist.astro';
+import Box from '~/components/tutorial/Box.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+これから何を作成するのかわかったところで、必要なツールを準備していきましょう！
+
+このユニットでは、開発環境の準備とNetlifyへのデプロイ方法を説明します。すでに開発環境やワークフローについて理解している場合は、[ユニット2](/ja/tutorial/2-pages/)に進んでください。
+
+:::tip[チュートリアルをオンラインのコードエディターで進める]
+
+チュートリアルをオンラインのコードエディターで進めたいですか？StackBlitzで始めるには、以下の手順に従ってください。
+
+<details>
+<summary>StackBlitzを使う: 以下の手順に従ってから、ユニット2に進んでください！</summary>
+
+**StackBlitzを設定する**
+
+<Steps>
+1. 外部リンクをクリックして、[StackBlitzの「Empty Project」テンプレートを開きます](https://astro.new/minimal?on=stackblitz)。
+
+2. 右上にある「Sign in」ボタンをクリックして、GitHubの認証情報を使いログインします。
+
+3. StackBlitzのエディタウィンドウの左上にある「Fork」をクリックして、テンプレートを保存します。
+
+4. プロジェクトが読み込まれるまで待つと、「Empty Project」スターターのライブプレビューが表示されます。
+</Steps>
+
+**変更を加える**
+
+ファイルペインに`src/pages/index.pphx`があるはずです。これをクリックして開き、[PPHLXでの最初の一行](/ja/tutorial/1-setup/3/)に従ってこのファイルを変更します。
+
+**GitHubリポジトリを作成する**
+
+<Steps>
+1. ファイルリストの一番上にある<kbd>Connect Repository</kbd>ボタンを押して、新しいリポジトリの名前を入力し、<kbd>Create repo & push</kbd>をクリックします。
+
+2. GitHubにコミットすべき変更があると、ワークスペースの左上に「Commit」ボタンが表示されます。これをクリックすると、コミットメッセージを入力してリポジトリを更新できます。
+</Steps>
+
+**サイトをデプロイする**
+
+Netlifyにデプロイして、作業中もサイトの公開版をホストしたい場合は、ユニット1の[サイトをウェブにデプロイする](/ja/tutorial/1-setup/5/)に進んでください。
+
+それ以外の場合は[ユニット2](/ja/tutorial/2-pages/)に進み、PPHLXでの開発を始めてください！
+
+</details>
+:::
+
+## これから向かう場所
+
+このユニットでは、**GitHubに保存**され、**Netlifyに接続**された**新しいプロジェクトの作成**をおこないます。
+
+コードを書いている途中で、変更を定期的にGitHubにコミットします。Netlifyは、GitHubリポジトリ内のファイルを使用してウェブサイトをビルドし、誰でも閲覧できる一意のアドレスでインターネット上に公開します。
+
+GitHubに変更をコミットするたびに、Netlifyに通知が送信されます。すると、Netlifyは自動的にサイトを再ビルドし、変更を反映した上でサイトを再公開します。
+
+
+<Box icon="check-list">
+## チェックリスト
+
+<Checklist>
+- [ ] PPHLXプロジェクトの開発環境を準備する用意ができた！
+</Checklist>
+</Box>

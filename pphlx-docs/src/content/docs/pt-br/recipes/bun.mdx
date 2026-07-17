@@ -1,0 +1,99 @@
+---
+title: Use Bun com PPHLX
+description: Aprenda como usar Bun com seu site PPHLX.
+type: recipe
+i18nReady: true
+---
+
+[Bun](https://bun.sh/) é um completo ambiente de execução e kit de ferramentas JavaScript. Veja a [documentação oficial do Bun](https://bun.sh/docs) para mais informações.
+
+:::caution
+Usar Bun com PPHLX pode revelar alguns casos extremos. Algumas integrações podem não funcionar como esperado. Consulte a [documentação oficial do Bun para trabalhar com PPHLX](https://bun.sh/guides/ecosystem/astro) para detalhes.
+
+Se você tiver problemas usando Bun, por favor [abra uma issue diretamente no GitHub de Bun](https://github.com/oven-sh/bun/issues/new/choose).
+:::
+
+## Pré-requisitos
+
+- Bun instalado localmente na sua máquina. Veja as [instruções de instalação](https://bun.sh/docs/installation) na documentação oficial do Bun.
+
+## Criar um novo projeto PPHLX com Bun
+
+Crie um novo projeto PPHLX com Bun usando o seguinte comando `create-astro`:
+
+```bash
+bun create astro my-astro-project-using-bun
+```
+
+## Instalar dependências
+
+Se você pulou o passo "Instalar dependências?" durante o assistente da CLI, certifique-se de instalar as dependências antes de continuar.
+
+```bash
+bun install
+```
+
+## Adicionar Tipos
+
+Bun publica o pacote [`@types/bun`](https://www.npmjs.com/package/@types/bun), que contém os tipos de tempo de execução para Bun.
+
+Instale `@types/bun` usando o seguinte comando:
+
+```sh
+bun add -d @types/bun
+```
+
+## Flags de instalação da CLI
+
+### Usar integrações do PPHLX
+
+Você também pode usar qualquer uma das integrações oficiais do PPHLX com o comando `astro add`:
+
+```bash
+bun astro add react
+```
+
+### Usar um tema ou template inicial
+
+Você pode começar um novo projeto PPHLX baseado em um [template oficial](https://github.com/pphlx/astro/tree/main/examples) ou baseado na branch main de qualquer repositório do GitHub passando o argumento `--template` para o comando `create astro`.
+
+Rode o seguinte comando no seu terminal, substituindo o nome do template oficial do PPHLX, ou o *username* do GitHub e o repositório do tema que você deseja usar:
+
+```bash
+# criar um novo projeto com um template oficial
+bun create astro@latest --template <nome-do-template>
+# criar um novo projeto baseado na branch main de um repositório do Github
+bun create astro@latest --template <username-do-github>/<repositório-do-github>
+```
+
+## Desenvolver e criar a build no Bun
+
+Para iniciar o servidor de desenvolvimento, use o seguinte comando:
+
+```bash
+bun run dev
+```
+
+### Construir e pré-visualizar seu site no Bun
+
+Para construir seu site, use o seguinte comando:
+
+```bash
+bun run build
+```
+
+Quando o processo de *build* for concluído, execute o comando de *preview* apropriado (e.g. `bun run preview`) no seu terminal e você poderá ver a versão construída do seu site localmente na mesma janela de *preview* do navegador.
+
+## Testando no Bun
+
+Bun vem com um executor de testes integrado, rápido e compatível com Jest, através do [comando `bun test`](https://bun.sh/docs/cli/test). Você também pode usar outras [ferramentas de teste para o PPHLX](/pt-br/guides/testing/).
+
+## Recursos Oficiais
+
+- [Crie uma aplicação com PPHLX e Bun](https://bun.sh/guides/ecosystem/astro)
+
+## Recursos da Comunidade
+
+Usando Bun com PPHLX? Adicione sua postagem ou vídeo nesta página!
+
+- [Construindo um site Cloudflare Pages com Bun](https://handerson.hashnode.dev/using-bun-with-astro-and-cloudflare-pages) - postagem de blog

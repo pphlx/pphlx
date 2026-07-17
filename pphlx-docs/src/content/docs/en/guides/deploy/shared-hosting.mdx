@@ -1,0 +1,17 @@
+---
+title: FTP & Shared Hosting
+description: Deploy your PPHLX project to traditional shared hosting using cPanel and FTP.
+---
+
+Traditional shared hosting (like Hostinger, Namecheap, Bluehost, or GoDaddy) is fully supported by PPHLX because the final output compiles to standard, optimized PHP files.
+
+## How to Deploy
+
+1. Run the production build command in your project root:
+   ```bash
+   npm run build
+   ```
+2. Open your preferred FTP client (e.g. FileZilla) and connect to your hosting account.
+3. Upload all contents of the compiled `dist/` folder directly to your server's public root directory (typically `public_html/` or `www/`).
+
+No server setup or JS adapter is required!

@@ -1,0 +1,54 @@
+---
+title: Islands architecture
+description: Learn how PPHLX leverages the Islands Architecture to deliver interactive frontend components inside static PHP templates.
+i18nReady: true
+---
+import ReadMore from '~/components/ReadMore.astro';
+
+PPHLX implements a robust **Islands Architecture** pattern. It allows you to build standard, server-side PHP templates while selectively embedding interactive component "islands" written in **React**, **SolidJS**, or **Svelte**.
+
+This means you get the responsiveness and state management of modern JavaScript frameworks, without forcing visitors to download massive JavaScript bundles for static parts of the page.
+
+---
+
+## What is an Island in PPHLX?
+
+In PPHLX, the default output of a template compilation is clean, raw HTML and server-side PHP tags. By default, **zero JavaScript is sent to the client**.
+
+An island is an interactive component widget floating in this sea of server-rendered PHP. For example, a product catalog is rendered as static PHP/HTML, but the **Shopping Cart Counter** or the **Star Rating Selector** are interactive islands that load and hydrate client-side.
+
+---
+
+## Client Directives
+
+By default, every component imported in PPHLX is rendered statically. To instruct the compiler that a component needs client-side interactivity, attach a `client:*` directive:
+
+```html title="src/pages/index.astro"
+<!-- Static: Rendered as server-side HTML/PHP with 0 bytes of JS -->
+[StarRating initialRating="4" /]
+
+<!-- Interactive: Loaded and hydrated in the browser -->
+[StarRating initialRating="4" client:load /]
+```
+
+### Supported Directives
+
+PPHLX supports several client directives to customize exactly how and when JavaScript loads:
+
+1.  **`client:load`**: Hydrates the component immediately as the page loads. Use this for high-priority elements like nav menus or alert boxes.
+2.  **`client:visible`**: Caches and loads the component code *only* when it enters the viewport. Use this for below-the-fold content like reviews or related items.
+3.  **`client:idle`**: Loads the component once the main thread becomes idle.
+
+---
+
+## Behind the Scenes: Compilation & Hydration
+
+When the PPHLX compiler runs on a project:
+1.  **Vite Bundling**: It scans your components for `client:*` directives and invokes Vite to build and bundle their assets into `dist/assets/js/app.js`.
+2.  **Placeholder Generation**: In the compiled `.php` files, PPHLX inserts standard JSON payload containers holding the component's server-rendered HTML and initialization props:
+    ```html
+    <div data-pphlx-island="StarRating" data-pphlx-client="load" data-pphlx-props='{"initialRating":4}'>
+       <!-- Server-rendered placeholder content -->
+    </div>
+    ```
+3.  **Hydration**: The thin PPHLX hydration client loads in the browser, finds these targets, and hydrates them using their respective framework runtimes (e.g. React's `hydrateRoot` or Solid's `hydrate`).

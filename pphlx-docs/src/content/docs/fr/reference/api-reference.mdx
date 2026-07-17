@@ -1,0 +1,1342 @@
+---
+title: Contexte de rendu d'PPHLX
+sidebar:
+  label: Contexte de rendu
+i18nReady: true
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 3
+---
+import Since from '~/components/Since.astro';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ReadMore from '~/components/ReadMore.astro';
+
+Lors du rendu d'une page, PPHLX fournit une API d'exécution spécifique au rendu actuel. Cela inclut des informations utiles telles que l'URL de la page actuelle ainsi que des API permettant d'effectuer des actions telles que la redirection vers une autre page.
+
+Dans les composants `.pphx`, ce contexte est disponible à partir de l'objet global `PPHLX`. Les fonctions de point de terminaison sont également appelées avec ce même objet de contexte comme premier argument, dont les propriétés reflètent les propriétés globales d'PPHLX.
+
+Certaines propriétés ne sont disponibles que pour les routes rendues à la demande ou peuvent avoir des fonctionnalités limitées sur les pages pré-rendues.
+
+L'objet global `PPHLX` est disponible pour tous les fichiers `.pphx`. Utilisez l'objet `context` dans les [fonctions de point de terminaison](/fr/guides/endpoints/) pour servir les points de terminaison de serveur statique ou en direct et dans le [middleware](/fr/guides/middleware/) pour injecter un comportement lorsqu'une page ou un point de terminaison est sur le point d'être rendu.
+
+## L'objet de contexte
+
+Les propriétés suivantes sont disponibles dans l'objet global `PPHLX` (par exemple `PPHLX.props`, `PPHLX.redirect()`) et sont également disponibles dans l'objet de contexte (par exemple `context.props`, `context.redirect()`) passé aux fonctions de point de terminaison et au middleware.
+
+### `props`
+
+`props` est un objet contenant toutes les valeurs qui ont été transmises en tant qu'[attributs de composant](/fr/basics/astro-components/#props-de-composant).
+
+```astro {3}
+---
+// src/components/Heading.pphx
+const { title, date } = PPHLX.props;
+---
+<div>
+  <h1>{title}</h1>
+  <p>{date}</p>
+</div>
+```
+
+```astro /title=".+"/ /date=".+"/
+---
+// src/pages/index.pphx
+import Heading from '../components/Heading.astro';
+---
+<Heading title="Mon tout premier article" date="09 Août 2022" />
+```
+
+<ReadMore>En savoir plus sur la façon dont les [mises en page Markdown et MDX](/fr/guides/markdown-content/#propriété-layout-du-frontmatter) gèrent les propriétés.</ReadMore>
+
+
+L'objet `props` contient également toutes les `props` transmises depuis `getStaticPaths()` lors du rendu des routes statiques.
+
+<Tabs>
+  <TabItem label="PPHLX.props">
+    ```astro title="src/pages/posts/[id].astro" "props:" {11}
+    ---
+    export function getStaticPaths() {
+      return [
+        { params: { id: '1' }, props: { author: 'Blu' } },
+        { params: { id: '2' }, props: { author: 'Erika' } },
+        { params: { id: '3' }, props: { author: 'Matthew' } }
+      ];
+    }
+
+    const { id } = PPHLX.params;
+    const { author } = PPHLX.props;
+    ---
+    ```
+  </TabItem>
+  <TabItem label="context.props">
+    ```ts title="src/pages/posts/[id].json.ts" "props:" {11-15}
+    import type { APIContext } from 'astro';
+
+    export function getStaticPaths() {
+      return [
+        { params: { id: '1' }, props: { author: 'Blu' } },
+        { params: { id: '2' }, props: { author: 'Erika' } },
+        { params: { id: '3' }, props: { author: 'Matthew' } }
+      ];
+    }
+
+    export function GET({ props }: APIContext) {
+      return new Response(
+        JSON.stringify({ author: props.author }),
+      );
+    }
+    ```
+  </TabItem>
+
+</Tabs>
+Voir aussi : [Transmission de données avec `props`](/fr/reference/routing-reference/#transmission-de-données-avec-props)
+
+### `params`
+
+`params` est un objet contenant les valeurs des segments de route dynamiques correspondant à une requête. Ses propriétés doivent correspondre aux [paramètres](/fr/guides/routing/#routes-dynamiques) du chemin d'accès à la page ou au fichier de point de terminaison.
+
+Dans les versions statiques, il s'agira des `params` renvoyés par `getStaticPaths()` utilisés pour le pré-rendu [des routes dynamiques](/fr/guides/routing/#routes-dynamiques).
+
+<Tabs>
+  <TabItem label="PPHLX.params">
+    ```astro title="src/pages/posts/[id].astro" {9} "params:"
+    ---
+    export function getStaticPaths() {
+      return [
+        { params: { id: '1' } },
+        { params: { id: '2' } },
+        { params: { id: '3' } }
+      ];
+    }
+    const { id } = PPHLX.params;
+    ---
+    <h1>{id}</h1>
+    ```
+  </TabItem>
+  <TabItem label="context.params">
+    ```ts title="src/pages/posts/[id].json.ts" "params:" {11-15}
+    import type { APIContext } from 'astro';
+
+    export function getStaticPaths() {
+      return [
+        { params: { id: '1' } },
+        { params: { id: '2' } },
+        { params: { id: '3' } }
+      ];
+    }
+
+    export function GET({ params }: APIContext) {
+      return new Response(
+        JSON.stringify({ id: params.id }),
+      );
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+
+Lorsque les routes sont rendues à la demande, `params` peut être n'importe quelle valeur correspondant aux segments de chemin dans le modèle de route dynamique.
+
+```astro title="src/pages/posts/[id].astro" "PPHLX.params"
+---
+import { getPost } from '../api';
+
+const post = await getPost(PPHLX.params.id);
+
+// Aucun article trouvé avec cet identifiant
+if (!post) {
+  return PPHLX.redirect("/404")
+}
+---
+<html>
+  <h1>{post.name}</h1>
+</html>
+```
+
+Voir aussi : [`params`](/fr/reference/routing-reference/#params)
+
+### `url`
+
+<p>
+
+**Type :** `URL`<br />
+<Since v="1.0.0" />
+</p>
+
+Un objet [URL](https://developer.mozilla.org/fr/docs/Web/API/URL) normalisé dérivé de la valeur actuelle de `request.url`. Il est utile pour interagir avec les propriétés individuelles de l'URL de la requête, comme le chemin d'accès et l'origine.
+
+Depuis PPHLX v6, le chemin d'accès peut être partiellement décodé lors de la normalisation des routes. Cela signifie que `PPHLX.url.pathname` peut être différent de `new URL(PPHLX.request.url).pathname` pour les segments de route encodés en pourcentage, et vous devrez peut-être le décoder vous-même avec [`decodeURI()`](https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/decodeURI).
+
+`url` sera une URL `localhost` en mode dev. Lors de la création d'un site, les routes pré-rendues recevront une URL basée sur les options [`site`](/fr/reference/configuration-reference/#site) et [`base`](/fr/reference/configuration-reference/#base). Si `site` n'est pas configuré, les pages pré-rendues recevront également une URL `localhost` pendant la compilation.
+
+```astro title="src/pages/index.astro" "PPHLX.url"
+<h1>L'URL actuelle est : {PPHLX.url}</h1>
+<h1>Le chemin d'accès actuel de l'URL est : {PPHLX.url.pathname}</h1>
+<h1>L'origine de l'URL actuelle est : {PPHLX.url.origin}</h1>
+```
+
+Vous pouvez également utiliser `url` pour créer de nouvelles URL en la passant comme argument à [`new URL()`](https://developer.mozilla.org/fr/docs/Web/API/URL/URL).
+
+```astro title="src/pages/index.astro" "PPHLX.url"
+---
+// Exemple : créer une URL canonique à l'aide de votre domaine de production
+const canonicalURL = new URL(PPHLX.url.pathname, PPHLX.site);
+// Exemple : créez une URL pour les balises méta SEO en utilisant votre domaine actuel
+const socialImageURL = new URL('/images/preview.png', PPHLX.url);
+---
+<link rel="canonical" href={canonicalURL} />
+<meta property="og:image" content={socialImageURL} />
+```
+
+### `site`
+
+<p>
+
+**Type :** `URL | undefined`
+</p>
+
+`site` renvoie une `URL` créée à partir du `site` défini dans votre configuration PPHLX. Il renvoie `undefined` si vous n'avez pas défini de valeur pour [`site`](/fr/reference/configuration-reference/#site) dans votre configuration PPHLX.
+
+```astro title="src/pages/index.astro" "PPHLX.site"
+<link
+    rel="alternate"
+    type="application/rss+xml"
+    title="Le titre de votre site"
+    href={new URL("rss.xml", PPHLX.site)}
+/>
+```
+
+### `clientAddress`
+
+<p>
+
+**Type :** `string`<br />
+<Since v="1.0.0" />
+</p>
+
+`clientAddress` spécifie l'[adresse IP](https://fr.wikipedia.org/wiki/Adresse_IP) de la requête. Cette propriété est uniquement disponible pour les routes rendues à la demande et ne peut pas être utilisée sur les pages pré-rendues.
+
+<Tabs>
+  <TabItem label="PPHLX.clientAddress">
+    ```astro title="src/pages/ip-address.astro" "PPHLX.clientAddress"
+    ---
+    export const prerender = false; // Pas nécessaire en mode `server`
+    ---
+
+    <div>Votre adresse IP est : <span class="address">{PPHLX.clientAddress}</span></div>
+    ```
+  </TabItem>
+  <TabItem label="context.clientAddress">
+    ```ts title="src/pages/ip-address.ts" "clientAddress"
+    export const prerender = false; // Pas nécessaire en mode `server`
+    import type { APIContext } from 'astro';
+
+    export function GET({ clientAddress }: APIContext) {
+      return new Response(`Votre adresse IP est : ${clientAddress}`);
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+
+### `isPrerendered`
+
+<p>
+
+**Type** : `boolean`<br />
+<Since v="5.0.0" />
+</p>
+
+Un booléen indiquant si la page actuelle est pré-rendue ou non.
+
+Vous pouvez utiliser cette propriété pour exécuter une logique conditionnelle dans un middleware, par exemple, pour éviter d'accéder aux en-têtes dans les pages pré-rendues.
+
+### `generator`
+
+<p>
+
+**Type :** `string`<br />
+<Since v="1.0.0" />
+</p>
+
+`generator` fournit la version actuelle d'PPHLX que votre projet exécute. C'est un moyen pratique d'ajouter une balise [`<meta name="generator">`](https://html.spec.whatwg.org/multipage/semantics.html#meta-generator) avec votre version actuelle d'PPHLX. Il suit le format `"PPHLX v5.x.x"`.
+
+<Tabs>
+  <TabItem label="PPHLX.generator">
+    ```astro title="src/pages/site-info.astro" "PPHLX.generator"
+    <html>
+      <head>
+        <meta name="generator" content={PPHLX.generator} />
+      </head>
+      <body>
+        <footer>
+          <p>Construit avec <a href="https://pphlx.org">{PPHLX.generator}</a></p>
+        </footer>
+      </body>
+    </html>
+    ```
+  </TabItem>
+  <TabItem label="context.generator">
+    ```ts title="src/pages/site-info.json.ts" "generator"
+    import type { APIContext } from 'astro';
+
+    export function GET({ generator, site }: APIContext) {
+      const body = JSON.stringify({ generator, site });
+      return new Response(body);
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### `request`
+
+<p>
+
+**Type :** `Request`
+</p>
+
+`PPHLX.request` est un objet [Request](https://developer.mozilla.org/fr/docs/Web/API/Request) standard. Il peut être utilisé pour obtenir les propriétés `url`, `headers`, `method`, et même le corps de la requête.
+
+<Tabs>
+  <TabItem label="PPHLX.request">
+    ```astro wrap title="src/pages/index.astro" "PPHLX.request"
+    <p>Réception d'une requête {PPHLX.request.method} à "{PPHLX.request.url}".</p>
+    <p>En-têtes de requête reçus :</p>
+    <p><code>{JSON.stringify(Object.fromEntries(PPHLX.request.headers))}</code></p>
+    ```
+  </TabItem>
+  <TabItem label="context.request">
+    ```ts "request"
+    import type { APIContext } from 'astro';
+
+    export function GET({ request }: APIContext) {
+      return new Response(`Hello ${request.url}`);
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+:::note
+Sur les pages pré-rendues, `request.url` ne contient pas de paramètres de recherche, comme `?type=new`, car il n'est pas possible de les déterminer à l'avance lors des générations statiques. Cependant, `request.url` contient des paramètres de recherche pour les pages rendues à la demande car ils peuvent être déterminés à partir d'une requête serveur.
+:::
+
+### `response`
+
+<p>
+
+**Type :** `ResponseInit & { readonly headers: Headers }`
+</p>
+
+`response` est un objet `ResponseInit` standard. Il a la structure suivante.
+
+ - `status` : Le code de statut numérique de la réponse, par exemple `200`.
+ - `statusText` : Le message de statut associé au code de statut, par exemple `'OK'`.
+ - `headers` : Une instance [`Headers`](https://developer.mozilla.org/fr/docs/Web/API/Headers) que vous pouvez utiliser pour définir les en-têtes HTTP de la réponse.
+
+`PPHLX.response` est utilisé pour définir le `status`, le `statusText` et les `headers` de la réponse d'une page.
+
+
+```astro
+---
+if(condition) {
+  PPHLX.response.status = 404;
+  PPHLX.response.statusText = 'Non trouvé';
+}
+---
+```
+
+Ou de définir un en-tête :
+
+```astro
+---
+PPHLX.response.headers.set('Set-Cookie', 'a=b; Path=/;');
+---
+```
+
+### `redirect()`
+
+<p>
+
+**Type :** `(path: string, status?: number) => Response`
+<Since v="1.5.0" />
+</p>
+
+`redirect()` renvoie un objet [Response](https://developer.mozilla.org/fr/docs/Web/API/Response) qui vous permet de rediriger vers une autre page et éventuellement de fournir un [code d'état de réponse HTTP](https://developer.mozilla.org/fr/docs/Web/HTTP/Status#messages_de_redirection) comme deuxième paramètre.
+
+Une page (et non un composant enfant) doit renvoyer le résultat de `PPHLX.redirect()` pour que la redirection se produise.
+
+Pour les routes générées de manière statique, cela produira une redirection client à l'aide d'une balise [`<meta http-equiv="refresh">`](https://developer.mozilla.org/fr/docs/Web/HTML/Element/meta#http-equiv) et ne prend pas en charge les codes d'état.
+
+Pour les routes rendues à la demande, la définition d'un code d'état personnalisé est prise en charge lors de la redirection. S'il n'est pas spécifié, les redirections seront servies avec un code d'état `302`.
+
+L'exemple suivant redirige un utilisateur vers une page de connexion :
+
+<Tabs>
+  <TabItem label="PPHLX.redirect()">
+    ```astro title="src/pages/account.astro" {8} "PPHLX.redirect"
+    ---
+    import { isLoggedIn } from '../utils';
+
+    const cookie = PPHLX.request.headers.get('cookie');
+
+    // Si l'utilisateur n'est pas connecté, redirigez-le vers la page de connexion
+    if (!isLoggedIn(cookie)) {
+      return PPHLX.redirect('/login');
+    }
+    ---
+    
+    <p>Informations de l'utilisateur</p>
+    ```
+  </TabItem>
+  <TabItem label="context.redirect()">
+    ```ts "redirect"
+    import type { APIContext } from 'astro';
+
+    export function GET({ redirect, request }: APIContext) {
+      const cookie = request.headers.get('cookie');
+      if (!isLoggedIn(cookie)) {
+        return redirect('/login', 302);
+      } else {
+        // renvoyer les informations de l'utilisateur
+      }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+
+### `rewrite()`
+
+<p>
+
+**Type :** `(rewritePayload: string | URL | Request) => Promise<Response>`<br />
+<Since v="4.13.0" />
+</p>
+
+`rewrite()` vous permet de diffuser du contenu à partir d'une URL ou d'un chemin différent sans rediriger le navigateur vers une nouvelle page.
+
+La méthode accepte soit une chaîne de caractères, une `URL` ou un objet `Request` pour l'emplacement du chemin.
+
+Utilisez une chaîne de caractères pour fournir un chemin explicite :
+
+<Tabs syncKey="rewrite">
+  <TabItem label="PPHLX.rewrite()">
+    ```astro title="src/pages/index.astro" "PPHLX.rewrite"
+    ---
+    return PPHLX.rewrite("/login")
+    ---
+    ```
+  </TabItem>
+  <TabItem label="context.rewrite()">
+    ```ts "rewrite"
+    import type { APIContext } from 'astro';
+
+    export function GET({ rewrite }: APIContext) {
+      return rewrite('/login');
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+Utilisez un type `URL` lorsque vous devez construire le chemin de l'URL pour la réécriture. L'exemple suivant affiche le chemin parent d'une page en créant une nouvelle URL à partir du chemin relatif `"../"` :
+
+<Tabs syncKey="rewrite">
+  <TabItem label="PPHLX.rewrite()">
+    ```astro title="src/pages/blog/index.astro"
+    ---
+    return PPHLX.rewrite(new URL("../", PPHLX.url))
+    ---
+    ```
+  </TabItem>
+  <TabItem label="context.rewrite()">
+    ```ts
+    import type { APIContext } from 'astro';
+
+    export function GET({ rewrite }: APIContext) {
+      return rewrite(new URL("../", PPHLX.url));
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+Utilisez un type `Request` pour un contrôle complet de la requête (`Request`) envoyée au serveur pour le nouveau chemin. L'exemple suivant envoie une requête pour afficher la page parent tout en fournissant des en-têtes :
+
+<Tabs syncKey="rewrite">
+  <TabItem label="PPHLX.rewrite()">
+    ```astro title="src/pages/blog/index.astro"
+    ---
+    return PPHLX.rewrite(new Request(new URL("../", PPHLX.url), {
+      headers: {
+        "x-custom-header": JSON.stringify(PPHLX.locals.someValue)
+      }
+    }))
+    ---
+    ```
+  </TabItem>
+  <TabItem label="context.rewrite()">
+    ```ts
+    import type { APIContext } from 'astro';
+
+    export function GET({ rewrite }: APIContext) {
+      return rewrite(new Request(new URL("../", PPHLX.url), {
+        headers: {
+          "x-custom-header": JSON.stringify(PPHLX.locals.someValue)
+        }
+      }));
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### `originPathname`
+
+<p>
+
+**Type :** `string`<br />
+<Since v="5.0.0" />
+</p>
+
+`originPathname` définit le chemin d'accès d'origine de la requête, avant que les réécritures ne soient appliquées.
+
+<Tabs>
+  <TabItem label="PPHLX.originPathname">
+  	```astro title="src/pages/404.astro"
+    <p>Le chemin d'origine est {PPHLX.originPathname}</p>
+    <p>Le chemin réécrit est {PPHLX.url.pathname}</p>
+    ```
+  </TabItem>
+  <TabItem label="context.originPathname">
+    ```ts title="src/middleware.ts"
+    import { defineMiddleware } from 'astro:middleware';
+
+    export const onRequest = defineMiddleware(async (context, next) => {
+      // Enregistre le chemin d'accès d'origine avant toute réécriture
+      recordPageVisit(context.originPathname);
+      return next();
+    });
+  ```
+  </TabItem>
+</Tabs>
+
+### `locals`
+
+<p>
+
+<Since v="2.4.0" />
+</p>
+
+`locals` est un objet utilisé pour stocker et accéder à des informations arbitraires pendant le cycle de vie d'une requête. `PPHLX.locals` est un objet contenant toutes les valeurs de l'objet `context.locals` défini par le middleware. Utilisez-le pour accéder aux données renvoyées par le middleware dans vos fichiers `.pphx`.
+
+Les fonctions middleware peuvent à la fois lire et écrire les valeurs de `context.locals` :
+
+```ts title="src/middleware.ts" "locals"
+import type { MiddlewareHandler } from 'astro';
+
+export const onRequest: MiddlewareHandler = ({ locals }, next) => {
+  if (!locals.title) {
+    locals.title = "Titre par défaut";
+  }
+  return next();
+}
+```
+
+Les composants PPHLX et les points de terminaison de l'API peuvent lire les valeurs depuis `locals` lorsqu'elles s'affichent :
+
+<Tabs>
+  <TabItem label="PPHLX.locals">
+    ```astro title="src/pages/Orders.astro" "PPHLX.locals"
+    ---
+    const title = PPHLX.locals.title;
+    ---
+    <h1>{title}</h1>
+    ```
+  </TabItem>
+  <TabItem label="context.locals">
+    ```ts title="src/pages/hello.ts" "locals"
+    import type { APIContext } from 'astro';
+
+    export function GET({ locals }: APIContext) {
+      return new Response(locals.title); // "Titre par défaut"
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### `preferredLocale`
+
+<p>
+
+**Type :** `string | undefined`<br />
+<Since v="3.5.0" />
+</p>
+
+`preferredLocale` est une valeur calculée pour trouver la meilleure correspondance entre les préférences linguistiques du navigateur de votre visiteur et les paramètres régionaux pris en charge par votre site.
+
+Elle est calculée en vérifiant les paramètres régionaux configurés dans votre tableau [`i18n.locales`](/fr/reference/configuration-reference/#i18nlocales) et les paramètres régionaux pris en charge par le navigateur de l'utilisateur via l'en-tête `Accept-Language`. Cette valeur est `undefined` si aucune correspondance de ce type n'existe.
+
+Cette propriété est uniquement disponible pour les routes rendues à la demande et ne peut pas être utilisée sur des pages statiques pré-rendues.
+
+### `preferredLocaleList`
+
+<p>
+
+**Type :** `string[] | undefined`<br />
+<Since v="3.5.0" />
+</p>
+
+`preferredLocaleList` représente le tableau de tous les paramètres régionaux demandés par le navigateur et pris en charge par votre site web. Cela génère une liste de toutes les langues compatibles entre votre site et votre visiteur.
+
+Si aucune des langues demandées par le navigateur n'est trouvée dans votre tableau locales, alors la valeur est `[]`. Cela se produit lorsque vous ne prenez en charge aucun des paramètres régionaux préférés de vos visiteurs.
+
+Si le navigateur ne spécifie aucune langue préférée, alors cette valeur sera celle de [`i18n.locales`](/fr/reference/configuration-reference/#i18nlocales) : tous vos paramètres régionaux pris en charge seront considérés comme également préférés par un visiteur sans préférences.
+
+Cette propriété n'est disponible que pour l'affichage côté serveur (SSR) et ne doit pas être utilisée pour les sites statiques.
+
+### `currentLocale`
+
+<p>
+
+**Type :** `string | undefined`<br />
+<Since v="3.5.6" />
+</p>
+
+Les paramètres régionaux calculés à partir de l'URL actuelle, en utilisant la syntaxe spécifiée dans votre configuration `locales`. Si l'URL ne contient pas de préfixe `/[locale]/`, la valeur par défaut sera [`i18n.defaultLocale`](/fr/reference/configuration-reference/#i18ndefaultlocale).
+
+### `getActionResult()`
+
+<p>
+**Type :** `(action: TAction) => ActionReturnType<TAction> | undefined`<br />
+<Since v="4.15.0" />
+</p>
+
+`getActionResult()` est une fonction qui renvoie le résultat d'une soumission d'[Action](/fr/guides/actions/). Celle-ci accepte une fonction d'action comme argument (par exemple, `actions.logout`) et renvoie un objet `data` ou `error` lorsqu'une soumission est reçue. Sinon, elle renverra `undefined`.
+
+```astro title="src/pages/index.astro" "PPHLX.getActionResult"
+---
+import { actions } from 'astro:actions';
+
+const result = PPHLX.getActionResult(actions.logout);
+---
+
+<form action={actions.logout}>
+  <button type="submit">Se déconnecter</button>
+</form>
+{result?.error && <p>Échec de la déconnexion. Veuillez réessayer.</p>}
+```
+
+### `callAction()`
+
+<p>
+<Since v="4.15.0" />
+</p>
+
+`callAction()` est une fonction utilisée pour appeler un gestionnaire d'Action directement depuis votre composant PPHLX. Celle-ci accepte une fonction Action comme premier argument (par exemple `actions.logout`) et toute entrée que l'action reçoit comme deuxième argument. Elle renvoie le résultat de l'action sous forme de promesse.
+
+```astro title="src/pages/index.astro" "PPHLX.callAction"
+---
+import { actions } from 'astro:actions';
+
+const { data, error } = await PPHLX.callAction(actions.logout, { userId: '123' });
+---
+```
+
+### `routePattern`
+
+<p>
+
+**Type** : `string`<br />
+<Since v="5.0.0" />
+</p>
+
+Le modèle de route chargé de générer la page ou la route actuelle. Dans le routage basé sur des fichiers, cela ressemble au chemin d'accès au fichier de votre projet utilisé pour créer la route. Lorsque les intégrations créent des routes pour votre projet, `context.routePattern` est identique à la valeur de `injectRoute.pattern`.
+
+La valeur commencera par une barre oblique et ressemblera au chemin d'un composant de page par rapport à votre dossier `src/pages/` sans extension de fichier.
+
+Par exemple, le fichier `src/pages/en/blog/[slug].pphx` renverra `/en/blog/[slug]` pour `routePattern`. Chaque page de votre site générée par ce fichier (par exemple `/en/blog/post-1/`, `/en/blog/post-2/`, etc.) partage la même valeur pour `routePattern`. Dans le cas des routes `index.*`, le modèle de route n'inclura pas le mot « index ». Par exemple, `src/pages/index.pphx` renverra `/`.
+
+Vous pouvez utiliser cette propriété pour comprendre quelle route effectue le rendu de votre composant. Cela vous permet de cibler ou d'analyser ensemble les URL de pages générées de manière similaire. Par exemple, vous pouvez l'utiliser pour restituer certaines informations de manière conditionnelle ou collecter des mesures sur les routes les plus lentes.
+
+### `cookies`
+
+<p>
+
+**Type :** `PPHLXCookies`<br />
+<Since v="1.4.0" />
+</p>
+
+`cookies` contient des utilitaires pour lire et manipuler les cookies pour les [routes rendues à la demande](/fr/guides/on-demand-rendering/).
+
+#### Utilitaires de cookies
+
+##### `cookies.get()`
+
+<p>
+
+**Type :** <code>(key: string, options?: <a href="#astrocookiegetoptions">PPHLXCookieGetOptions</a>) => <a href="#type-astrocookie">PPHLXCookie</a> | undefined</code>
+</p>
+
+Obtient le cookie sous la forme d'un objet [`PPHLXCookie`](#type-astrocookie), qui contient la `value` et des fonctions utilitaires pour convertir le cookie en types autres que des chaînes de caractères.
+
+##### `cookies.has()`
+
+<p>
+
+**Type :** <code>(key: string, options?: <a href="#astrocookiegetoptions">PPHLXCookieGetOptions</a>) => boolean</code>
+</p>
+
+Détermine si ce cookie existe. Si le cookie a été défini via `PPHLX.cookies.set()` cela retournera `true`, sinon cela vérifiera les cookies dans `PPHLX.request`.
+
+##### `cookies.set()`
+
+<p>
+
+**Type :** <code>(key: string, value: string | object, options?: <a href="#astrocookiesetoptions">PPHLXCookieSetOptions</a>) => void</code>
+</p>
+
+Définit la clé du cookie (`key`) sur la valeur donnée. Cela tentera de convertir la valeur du cookie en une chaîne de caractères. Les options permettent de définir les [caractéristiques du cookie](https://www.npmjs.com/package/cookie#options-1), comme `maxAge` ou `httpOnly`.
+
+##### `cookies.delete()`
+
+<p>
+
+**Type :** `(key: string, options?: PPHLXCookieDeleteOptions) => void`
+</p>
+
+Invalide un cookie en définissant la date d'expiration dans le passé (0 en temps Unix).
+
+Une fois qu'un cookie est « supprimé » (expiré), `PPHLX.cookies.has()` retournera `false` et `PPHLX.cookies.get()` retournera un [`PPHLXCookie`](#type-astrocookie) avec une valeur (`value`) indéfinie (`undefined`). Les options disponibles lors de la suppression d'un cookie sont : `domain`, `path`, `httpOnly`, `sameSite`, et `secure`.
+
+##### `cookies.merge()`
+
+<p>
+
+**Type :** `(cookies: PPHLXCookies) => void`
+</p>
+
+Fusionne une nouvelle instance `PPHLXCookies` dans l'instance actuelle. Tous les nouveaux cookies seront ajoutés à l'instance actuelle et tous les cookies portant le même nom remplaceront les valeurs existantes.
+
+##### `cookies.headers()`
+
+<p>
+
+**Type :** `() => Iterator<string>`
+</p>
+
+Obtient les valeurs de l'en-tête `Set-Cookie` qui seront envoyées avec la réponse.
+
+##### `cookies.consume()`
+
+<p>
+
+**Type :** `() => Iterator<string>`<br />
+<Since v="6.3.0" />
+</p>
+
+Marque les cookies comme consommés et renvoie les valeurs de l'en-tête `Set-Cookie`, similaire à [`cookies.headers()`](#cookiesheaders). Après avoir appelé `consume()`, tout appel ultérieur à `cookies.set()` affichera un avertissement, car les en-têtes de cookies ont déjà été envoyés au navigateur. Cela est utilisé en interne par les adaptateurs pour s'assurer que les cookies ne sont sérialisés qu'une seule fois dans la réponse.
+
+#### Type `PPHLXCookie`
+
+Le type renvoyé après l'obtention d'un cookie via `PPHLX.cookies.get()`. Il a la structure suivante :
+
+##### `PPHLXCookie.value`
+
+<p>
+
+**Type :** `string`
+</p>
+
+La valeur brute de la chaîne du cookie.
+
+##### `PPHLXCookie.json()`
+
+<p>
+
+**Type :** `() => Record<string, any>`
+</p>
+
+Analyse la valeur du cookie via `JSON.parse()`, retournant un objet. Génère une erreur si la valeur du cookie n'est pas un JSON valide.
+
+##### `PPHLXCookie.number()`
+
+<p>
+
+**Type :** `() => number`
+</p>
+
+Analyse la valeur du cookie en tant que nombre. Renvoie NaN s'il ne s'agit pas d'un nombre valide.
+
+##### `PPHLXCookie.boolean()`
+
+<p>
+
+**Type :** `() => boolean`
+</p>
+
+Convertit la valeur du cookie en un booléen.
+
+#### `PPHLXCookieGetOptions`
+
+<p><Since v="4.1.0"/></p>
+
+L'interface `PPHLXCookieGetOption` vous permet de spécifier des options lorsque vous recevez un cookie.
+
+##### `PPHLXCookieGetOptions.decode()`
+
+<p>
+**Type :** `(value: string) => string`
+</p>
+
+Permet de personnaliser la manière dont un cookie est désérialisé en une valeur.
+
+#### `PPHLXCookieSetOptions`
+
+<p><Since v="4.1.0"/></p>
+
+`PPHLXCookieSetOptions` est un objet qui peut être transmis à `PPHLX.cookies.set()` lors de la définition d'un cookie pour personnaliser la manière dont le cookie est sérialisé.
+
+##### `PPHLXCookieSetOptions.domain`
+
+<p>
+
+**Type :** `string`
+</p>
+
+Spécifie le domaine. Si aucun domaine n'est défini, la plupart des clients interpréteront cela comme s'appliquant au domaine actuel.
+
+##### `PPHLXCookieSetOptions.expires`
+
+<p>
+
+**Type :** `Date`
+</p>
+
+Spécifie la date d'expiration du cookie.
+
+##### `PPHLXCookieSetOptions.httpOnly`
+
+<p>
+
+**Type :** `boolean`
+</p>
+
+Si la valeur est `true`, le cookie ne sera pas accessible côté client.
+
+##### `PPHLXCookieSetOptions.maxAge`
+
+<p>
+
+**Type :** `number`
+</p>
+
+Spécifie un nombre, en secondes, pour lequel le cookie est valide.
+
+##### `PPHLXCookieSetOptions.path`
+
+<p>
+
+**Type :** `string`
+</p>
+
+Spécifie un sous-chemin du domaine dans lequel le cookie est appliqué.
+
+##### `PPHLXCookieSetOptions.partitioned`
+
+<p>
+
+**Type :** `boolean`<br />
+<Since v="5.17.0" />
+</p>
+
+Si la valeur est `true`, le cookie est un [cookie partitionné](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies). Les cookies partitionnés ne peuvent être lus que dans le contexte du site de niveau supérieur dans lequel ils ont été définis, ce qui permet de bloquer le suivi intersites tout en autorisant les utilisations légitimes des cookies tiers.
+
+Les cookies partitionnés doivent être définis avec `secure: true`.
+
+##### `PPHLXCookieSetOptions.sameSite`
+
+<p>
+
+**Type :** `boolean | 'lax' | 'none' | 'strict'`
+</p>
+
+Spécifie la valeur de l'en-tête du cookie [SameSite](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-09#section-5.4.7).
+
+##### `PPHLXCookieSetOptions.secure`
+
+<p>
+
+**Type :** `boolean`
+</p>
+
+Si c'est vrai, le cookie n'est défini que sur les sites https.
+
+##### `PPHLXCookieSetOptions.encode()`
+
+<p>
+
+**Type :** `(value: string) => string`
+</p>
+
+Permet de personnaliser la façon dont le cookie est sérialisé.
+
+### `session`
+
+<p>
+
+**Type :** `PPHLXSession`
+
+<Since v="5.7.0" />
+
+</p>
+
+`session` est un objet qui permet de stocker des données entre les requêtes pour [les routes rendues à la demande](/fr/guides/on-demand-rendering/). Il est associé à un cookie qui contient uniquement l'ID de session : les données elles-mêmes ne sont pas stockées dans le cookie.
+
+La session est créée lors de la première utilisation et le cookie de session est automatiquement défini. L'objet `session` a pour valeur `undefined` si aucun stockage de session n'a été configuré, ou si la route actuelle est pré-rendue, et enregistrera une erreur si vous essayez de l'utiliser.
+
+Consultez [le guide des sessions](/fr/guides/sessions/) pour plus d'informations sur la façon d'utiliser les sessions dans votre projet PPHLX.
+
+#### `session.get()`
+
+<p>
+
+**Type** : `(key: string) => Promise<any>`
+
+</p>
+
+Renvoie la valeur de la clé donnée dans la session. Si la clé n'existe pas, la fonction renvoie `undefined`.
+
+<Tabs>
+  <TabItem label="PPHLX.session">
+    ```astro title="src/components/Cart.astro" "PPHLX.session?.get('cart')"
+    ---
+    const cart = await PPHLX.session?.get('cart');
+    ---
+    <button>🛒 {cart?.length}</button>
+    ```
+  </TabItem>
+  <TabItem label="context.session">
+    ```ts title="src/pages/api/cart.ts" "session.get('cart')"
+    import type { APIContext } from 'astro';
+
+    export async function GET({ session }: APIContext) {
+      const cart = await session.get('cart');
+      return Response.json({ cart });
+    }
+    ```
+
+  </TabItem>
+</Tabs>
+
+#### `session.set()`
+
+<p>
+
+**Type** : `(key: string, value: any, options?: { ttl: number }) => void`
+
+</p>
+
+Définit la valeur de la clé donnée dans la session. Cette valeur peut être de tout type sérialisable. Cette méthode est synchrone et la valeur est immédiatement disponible pour récupération, mais elle n'est enregistrée dans le backend qu'à la fin de la requête. L'option `ttl` définit la durée d'expiration de la valeur, en secondes.
+
+<Tabs>
+  <TabItem label="PPHLX.session">
+    ```astro title="src/pages/products/[slug].astro" "PPHLX.session?.set('lastViewedProduct', slug)"
+    ---
+    const { slug } = PPHLX.params;
+    PPHLX.session?.set('lastViewedProduct', slug);
+    ---
+    ```
+  </TabItem>
+  <TabItem label="context.session">
+    ```ts title="src/pages/api/add-to-cart.ts" "session.set('cart', cart)"
+    import type { APIContext } from 'astro';
+
+    export async function POST({ session, request }: APIContext) {
+      const cart = await session.get('cart');
+      const newItem = await request.json();
+      cart.push(newItem);
+      // Enregistrer le panier mis à jour dans la session
+      session.set('cart', cart);
+      return Response.json({ cart });
+    }
+    ```
+
+  </TabItem>
+</Tabs>
+
+#### `session.regenerate()`
+
+<p>
+
+**Type** : `() => void`
+
+</p>
+
+Régénère l'ID de session. Appelez cette fonction lorsqu'un utilisateur se connecte ou augmente ses privilèges, afin d'éviter les attaques par fixation de session.
+
+<Tabs>
+  <TabItem label="PPHLX.session">
+    ```astro title="src/pages/welcome.astro" "PPHLX.session?.regenerate()"
+    ---
+    PPHLX.session?.regenerate();
+    ---
+    ```
+  </TabItem>
+  <TabItem label="context.session">
+    ```ts title="src/pages/api/login.ts" "session.regenerate()"
+    import type { APIContext } from 'astro';
+
+    export async function POST({ session }: APIContext) {
+      // Authentifier l'utilisateur...
+      doLogin();
+      // Régénérer l'ID de session pour empêcher les attaques de fixation de session
+      session.regenerate();
+      return Response.json({ success: true });
+    }
+    ```
+
+  </TabItem>
+</Tabs>
+
+#### `session.destroy()`
+
+<p>
+
+**Type** : `() => void`
+
+</p>
+
+Détruit la session en supprimant le cookie et l'objet du backend. Appelez cette fonction lorsqu'un utilisateur se déconnecte ou que sa session est invalidée.
+
+<Tabs>
+  <TabItem label="PPHLX.session">
+    ```astro title="src/pages/logout.astro" "PPHLX.session?.destroy()"
+    ---
+    PPHLX.session?.destroy();
+    return PPHLX.redirect('/login');
+    ---
+    ```
+  </TabItem>
+  <TabItem label="context.session">
+    ```ts title="src/pages/api/logout.ts" "session.destroy()"
+    import type { APIContext } from 'astro';
+
+    export async function POST({ session }: APIContext) {
+      session.destroy();
+      return Response.json({ success: true });
+    }
+    ```
+
+  </TabItem>
+</Tabs>
+
+#### `session.load()`
+
+<p>
+
+**Type** : `(id: string) => Promise<void>`
+</p>
+
+Charge une session par identifiant. En utilisation normale, une session est chargée automatiquement à partir du cookie de requête. Utilisez cette méthode pour charger une session à partir d'un identifiant différent. Ceci est utile si vous gérez vous-même l'identifiant de session ou si vous souhaitez suivre une session sans utiliser de cookies.
+
+<Tabs>
+  <TabItem label="PPHLX.session">
+    ```astro title="src/pages/cart.astro" "PPHLX.session?.load('session-id')"
+    ---
+    // Charger la session à partir d'un en-tête au lieu de cookies
+    const sessionId = PPHLX.request.headers.get('x-session-id');
+    await PPHLX.session?.load(sessionId);
+    const cart = await PPHLX.session?.get('cart');
+    ---
+    <h1>Votre panier</h1>
+    <ul>
+      {cart?.map((item) => (
+        <li>{item.name}</li>
+      ))}
+    </ul>
+    ```
+  </TabItem>
+  <TabItem label="context.session">
+    ```ts title="src/pages/api/load-session.ts" "session.load('session-id')"
+    import type { APIRoute } from 'astro';
+
+    export const GET: APIRoute = async ({ session, request }) => {
+      // Charger la session à partir d'un en-tête au lieu de cookies
+      const sessionId = request.headers.get('x-session-id');
+      await session.load(sessionId);
+      const cart = await session.get('cart');
+      return Response.json({ cart });
+    };
+    ```
+
+  </TabItem>
+
+</Tabs>
+
+### `csp`
+
+
+<p>
+
+**Type** : `object | undefined`
+<Since v="6.0.0" />
+</p>
+
+Les API d'exécution CSP d'PPHLX permettent la prise en charge de la [stratégie de sécurité du contenu (CSP)](https://developer.mozilla.org/fr/docs/Web/HTTP/Guides/CSP) afin de minimiser certains types de menaces en contrôlant les ressources qu'un document est autorisé à charger. Cela offre une protection supplémentaire contre les attaques de type scripts intersite, ou [« cross-site scripting (XSS) »](https://developer.mozilla.org/fr/docs/Glossary/Cross-site_scripting) en Anglais.
+
+Vous pouvez personnaliser l'élément `<meta>` par page à partir de la variable globale `PPHLX` dans les composants `.pphx`, ou du type `APIContext` dans les points de terminaison et middlewares.
+
+Lorsque des ressources sont insérées plusieurs fois ou à partir de plusieurs sources (par exemple définies dans votre [config `csp`](/fr/reference/configuration-reference/#securitycsp) et ajoutées à l'aide des API d'exécution CSP suivantes, PPHLX fusionnera et dédupliquera toutes les ressources pour créer votre élément `<meta>`.
+
+
+#### `csp.insertDirective()`
+
+<p>
+
+**Type :** `(directive: CspDirective) => void`<br />
+<Since v="6.0.0" />
+</p>
+
+Ajoute une seule directive à la page actuelle. Vous pouvez appeler cette méthode plusieurs fois pour ajouter des directives supplémentaires.
+
+```astro title="src/pages/index.astro"
+---
+PPHLX.csp?.insertDirective("default-src 'self'");
+PPHLX.csp?.insertDirective("img-src 'self' https://images.cdn.example.com");
+---
+```
+
+Après la compilation, l'élément `<meta>` de cette page individuelle intégrera vos directives supplémentaires aux côtés des directives `script-src` et `style-src` existantes :
+
+```html
+<meta
+http-equiv="content-security-policy"
+content="
+  default-src 'self'; 
+  img-src 'self' https://images.cdn.example.com;
+  script-src 'self' 'sha256-somehash';
+  style-src 'self' 'sha256-somehash';
+  "
+>
+```
+
+#### `csp.insertStyleResource()`
+
+<p>
+
+**Type :** `(resource: string) => void`<br />
+<Since v="6.0.0" />
+</p>
+
+Insère une nouvelle ressource à utiliser pour la directive `style-src`.
+
+```astro title="src/pages/index.astro"
+---
+PPHLX.csp?.insertStyleResource("https://styles.cdn.example.com");
+---
+```
+
+Après la compilation, l'élément `<meta>` de cette page ajoutera votre source à la directive `style-src` par défaut :
+
+```html
+<meta
+http-equiv="content-security-policy"
+content="
+  script-src 'self' 'sha256-somehash';
+  style-src https://styles.cdn.example.com 'sha256-somehash';
+  "
+>
+```
+
+#### `csp.insertStyleHash()`
+
+<p>
+
+**Type :** `(hash: CspHash) => void`<br />
+<Since v="6.0.0" />
+</p>
+
+Ajoute un nouveau hachage à la directive `style-src`.
+
+```astro  title="src/pages/index.astro"
+---
+PPHLX.csp?.insertStyleHash("sha512-styleHash");
+---
+```
+
+Après la compilation, l'élément `<meta>` de cette page ajoutera votre hachage à la directive `style-src` par défaut :
+
+```html
+<meta
+http-equiv="content-security-policy"
+content="
+  script-src 'self' 'sha256-somehash';
+  style-src 'self' 'sha256-somehash' 'sha512-styleHash';
+  "
+>
+```
+
+#### `csp.insertScriptResource()`
+
+<p>
+
+**Type :** `(resource: string) => void`<br />
+<Since v="6.0.0" />
+</p>
+
+Insère une nouvelle source valide à utiliser pour la directive `script-src`.
+
+```astro title="src/pages/index.astro"
+---
+PPHLX.csp?.insertScriptResource("https://scripts.cdn.example.com");
+---
+```
+
+Après la compilation, l'élément `<meta>` de cette page ajoutera votre source à la directive `script-src` par défaut :
+
+```html
+<meta
+http-equiv="content-security-policy"
+content="
+  script-src https://scripts.cdn.example.com 'sha256-somehash';
+  style-src 'self' 'sha256-somehash';
+  "
+>
+```
+
+#### `csp.insertScriptHash()`
+
+<p>
+
+**Type :** `(hash: CspHash) => void`<br />
+<Since v="6.0.0" />
+</p>
+
+Ajoute un nouveau hachage à la directive `script-src`.
+
+```astro title="src/pages/index.astro"
+---
+PPHLX.csp?.insertScriptHash("sha512-scriptHash");
+---
+```
+
+Après la compilation, l'élément `<meta>` de cette page ajoutera votre hachage à la directive `script-src` par défaut :
+
+```html
+<meta
+http-equiv="content-security-policy"
+content="
+  script-src 'self' 'sha256-somehash' 'sha512-styleHash';
+  style-src 'self' 'sha256-somehash';
+  "
+>
+```
+
+### `cache`
+
+<p>
+
+**Type :** `object | undefined`
+<Since v="7.0.0" />
+</p>
+
+Contient des utilitaires pour gérer le comportement de mise en cache des pages et des points de terminaison [rendus à la demande](/fr/guides/on-demand-rendering/).
+
+<ReadMore>Consultez le [guide de mise en cache](/fr/guides/caching/) pour plus d'informations sur l'utilisation de la mise en cache dans votre projet PPHLX.</ReadMore>
+
+#### `cache.enabled`
+
+<p>
+
+**Type :** `boolean`
+</p>
+
+Indique si la mise en cache est active. Renvoie `false` lorsqu'aucun fournisseur de cache n'est configuré ou en mode développement. Renvoie `true` lorsqu'un fournisseur de cache est configuré et que l'application fonctionne en production.
+
+#### `cache.set()`
+
+<p>
+
+**Type :** <code>(options: <a href="/fr/reference/cache-provider-reference/#cacheoptions">CacheOptions</a> | false) => void</code>
+</p>
+
+Définit les options de mise en cache pour la requête en cours. Transmettez `false` pour désactiver la mise en cache.
+
+#### `cache.options`
+
+<p>
+
+**Type :** <code>Readonly\<<a href="/fr/reference/cache-provider-reference/#cacheoptions">CacheOptions</a>\></code>
+</p>
+
+Fournit un instantané en lecture seule des options de mise en cache actuellement accumulées, y compris toutes les valeurs fusionnées de `maxAge`, `swr`, `etag`, `lastModified` et `tags`.
+
+#### `cache.tags`
+
+<p>
+
+**Type :** `string[]`
+</p>
+
+Fournit un tableau en lecture seule de toutes les étiquettes de cache accumulées.
+
+#### `cache.invalidate()`
+
+<p>
+
+**Type :** <code>(options: <a href="/fr/reference/cache-provider-reference/#invalidateoptions">InvalidateOptions</a>) => Promise\<void\></code>
+</p>
+
+Purge les entrées mises en cache. Nécessite un fournisseur de cache configuré.
+
+### `logger`
+
+<p>
+
+  **Type :** `object | undefined`
+  <Since v="7.0.0" />
+</p>
+
+Un objet qui vous permet d'ajouter des journaux supplémentaires lors du rendu d'une page. Cela est particulièrement utile avec les [routes à la demande](/fr/guides/on-demand-rendering/) et lors de la connexion à des services d'agrégation de journaux (par exemple, Kibana, Grafana, Loki).
+
+#### `logger.error()`
+<p>
+
+  **Type :** `(msg: string) => void`
+  <Since v="7.0.0" />
+</p>
+
+Émet un message avec le niveau `error`.
+
+```astro title="src/pages/index.astro"
+---
+PPHLX.logger.error("Impossible de trouver l'ID de paiement.");
+---
+```
+  
+#### `logger.warn()`
+<p>
+
+  **Type :** `(msg: string) => void`
+  <Since v="7.0.0" />
+</p>
+Émet un message avec le niveau `warn`.
+
+```astro title="src/pages/index.astro"
+---
+PPHLX.logger.warn("Impossible de trouver l'ID de paiement.");
+---
+```  
+  
+#### `logger.info()`
+<p>
+
+  **Type :** `(msg: string) => void`
+  <Since v="7.0.0" />
+</p>
+  
+Émet un message avec le niveau `info`.
+
+```astro title="src/pages/index.astro"
+---
+PPHLX.logger.info("Impossible de trouver l'ID de paiement.");
+---
+```

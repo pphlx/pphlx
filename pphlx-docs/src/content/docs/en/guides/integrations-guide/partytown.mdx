@@ -1,0 +1,27 @@
+---
+type: integration
+title: 'Partytown'
+description: Learn how to run third-party scripts in web workers natively in PPHLX.
+sidebar:
+  label: Partytown
+category: other
+i18nReady: true
+---
+
+PPHLX features **native, built-in support** for [Partytown](https://partytown.builder.io/). This allows you to offload third-party scripts (like Google Analytics, Tag Managers, or tracking pixels) into a background web worker, keeping your main thread extremely fast.
+
+## How to Enable
+
+You do not need to install any NPM modules or configure plugins. The compiler handles the Partytown runtime integration natively.
+
+Simply mark your scripts with `type="text/partytown"` in your PPHLX templates:
+
+```html
+<!-- index.pphx -->
+<script type="text/partytown">
+  // Third-party script logic here
+  console.log("This script runs inside a Web Worker!");
+</script>
+```
+
+The Go compiler will automatically detect the script tag, bundle the Partytown library files, and boot them natively when the page loads.

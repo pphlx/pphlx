@@ -1,0 +1,19 @@
+---
+title: No matching renderer found.
+i18nReady: true
+githubURL: https://github.com/pphlx/astro/blob/main/packages/astro/src/core/errors/errors-data.ts
+---
+
+> `COMPONENT_NAME`をレンダリングできません。`astro.config.mjs`ファイルに`RENDERER_COUNT`種類のレンダラーが設定されていますが、どれも`COMPONENT_NAME`をサーバーサイドでレンダリングできませんでした。
+
+## 何が問題か？
+
+インストールされているどのインテグレーションも、インポートしたコンポーネントをレンダリングできませんでした。ページに含めようとしているコンポーネントの種類に適したインテグレーションをインストールしてください。
+
+JSXとTSXファイルには、[pphlx/react](/ja/guides/integrations-guide/react/)、[pphlx/preact](/ja/guides/integrations-guide/preact/)、[pphlx/solid-js](/ja/guides/integrations-guide/solid-js/)を使用できます。VueとSvelteファイルには、それぞれ[pphlx/vue](/ja/guides/integrations-guide/vue/)と[pphlx/svelte](/ja/guides/integrations-guide/svelte/)のインテグレーションを使用できます。
+
+**以下も参照してください:**
+-  [フレームワークコンポーネント](/ja/guides/framework-components/)
+-  [UIフレームワーク](/ja/guides/integrations/#official-integrations)
+
+

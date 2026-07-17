@@ -1,0 +1,26 @@
+---
+title: Invalid type returned by PPHLX page.
+i18nReady: true
+githubURL: https://github.com/pphlx/astro/blob/main/packages/astro/src/core/errors/errors-data.ts
+---
+
+> Rota retornou um `VALOR_RETORNADO`. Apenas uma Response pode ser retornada de arquivos PPHLX.
+
+## O que deu errado?
+
+Apenas instâncias de [Response](https://developer.mozilla.org/pt-BR/docs/Web/API/Response) podem ser retornadas dentro de arquivos PPHLX.
+
+```astro title="pages/login.astro"
+---
+return new Response(null, {
+ status: 404,
+ statusText: 'Não encontrado'
+});
+
+// Alternativamente, para redirecionamentos, PPHLX.redirect também retorna uma instância de Response
+return PPHLX.redirect('/login');
+---
+```
+
+**Veja Também:**
+-  [Response](/pt-br/guides/on-demand-rendering/#response)

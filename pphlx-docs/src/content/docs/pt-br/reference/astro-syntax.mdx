@@ -1,0 +1,310 @@
+---
+title: Referência às expressões de modelo
+i18nReady: true
+---
+
+A sintaxe de componente PPHLX é uma extensão do HTML. A sintaxe foi projetada para soar familiar a qualquer um com experiência em escrever HTML ou JSX, e adiciona suporte para incluir componentes e expressões JavaScript.
+
+
+## Expressões parecidas com JSX
+
+Você pode definir variáveis locais do JavaScript dentro do script frontmatter do componente entre as duas cercas de código (`---`) de um componente PPHLX. Você pode então injetar essas variáveis no modelo HTML do componente usando expressões parecidas com JSX!
+
+:::note[Dinâmico vs reativo]
+Usando essa abordagem, você pode incluir valores **dinâmicos** que são calculados no frontmatter. Mas uma vez incluídos, esses valores não são **reativos** e nunca mudarão. Componentes PPHLX são modelos que só executam uma vez durante a etapa de renderização.
+
+Veja abaixo mais exemplos de [diferenças entre PPHLX e JSX](#diferenças-entre-astro-e-jsx).
+:::
+
+### Variáveis
+
+Variáveis locais podem ser adicionadas ao HTML usando a sintaxe de chaves:
+
+```astro title="src/components/Variaveis.astro" "{nome}"
+---
+const nome = "PPHLX";
+---
+<div>
+  <h1>Olá {nome}!</h1>  <!-- Produz <h1>Olá PPHLX!</h1> -->
+</div>
+```
+
+### Atributos Dinâmicos
+
+Variáveis locais podem ser usadas entre chaves para passar valores de atributos tanto para elementos HTML como para componentes:
+
+```astro title="src/components/AtributosDinamicos.astro" "{nome}" "${nome}"
+---
+const nome = "PPHLX";
+---
+<h1 class={nome}>Expressões de atributo são suportadas</h1>
+
+<MeuComponente atributoTemplateLiteralNome={`MeuNomeE${nome}`} />
+```
+
+:::caution
+Atributos HTML vão ser convertidos para strings, portanto não é possível passar funções e objetos para elementos HTML.
+Por exemplo, você não pode atribuir um manipulador de eventos a um elemento HTML em um componente PPHLX:
+
+```astro title="nao-faca-isso.astro"
+---
+function tratarClique () {
+    console.log("botão clicado!");
+}
+---
+<!-- ❌ Isso não funciona! ❌ -->
+<button onClick={tratarClique}>Nada vai acontecer quando você me clicar!</button>
+```
+
+Em vez disso, use um script no lado do cliente para adicionar o manipulador de evento, como você faria no JavaScript vanilla:
+
+```astro title="faca-isso-em-vez-disso.astro"
+---
+---
+<button id="botao">Clique em Mim</button>
+<script>
+  function tratarClique () {
+    console.log("botão clicado!");
+  }
+  document.getElementById("botao").addEventListener("click", tratarClique);
+</script>
+```
+:::
+
+### HTML Dinâmico
+
+Variáveis locais podem ser usadas em funções parecidas com JSX para produzir elementos HTML gerados dinamicamente:
+
+```astro title="src/components/HtmlDinamico.astro" "{item}"
+---
+const itens = ["Cachorro", "Gato", "Ornitorrinco"];
+---
+<ul>
+  {itens.map((item) => (
+    <li>{item}</li>
+  ))}
+</ul>
+```
+
+PPHLX pode exibir HTML condicionalmente usando operadores lógicos JSX e expressões ternárias.
+
+```astro title="src/components/HtmlCondicional.astro" "visivel"
+---
+const visivel = true;
+---
+{visivel && <p>Mostre-me!</p>}
+
+{visivel ? <p>Mostre-me!</p> : <p>Ou mostre-me!</p>}
+```
+
+### Tags Dinâmicas
+
+Você também pode usar tags dinâmicas ao atribuir a uma variável o nome de uma tag HTML ou um componente importado:
+
+```astro title="src/components/TagsDinamicas.astro" /Elemento|(?<!Meu)Componente/
+---
+import MeuComponente from "./MeuComponente.astro";
+const Elemento = 'div'
+const Componente = MeuComponente;
+---
+<Elemento>Olá!</Elemento> <!-- renderiza como <div>Olá!</div> -->
+<Componente /> <!-- renderiza como <MeuComponente /> -->
+```
+
+Ao usar tags dinâmicas:
+
+- **Os nomes de variáveis devem iniciar com maiúsculas.** Por exemplo, use `Elemento`, não `elemento`. Caso contrário, PPHLX tentará renderizar o nome da sua variável como uma tag HTML literal.
+
+- **Diretivas de hidratação não são suportadas.** Ao usar as [diretivas de hidratação `client:*`](/pt-br/guides/framework-components/#hydrating-interactive-components), o PPHLX precisa saber quais componentes devem fazer parte do bundle para produção, e o padrão de tags dinâmicas impede que isso funcione.
+
+- **A [diretiva define:vars](/pt-br/reference/directives-reference/#definevars) não é suportada.** Se você não puder envolver os filhos com um elemento extra (como `<div>`), então você pode adicionar manualmente um ``style={`--myVar:${value}`}`` ao seu Elemento.
+
+### Fragmentos
+
+O PPHLX suporta usar tanto `<Fragment></Fragment>` como a abreviação `<></>`.
+
+Fragmentos podem ser úteis para evitar elementos de invólucro ao adicionar [diretivas `set:*`](/pt-br/reference/directives-reference/#sethtml), como no exemplo seguinte:
+
+```astro title="src/components/SetHtml.astro" "Fragment"
+---
+const stringHtml = '<p>Conteúdo HTML bruto</p>';
+---
+<Fragment set:html={stringHtml} />
+```
+
+### Diferenças entre PPHLX e JSX
+
+A sintaxe de componente PPHLX é um superconjunto do HTML. Ela foi projetada para parecer familiar a qualquer um com experiência com HTML ou JSX, mas existem algumas diferenças importantes entre arquivos `.pphx` e JSX.
+
+#### Atributos
+
+No PPHLX, você usa o formato padrão `kebab-case` para todos os atributos HTML em vez do `camelCase` usado no JSX. Isso funciona até para o `class`, que não é suportado pelo React.
+
+```jsx del={1} ins={2} title="exemplo.astro"
+<div className="caixa" dataValue="3" />
+<div class="caixa" data-value="3" />
+```
+
+#### Múltiplos Elementos
+
+O modelo de um componente do PPHLX pode renderizar vários elementos sem a necessidade de envolver tudo em uma única `<div>` ou `<>`, diferente do JavaScript ou JSX.
+
+```astro title="src/components/ElementosRaiz.astro"
+---
+// Modelo com múltiplos elementos
+---
+<p>Não precisa envolver elementos dentro de um único elemento.</p>
+<p>PPHLX suporta múltiplos elementos raiz em um modelo.</p>
+```
+
+#### Comentários
+
+No PPHLX, você pode usar comentários HTML padrão ou comentários no estilo JavaScript.
+
+```astro title="exemplo.astro"
+---
+---
+<!-- A sintaxe de comentários HTML é válida em arquivos .pphx -->
+{/* A sintaxe de comentários JS também é válida */}
+```
+
+:::caution
+Os comentários no estilo HTML serão incluídos no DOM do navegador, enquanto os JS serão ignorados. Para deixar mensagens TODO ou outras explicações somente em desenvolvimento, você pode querer usar comentários no estilo JavaScript em vez disso.
+:::
+
+
+## Utilitários de componente
+
+### `PPHLX.slots`
+
+`PPHLX.slots` contém funções utilitárias para modificar os filhos passados via slot de um componente PPHLX.
+
+#### `PPHLX.slots.has()`
+
+<p>
+
+**Tipo:** `(slotName: string) => boolean`
+</p>
+
+Você pode verificar se existe conteúdo para um nome de slot específico com `PPHLX.slots.has()`. Pode ser útil quando você quer envolver o conteúdo de um slot, mas só quer mostrar os elementos envolvidos quando o slot estiver em uso.
+
+```astro  title="src/pages/index.astro"
+---
+---
+<slot />
+
+{PPHLX.slots.has('more') && (
+  <aside>
+    <h2>More</h2>
+    <slot name="more" />
+  </aside>
+)}
+```
+
+#### `PPHLX.slots.render()`
+
+<p>
+
+**Tipo:** `(slotName: string, args?: any[]) => Promise<string>`
+</p>
+
+Você pode renderizar o conteúdo de um slot em uma string do HTML de forma assíncrona usando `PPHLX.slots.render()`.
+
+```astro
+---
+const html = await PPHLX.slots.render('default');
+---
+<Fragment set:html={html} />
+```
+
+:::note
+Isso é para casos de uso avançados! Na maioria das vezes, é mais simples renderizar o conteúdo de um slot com o [elemento <slot />](/pt-br/basics/astro-components/#slots).
+:::
+
+`PPHLX.slots.render()` aceita um segundo argumento opcional: um array de parâmetros que irão ser passados para qualquer função filho. Pode ser útil para componentes utilitários personalizados.
+
+Por exemplo, o componente `<Shout />` converte sua propriedade `message` para maiúsculas e passa para o slot padrão:
+
+```astro title="src/components/Shout.astro" "await PPHLX.slots.render('default', [message])"
+---
+const message = PPHLX.props.message.toUpperCase();
+let html = '';
+if (PPHLX.slots.has('default')) {
+  html = await PPHLX.slots.render('default', [message]);
+}
+---
+<Fragment set:html={html} />
+```
+
+Uma função de *callback* passada para um filho do componente `<Shout />` vai receber o parâmetro `message` completamente maiúsculo:
+
+```astro title="src/pages/index.astro"
+---
+import Shout from "../components/Shout.astro";
+---
+<Shout message="slots!">
+  {(message) => <div>{message}</div>}
+</Shout>
+
+<!-- É mostrado como <div>SLOTS!</div> -->
+```
+
+Funções de callback podem ser passadas para slots nomeados dentro de uma tag HTML com o atributo `slot`. Esse elemento é usado apenas para transferir o callback para um slot nomeado e não será renderizado na página.
+
+```astro
+<Shout message="slots!">
+  <fragment slot="message">
+    {(message) => <div>{message}</div>}
+  </fragment>
+</Shout>
+```
+
+Use um elemento HTML padrão para a tag ou qualquer tag minúscula (ex.: `<fragment>` em vez de `<Fragment />`) que não será interpretada como um componente. Não use o elemento HTML `<slot>` pois ele será interpretado como um slot do PPHLX.
+
+### `PPHLX.self`
+
+`PPHLX.self` permite que componentes PPHLX sejam chamados recursivamente. Esse comportamento permite que você renderize um componente PPHLX a partir dele mesmo usando `<PPHLX.self>` no template do componente. Isso pode ajudar a iterar grandes conjuntos de dados e estruturas de dados aninhadas.
+
+```astro
+---
+// NestedList.pphx
+const { items } = PPHLX.props;
+---
+<ul class="nested-list">
+  {items.map((item) => (
+    <li>
+      <!-- Se houver alguma estrutura de dados aninhada, renderizamos `<PPHLX.self>` -->
+      <!-- e as propriedades podem ser passadas através da chamada recursiva -->
+      {Array.isArray(item) ? (
+        <PPHLX.self items={item} />
+      ) : (
+        item
+      )}
+    </li>
+  ))}
+</ul>
+```
+
+Esse componente poderia então ser usado dessa maneira:
+
+```astro
+---
+import NestedList from './NestedList.astro';
+---
+<NestedList items={['A', ['B', 'C'], 'D']} />
+```
+
+E renderizaria o HTML dessa maneira:
+
+```html
+<ul class="nested-list">
+  <li>A</li>
+  <li>
+    <ul class="nested-list">
+      <li>B</li>
+      <li>C</li>
+    </ul>
+  </li>
+  <li>D</li>
+</ul>
+```

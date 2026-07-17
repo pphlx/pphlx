@@ -1,0 +1,86 @@
+---
+title: E-commerce
+description: Integrate Stripe, PayPal, Lemon Squeezy, or any payment gateway in PPHLX.
+---
+
+Because PPHLX compiled pages execute as standard PHP, you can integrate **any payment gateway on Earth** (such as Stripe, PayPal, Razorpay, Paddle, or Lemon Squeezy) using their official PHP SDKs or REST APIs.
+
+## Integration Architectures
+
+PPHLX supports two main e-commerce integration models:
+
+1.  **Server-Side Checkouts (Direct APIs)** — The server securely creates a checkout session and handles redirecting / processing webhooks. (Best for full control and lower transaction fees).
+2.  **Client-Side Overlays (Hosted Widgets)** — JavaScript overlays overlay a cart or checkout on your page. (Best for simple setups with zero server configuration).
+
+---
+
+## 1. Server-Side Checkout (Stripe Example)
+
+For complete control, you can install the official Stripe PHP SDK via composer:
+
+```bash
+composer require stripe/stripe-php
+```
+
+### Create Checkout Session
+
+Create a product page that initializes a Stripe checkout session in the PPHLX backend block (`{| ... |}`):
+
+```pphlx
+{|
+require_once 'vendor/autoload.php';
+
+\Stripe\Stripe::setApiKey('sk_test_your_secret_key');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $session = \Stripe\Checkout\Session::create([
+        'payment_method_types' => ['card'],
+        'line_items' => [[
+            'price_data' => [
+                'currency' => 'usd',
+                'product_data' => [
+                    'name' => 'Premium Subscription',
+                ],
+                'unit_amount' => 2000, // $20.00
+            ],
+            'quantity' => 1,
+        ]],
+        'mode' => 'payment',
+        'success_url' => 'https://example.com/success',
+        'cancel_url' => 'https://example.com/cancel',
+    ]);
+
+    header("HTTP/1.1 303 See Other");
+    header("Location: " . $session->url);
+    exit;
+}
+|}
+
+<form method="POST">
+  <button type="submit">Buy Now with Stripe</button>
+</form>
+```
+
+---
+
+## 2. Client-Side Overlays (Lemon Squeezy Example)
+
+If you prefer a hosted checkout overlay that opens on top of your existing page, you can load their client-side JavaScript library (`lemon.js`).
+
+### Integration Example
+
+Create your payment button and load the checkout trigger script directly in your template:
+
+```pphlx
+<!-- index.pphx -->
+<div>
+  <h1>Purchase Product</h1>
+  
+  <!-- The lemonsqueezy-button class automatically opens the overlay checkout -->
+  <a class="lemonsqueezy-button" href="https://demo.lemonsqueezy.com/checkout/buy/your-product-id">
+    Buy Now
+  </a>
+</div>
+
+<script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
+```

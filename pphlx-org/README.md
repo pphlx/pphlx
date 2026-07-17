@@ -1,6 +1,6 @@
 # [astro.build](https://astro.build)
 
-The source code for [astro.build](https://astro.build), built with [Astro](https://github.com/withastro/astro).
+The source code for [astro.build](https://astro.build), built with [Astro](https://github.com/pphlx/pphlx).
 
 ## Updating Themes
 

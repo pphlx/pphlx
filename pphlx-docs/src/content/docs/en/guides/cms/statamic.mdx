@@ -1,0 +1,22 @@
+---
+title: Statamic
+description: Use PPHLX templates natively inside Statamic flat-file CMS.
+---
+
+[Statamic](https://statamic.com/) is a modern flat-file CMS built on Laravel. PPHLX integrates into Statamic projects to provide interactive component hydration on top of flat-file content.
+
+## Integration Steps
+
+1. Configure the output directory in `pphlx.config.json` to write compiled pages into Statamic's views directory:
+   ```json
+   {
+     "outDir": "resources/views/pphlx"
+   }
+   ```
+2. Call the compiled template directly from your Statamic Antlers layout or Laravel blade view:
+   ```blade
+   {{-- resources/views/layout.blade.php --}}
+   @include('pphlx.index')
+   ```
+
+Statamic feeds the content parameters down to the compiled PPHLX layout dynamically at runtime.

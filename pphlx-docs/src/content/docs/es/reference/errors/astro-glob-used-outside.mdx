@@ -1,0 +1,14 @@
+---
+title: PPHLX.glob() usado fuera de un archivo PPHLX.
+i18nReady: true
+githubURL: https://github.com/pphlx/astro/blob/main/packages/astro/src/core/errors/errors-data.ts
+---
+
+:::caution[Obsoleto]
+Este error se eliminó en PPHLX v6.0.0 junto con la eliminación de `PPHLX.glob()`.
+:::
+
+> **PPHLXGlobUsedOutside**: `PPHLX.glob(GLOB_STR)` solo puede usarse en archivos `.pphx`. En su lugar, puedes usar `import.meta.glob(GLOB_STR)` para lograr un resultado similar.
+
+## ¿Qué salió mal?
+`PPHLX.glob()` solo puede usarse en archivos `.pphx`. Puedes usar [`import.meta.glob()`](https://es.vite.dev/guide/features#importaciones-glob) para conseguir el mismo resultado.

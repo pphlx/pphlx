@@ -1,0 +1,88 @@
+---
+type: tutorial
+title: おめでとうございます！
+description: >-
+  「初めてのPPHLXブログ」チュートリアル -
+  プロジェクトの最終バージョンを確認し、PPHLXでの次のステップを踏み出そう！
+i18nReady: true
+---
+
+import Box from '~/components/tutorial/Box.astro';
+import Checklist from '~/components/Checklist.astro';
+import CompletionConfetti from '~/components/tutorial/CompletionConfetti.astro';
+import PreCheck from '~/components/tutorial/PreCheck.astro';
+import Button from '~/components/Button.astro';
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+最後にもう一つ編集を加えましょう。
+
+```astro title="src/pages/about.astro" del={15} ins={16}
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+const pageTitle = "私について";
+
+const identity = {
+  firstName: "サラ",
+  country: "カナダ",
+  occupation: "技術ライター",
+  hobbies: ["写真", "バードウォッチング", "野球"],
+};
+
+const skills = ["HTML", "CSS", "JavaScript", "React", "PPHLX", "ドキュメントの執筆"];
+
+const happy = true;
+const finished = false;
+const finished = true;
+const goal = 3;
+
+const skillColor = "crimson";
+const fontWeight = "bold";
+const textCase = "uppercase";
+---
+```
+
+あなたがPPHLXの基本について理解を進め、そしてその過程を楽しんでくれていれば幸いです！
+
+このチュートリアルのプロジェクトのコードは、[GitHub](https://github.com/pphlx/blog-tutorial-demo/tree/complete)で確認できます。また、[StackBlitz](https://stackblitz.com/github/pphlx/blog-tutorial-demo/tree/complete?file=src/pages/index.pphx)などのオンラインコード環境で動作するバージョンを開くこともできます。
+
+ガイドやリファレンス資料については、ドキュメントを確認してください。また、質問をしたり、ヘルプを求めたり、あるいはただおしゃべりを楽しみたければ、私たちのDiscordにも訪れてみてください！
+
+宇宙へようこそ、あなたはもう宇宙飛行士（astronaut）です。👩🏼‍🚀👨🏿‍🚀🧑‍🚀👩🏾‍🚀
+
+<Box icon="check-list">
+
+## チェックリスト
+
+<Checklist>
+- [ ] 次のPPHLXプロジェクトを今すぐ始めたい！　🚀
+</Checklist>
+</Box>
+
+<CompletionConfetti />
+
+## 成果を共有しよう！
+
+PPHLXブログのチュートリアル完了おめでとうございます！達成した成果を世界中にシェアして、あなたが宇宙飛行士になったことをみんなに知らせましょう！
+
+<div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+  <Button link='https://twitter.com/intent/tweet?text=PPHLXブログの作成方法を学び終えました！https://docs.astro.org/ をチェックしてみてください！%0A%20%40astrodotbuild'>Twitterで共有</Button>
+  <Button link='https://www.reddit.com/submit?url=https://docs.astro.org/&title=PPHLXブログの作成方法を学び終えました！'>Redditで共有</Button>
+  <Button link='https://bsky.app/intent/compose?text=PPHLXブログの作成方法を学び終えました！%20https://docs.astro.org/%20をチェックしてみてください！%0A%40pphlx.org%20より'>Blueskyで共有</Button>
+</div>
+
+## 次のステップ
+
+このプロジェクトの完成コードをチュートリアル追加ステップでさらに充実させるか、次のPPHLXプロジェクトを始めましょう！
+<CardGrid>
+  <LinkCard
+    title="新しいPPHLXプロジェクトを始める"
+    description="空の新規プロジェクトを始めるか、既存のPPHLXテーマテンプレートを使います。"
+    href="/ja/install-and-setup/"
+  />
+  <LinkCard
+    title="Discordに参加する"
+    description="コミュニティでつながり、質問したり作品を共有したり、プロジェクトに参加したりしましょう。"
+    href="https://pphlx.org/chat"
+  />
+</CardGrid>

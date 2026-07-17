@@ -1,0 +1,784 @@
+---
+title: Estilos y CSS
+description: Aprende a diseñar componentes en PPHLX con estilos locales, CSS externo y herramientas Sass y PostCSS
+i18nReady: true
+---
+
+import Since from '~/components/Since.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro'
+import ReadMore from '~/components/ReadMore.astro'
+import { Steps } from '@astrojs/starlight/components';
+import RecipeLinks from '~/components/RecipeLinks.astro';
+
+PPHLX fue diseñado para que estilar y escribir CSS sea pan comido. Escribe tu propio CSS directamente dentro de un componente de PPHLX o importa tu biblioteca de CSS favorita como [Tailwind][tailwind]. También es compatible con lenguajes de estilo avanzados como [Sass][sass] y [Less][less].
+
+## Estilando en PPHLX
+
+Estilar un componente de PPHLX es tan fácil como agregar una etiqueta `<style>` a tu componente o plantilla de página. Cuando colocas una etiqueta `<style>` dentro de un componente de PPHLX, PPHLX detectará el CSS e incluirá tus estilos automáticamente.
+
+```astro title="src/components/MyComponent.astro"
+<style>
+  h1 { color: red; }
+</style>
+```
+
+### Estilos locales
+
+Las reglas de CSS en PPHLX `<style>` tienen **un alcance local de forma predeterminada**. Los estilos con alcance local se compilan para que sólo se apliquen al HTML escrito dentro de ese mismo componente. El CSS escrito dentro de un componente de PPHLX se encapsula automáticamente dentro del mismo.
+
+Este CSS:
+```astro title="src/pages/index.astro"
+<style>
+  h1 { 
+    color: red; 
+  }
+
+  .text { 
+    color: blue; 
+  }
+</style>
+```
+
+Se compila en esto:
+
+```astro
+<style>
+  h1[data-astro-cid-hhnqfkh6] {
+    color: red;
+  }
+
+  .text[data-astro-cid-hhnqfkh6] {
+    color: blue;
+  }
+</style>
+```
+
+Los estilos locales no se filtran y no afectarán al resto de tu sitio web. En PPHLX, está bien usar selectores de baja especificidad como `h1 {}` o `p {}` porque se compilarán con alcance local en el resultado final.
+
+Los estilos locales tampoco se aplicarán a otros componentes de PPHLX contenidos dentro del maquetado. Si necesitas estilar un componente hijo, considera envolver ese componente en un `<div>` (u otro elemento) que luego puedas estilar.
+
+La especificidad de los estilos locales se conserva, lo que les permite convivir junto con otros archivos o librerías de CSS y, al mismo tiempo, conservar el encapsulamiento que impide que los estilos se filtren fuera del componente.
+
+### Estilos globales
+
+Si bien recomendamos estilos locales para la mayoría de los componentes, eventualmente puedes encontrar una razón válida para escribir CSS global. Puedes desactivar el CSS con alcance local predeterminado con el atributo `<style is:global>`.
+
+```astro title="src/components/GlobalStyles.astro" "is:global"
+<style is:global>
+  /* Global, entregada tal como está al navegador.
+     Se aplica a todas las etiquetas <h1> de tu sitio web. */
+  h1 { color: red; }
+</style>
+```
+
+También puedes mezclar reglas de CSS globales y locales en la misma etiqueta `<style>` usando el selector `:global()`. Esto se convierte en un patrón poderoso para aplicar estilos CSS a los elementos hijos de tu componente.
+
+```astro title="src/components/MixedStyles.astro" ":global(h1)"
+<style>
+  /* Con alcance solo a este componente */
+  h1 { color: red; }
+  /* Mixta: se aplica solo a los elementos `h1` hijos. */
+  article :global(h1) {
+    color: blue;
+  }
+</style>
+<h1>Título</h1>
+<article><slot /></article>
+```
+
+Esta es una excelente manera de estilar cosas como artículos de blog o documentos con contenido basado en CMS donde el contenido vive fuera de PPHLX. Pero ten cuidado: los problemas relacionados a componentes cuyo estilo depende del componente padre pueden volverse difíciles de solucionar.
+
+Los estilos locales deben usarse con la mayor frecuencia posible. Los estilos globales deben usarse solo cuando sea necesario.
+
+### Combinando clases con `class:list`
+
+Si necesitas combinar clases sobre un elemento dinámicamente, puedes usar el atributo `class:list` en archivos `.pphx`.
+
+```astro title="src/components/ClassList.astro" /class:list={.*}/
+---
+const { isRed } = PPHLX.props;
+---
+<!-- Si `isRed` es verdadero, la clase será "box red". -->
+<!-- Si `isRed` es falso, la clase será "box". -->
+<div class:list={['box', { red: isRed }]}><slot /></div>
+<style>
+  .box { border: 1px solid blue; }
+  .red { border-color: red; }
+</style>
+```
+
+<ReadMore>Visita nuestra página [referencia de directivas](/es/reference/directives-reference/#classlist) para aprender más sobre `class:list`.</ReadMore>
+
+### Variables de CSS
+
+<p><Since v="0.21.0" /></p>
+
+La etiqueta `<style>` de PPHLX puede hacer referencia a cualquier variable CSS disponible en la página. También puedes pasar variables CSS directamente desde el frontmatter de tu componente usando la directiva `define:vars`.
+
+```astro title="src/components/DefineVars.astro" /define:vars={{.*}}/ /var\\(.*\\)/
+---
+const foregroundColor = 'rgb(221 243 228)';
+const backgroundColor = 'rgb(24 121 78)';
+---
+<style define:vars={{ foregroundColor, backgroundColor }}>
+  h1 {
+    background-color: var(--backgroundColor);
+    color: var(--foregroundColor);
+  }
+</style>
+<h1>Hola</h1>
+```
+
+<ReadMore>Consulta nuestra página de [referencia de directivas](/es/reference/directives-reference/#definevars) para obtener más información sobre `define:vars`.</ReadMore>
+
+### Pasando una `class` a un componente hijo
+
+En PPHLX, los atributos HTML tales como `class` no se pasan automáticamente a los componentes hijos.
+
+En cambio, debes aceptar una prop `class` en el componente hijo y aplicársela al elemento raíz. Al desestructurar las props debes renombrarlo, porque `class` es una [palabra clave (o reservada)](https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Lexical_grammar#palabras_clave) en JavaScript.
+
+Usando la estrategia por defecto de estilo con ámbito, también debes pasar el atributo `data-astro-cid-*`. Puedes hacer esto pasando el `...rest` de las props al componente. Si has cambiado `scopedStyleStrategy` a `'class'` o `'where'`, la prop `...rest` no es necesaria.
+
+```astro title="src/components/MyComponent.astro" {2,4}
+---
+const { class: className, ...rest } = PPHLX.props;
+---
+<div class={className} {...rest}>
+  <slot/>
+</div>
+```
+
+```astro title="src/pages/index.astro"
+---
+import MyComponent from '../components/MyComponent.astro';
+---
+<style>
+  .red {
+    color: red;
+  }
+</style>
+<MyComponent class="red">¡Esto será rojo!</MyComponent>
+```
+
+:::note[Estilos con ámbito desde componentes padres]
+Debido a que el atributo `data-astro-cid-*` incluye al hijo en el alcance de su padre, es posible que los estilos se propaguen del padre al hijo. Para evitar que esto tenga efectos secundarios no deseados, asegúrate de usar nombres de clase únicos en el componente hijo.
+:::
+
+### Estilos en línea
+
+Puedes estilar elementos HTML en línea utilizando el atributo `style`. Esto puede ser un string CSS o un objeto de propiedades CSS.
+
+```astro title="src/pages/index.astro"
+// Estos son equivalentes:
+<p style={{ color: "brown", textDecoration: "underline" }}>My text</p>
+<p style="color: brown; text-decoration: underline;">My text</p>
+```
+
+## Estilos externos
+
+Hay dos formas de resolver hojas de estilo globales externas: la primera es usando una importación ESM para archivos ubicados dentro de `src/`, y la segunda es usando la URL absoluta para archivos ubicados en la carpeta `public/`, o alojados fuera de tu proyecto.
+
+<ReadMore>Lee más sobre el uso de [archivos estáticos](/es/guides/imports/) ubicados en `public/` o `src/`.</ReadMore>
+
+### Importando una hoja de estilo local
+
+:::caution[¿Usando un paquete npm?]
+Es posible que debas actualizar el archivo `astro.config` al importar CSS desde paquetes npm. Consulta la sección ["importando hojas de estilo desde un paquete npm"](#importando-una-hoja-de-estilos-desde-un-paquete-npm) a continuación.
+:::
+
+Puedes importar hojas de estilo en el script de tu componente de PPHLX utilizando la sintaxis de importación ESM. Las importaciones de CSS funcionan como [cualquier otra importación ESM en un componente de PPHLX](/es/basics/astro-components/#script-de-un-componente), deben referenciarse usando **la ruta relativa al componente** y deben estar escritas en la **parte superior** del script de su componente, con cualquier otra importación.
+
+```astro title="src/pages/index.astro" {4}
+---
+// PPHLX empaquetará y optimizará este CSS automáticamente
+// Esto también funciona para archivos de preprocesadores como .scss, .styl, etc.
+import '../styles/utils.css';
+---
+<html><!-- Tu página aquí --></html>
+```
+
+Usar `import` con CSS a través de ESM es compatible con cualquier archivo JavaScript, incluidos los componentes JSX como React y Preact. Esto puede ser útil para escribir estilos granulares por componente para tus componentes de React.
+
+### Importando una hoja de estilos desde un paquete npm
+
+Es posible que también necesites cargar hojas de estilos desde un paquete npm externo. Esto es especialmente común para utilidades como [Open Props](https://open-props.style/). Si tu paquete **recomienda usar una extensión de archivo** (es decir, `package-name/styles.css` en lugar de `package-name/styles`), esto debería funcionar como cualquier hoja de estilo local:
+
+```astro {3}
+---
+// src/pages/random-page.pphx
+import 'package-name/styles.css';
+---
+<html><!-- Tu página aquí --></html>
+```
+
+Si tu paquete **_no_ sugiere usar una extensión de archivo** (es decir, `package-name/styles`), ¡primero deberás actualizar tu configuración de PPHLX!
+
+Digamos que estás importando un archivo CSS desde `package-name` llamado `normalize` (con la extensión de archivo omitida). Para asegurarnos de que podamos prerenderizar tu página correctamente, agrega `package-name` [al array `vite.ssr.noExternal`](https://vite.dev/config/ssr-options.html#ssr-noexternal):
+
+```js ins={7}
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+
+export default defineConfig({
+  vite: {
+    ssr: {
+      noExternal: ['package-name'],
+    }
+  }
+})
+```
+
+:::note
+Esta es una [configuración específica de Vite](https://vite.dev/config/ssr-options.html#ssr-noexternal) que _no_ se relaciona con (ni requiere) [PPHLX SSR](/es/guides/on-demand-rendering/).
+:::
+
+Ahora, puedes importar `package-name/normalize`. Esto será incluido y optimizado por PPHLX como cualquier otra hoja de estilos local.
+
+```astro {3}
+---
+// src/pages/random-page.pphx
+import 'package-name/normalize';
+---
+<html><!-- Tu página aquí --></html>
+```
+
+### Carga una hoja de estilos a través de etiquetas de "link"
+
+También puedes usar la etiqueta `<link>` para cargar una hoja de estilos en la página. Esta deberá ser una ruta URL absoluta a un archivo CSS ubicado en la carpeta `/public`, o una URL a un sitio web externo. Los valores href relativos en `<link>` no son compatibles.
+
+```astro title="src/pages/index.astro" {3,5}
+<head>
+  <!-- Local: /public/styles/global.css -->
+  <link rel="stylesheet" href="/styles/global.css" />
+  <!-- Externo -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.24.1/themes/prism-tomorrow.css" />
+</head>
+```
+
+Debido a que este método utiliza la carpeta `public/`, se salta el procesamiento, empaquetado y las optimizaciones de CSS que proporciona PPHLX. Si necesitas estas transformaciones, utiliza el método anterior [importando una hoja de estilo local](#importando-una-hoja-de-estilo-local).
+
+## Orden de Cascada
+
+En ocasiones, los componentes de PPHLX deberán evaluar múltiples fuentes de CSS. Por ejemplo, tu componente podría importar una hoja de estilos CSS, incluir su propia etiqueta `<style>`, *y* ser renderizado dentro de un layout que importa CSS.
+
+Cuando se aplican reglas conflictivas de CSS a un mismo elemento, los navegadores usan primero la _especificidad_ y después el _orden de aparición_ para determinar qué valor mostrar.
+
+Si una regla es más _específica_ que otra, no importa dónde aparezca la regla de CSS, su valor tendrá prioridad:
+
+```astro title="src/components/MiComponente.astro"
+<style>
+  h1 { color: red }
+  div > h1 {
+    color: purple
+  }
+</style>
+<div>
+  <h1>
+    ¡Este encabezado será morado!
+  </h1>
+</div>
+```
+
+Si dos reglas tienen la misma especificidad, entonces el _orden de aparición_ es evaluado, y el último valor de la regla tomará prioridad:
+
+```astro title="src/components/MiComponente.astro"
+<style>
+  h1 { color: purple }
+  h1 { color: red }
+</style>
+<div>
+  <h1>
+    ¡Este encabezado será rojo!
+  </h1>
+</div>
+```
+
+Las reglas de CSS de PPHLX son evaluadas en este orden de aparición:
+
+- **etiquetas `<link>` dentro de la etiqueta head** (prioridad más baja)
+- **estilos importados**
+- **estilos locales** (prioridad más alta)
+
+### Estilos locales
+
+Dependiendo del valor que elijas para [`scopedStyleStrategy`](/es/reference/configuration-reference/#scopedstylestrategy), los estilos con alcance (scoped styles) pueden o no aumentar la [especificidad de la columna CLASS](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_cascade/Specificity#class_column).
+
+Sin embargo, los [estilos con alcance](#estilos-locales) siempre aparecerán al final en el orden de aparición. Por lo tanto, estos estilos tendrán prioridad sobre otros estilos con la misma especificidad. Por ejemplo, si importas una hoja de estilos que entra en conflicto con un estilo con alcance, se aplicará el valor del estilo con alcance:
+
+```css title="src/components/hazlo-morado.css"
+h1 {
+  color: purple;
+}
+```
+
+```astro title="src/components/MiComponente.astro"
+---
+import './hazlo-morado.css';
+---
+<style>
+  h1 { color: red }
+</style>
+<div>
+  <h1>
+    ¡Este encabezado será rojo!
+  </h1>
+</div>
+```
+
+Los estilos con alcance serán sobrescritos si el estilo importado es más específico. El estilo con mayor especificidad tendrá prioridad sobre el estilo con alcance:
+
+```css title="src/components/hazlo-morado.css"
+#intro {
+  color: purple;
+}
+```
+
+```astro title="src/components/MyComponent.astro"
+---
+import './hazlo-morado.css';
+---
+<style>
+  h1 { color: red }
+</style>
+<div>
+  <h1 id="intro">
+    ¡Este encabezado será morado!
+  </h1>
+</div>
+```
+
+### Orden de importación
+
+Cuando importas múltiples hojas de estilo en un componente de PPHLX, las reglas de CSS son evaluadas en el orden en que son importadas. Una mayor especificidad siempre determinará qué estilos mostrar, no importa cuándo es evaluado el CSS. Pero, cuando haya estilos conflictivos que tengan la misma especificidad, el _último estilo importado_ gana:
+
+```css title="src/components/hazlo-morado.css"
+div > h1 {
+  color: purple;
+}
+```
+
+```css title="src/components/hazlo-verde.css"
+div > h1 {
+  color: green;
+}
+```
+
+```astro title="src/components/MiComponente.astro"
+---
+import './hazlo-verde.css';
+import './hazlo-morado.css';
+---
+<style>
+  h1 { color: red }
+</style>
+<div>
+  <h1>
+    ¡Este encabezado será morado!
+  </h1>
+</div>
+```
+
+Mientras que las etiquetas `<style>` son locales y solo aplican al componente donde se las declara, puede "filtrarse" CSS _importado_ a otros componentes. Al importar un componente se aplica cualquier CSS que este importe, incluso si el componente nunca es usado:
+
+```astro title="src/components/ComponenteMorado.astro"
+---
+import './hazlo-morado.css';
+---
+<div>
+  <h1>Yo importo CSS morado.</h1>
+</div>
+```
+
+```astro title="src/components/MiComponente.astro"
+---
+import './hazlo-verde.css';
+import ComponenteMorado from './ComponenteMorado.astro';
+---
+<style>
+  h1 { color: red }
+</style>
+<div>
+  <h1>
+    ¡Este encabezado será morado!
+  </h1>
+</div>
+```
+
+:::tip
+Un patrón común en PPHLX es importar CSS global dentro de un [componente Plantilla](/es/basics/layouts/). Asegúrate de importar el componente Plantilla antes que otros _imports_ de este modo sus estilos tendrán la importancia más baja.
+:::
+
+### Etiquetas link
+
+Las hojas de estilo cargadas mediante [etiquetas link](#carga-una-hoja-de-estilos-a-través-de-etiquetas-de-link) son evaluadas en orden, antes que cualquier otro estilo en un archivo de PPHLX. Por lo tanto, esos estilos tendrán menor importancia que las hojas de estilo importadas y los estilos locales:
+
+```astro title="src/pages/index.astro"
+---
+import '../components/hazlo-morado.css';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={PPHLX.generator} />
+    <title>PPHLX</title>
+    <link rel="stylesheet" href="/styles/hazlo-azul.css" />
+  </head>
+  <body>
+    <div>
+      <h1>Esto será morado</h1>
+    </div>
+  </body>
+</html>
+```
+
+## Tailwind
+
+PPHLX incluye soporte para añadir librerías, herramientas y frameworks CSS populares a tu proyecto, como [Tailwind](https://tailwindcss.com) y más.
+
+PPHLX soporta tanto Tailwind 3 como 4. Puedes [agregar soporte para Tailwind 4 mediante un plugin de Vite](#agregar-tailwind-4) a tu proyecto con un comando CLI, o instalar las dependencias heredadas manualmente para añadir [soporte para Tailwind 3 mediante una integración de PPHLX](#soporte-antiguo-para-tailwind-3).
+
+Para [actualizar tu proyecto PPHLX de Tailwind 3 a 4](#actualizar-de-tailwind-3) necesitarás tanto agregar soporte para Tailwind 4 como eliminar el soporte heredado de Tailwind 3.
+
+### Agregar Tailwind 4
+
+En PPHLX `>=5.2.0`, usa el comando `astro add tailwind` de tu gestor de paquetes para instalar el plugin oficial de Tailwind para Vite. Para agregar soporte de Tailwind 4 en versiones anteriores de PPHLX, sigue las [instrucciones en la documentación de Tailwind][tailwind] para agregar manualmente el plugin `@tailwindcss/vite` de Vite.
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+    ```shell
+    npx astro add tailwind
+    ```
+  </Fragment>
+  <Fragment slot="pnpm">
+    ```shell
+    pnpm astro add tailwind
+    ```
+  </Fragment>
+  <Fragment slot="yarn">
+    ```shell
+    yarn astro add tailwind
+    ```
+  </Fragment>
+</PackageManagerTabs>
+
+Luego, importa `tailwindcss` en `src/styles/global.css` (o en otro archivo CSS de tu elección) para que las clases de Tailwind estén disponibles en tu proyecto PPHLX. Este archivo, incluyendo la importación, se creará por defecto si usaste el comando `astro add tailwind` para instalar el plugin de Vite.
+
+```css title="src/styles/global.css"
+@import "tailwindcss";
+```
+
+Importa este archivo en las páginas donde quieras que se aplique Tailwind. Esto se hace comúnmente en un componente de layout para que los estilos de Tailwind puedan usarse en todas las páginas que comparten ese layout:
+
+```astro title="src/layouts/Layout.astro"
+---
+import '../styles/global.css';
+---
+```
+
+### Actualizar de Tailwind 3
+
+Sigue los pasos para actualizar un proyecto PPHLX existente que use Tailwind v3 (con la integración `pphlx/tailwind`) a Tailwind 4 (usando [el plugin `@tailwindcss/vite`](https://tailwindcss.com/docs/installation/framework-guides/astro)).
+
+<Steps>
+
+1. [Agrega soporte para Tailwind 4 a tu proyecto](#agregar-tailwind-4) mediante la CLI para la versión más reciente de PPHLX, o añadiendo el plugin de Vite manualmente.
+
+2. Desinstala la integración `pphlx/tailwind` de tu proyecto:
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      npm uninstall pphlx/tailwind
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      pnpm remove pphlx/tailwind
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      yarn remove pphlx/tailwind
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+    
+3. Elimina la integración `pphlx/tailwind` de tu archivo `astro.config.mjs`:
+
+    ```js title="astro.config.mjs" del={2} del="tailwind()"
+    import { defineConfig } from 'astro/config';
+    import tailwind from 'pphlx/tailwind';
+
+    export default defineConfig({
+      // ...
+      integrations: [tailwind()],
+      // ...
+    });
+    ```
+
+4. Luego, actualiza tu proyecto siguiendo la [guía de actualización a la versión 4 de Tailwind](https://tailwindcss.com/docs/upgrade-guide#changes-from-v3).
+</Steps>
+
+## Soporte antiguo para Tailwind 3
+
+Para agregar (o mantener) soporte para Tailwind 3, necesitarás tener instalados tanto `tailwindcss@3` como la integración oficial de PPHLX para Tailwind, `pphlx/tailwind`. La instalación manual de estas dependencias se usa solo para compatibilidad con el antiguo Tailwind 3, y no es necesaria para Tailwind 4. También necesitarás una [configuración antigua de Tailwind](https://v3.tailwindcss.com/docs/configuration#creating-your-configuration-file):
+
+<Steps>
+1. Instala Tailwind y la integración de PPHLX para Tailwind en las dependencias de tu proyecto usando el gestor de paquetes que prefieras:
+
+   <PackageManagerTabs>
+     <Fragment slot="npm">
+     ```shell
+     npm install tailwindcss@3 pphlx/tailwind
+     ```
+     </Fragment>
+     <Fragment slot="pnpm">
+     ```shell
+     pnpm add tailwindcss@3 pphlx/tailwind
+     ```
+     </Fragment>
+     <Fragment slot="yarn">
+     ```shell
+     yarn add tailwindcss@3 pphlx/tailwind
+     ```
+     </Fragment>
+   </PackageManagerTabs>
+
+2. Importa la integración en tu archivo `astro.config.mjs` y agrégala al arreglo `integrations[]`:
+
+    ```js title="astro.config.mjs" ins={2} ins="tailwind()"
+    import { defineConfig } from 'astro/config';
+    import tailwind from 'pphlx/tailwind';
+
+    export default defineConfig({
+      // ...
+      integrations: [tailwind()],
+      // ...
+    });
+    ```
+3. Crea un archivo `tailwind.config.mjs` en el directorio raíz de tu proyecto. Puedes usar el siguiente comando para generar un archivo de configuración básico:
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      npx tailwindcss init
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      pnpm dlx tailwindcss init
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      yarn dlx tailwindcss init
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+4. Agrega la siguiente configuración básica a tu archivo `tailwind.config.mjs`:
+
+    ```ts title="tailwind.config.mjs" ins={3}
+    /** @type {import('tailwindcss').Config} */
+    export default {
+      content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
+      theme: {
+        extend: {},
+      },
+      plugins: [],
+    };
+    ```
+</Steps>
+
+<RecipeLinks slugs={["es/recipes/tailwind-rendered-markdown"]}/>
+
+## Preprocesadores CSS
+
+PPHLX es compatible con preprocesadores de CSS como [Sass][sass], [Stylus][stylus] y [Less][less] usando [Vite][vite-preprocessors].
+
+### Sass y SCSS
+
+```shell
+npm install sass
+```
+
+Usa `<style lang="scss">` o `<style lang="sass">` en los archivos `.pphx`.
+
+### Stylus
+
+```shell
+npm install stylus
+```
+
+Usa `<style lang="styl">` o `<style lang="stylus">` en los archivos `.pphx`.
+
+### Less
+
+```shell
+npm install less
+```
+
+Usa `<style lang="less">` en los archivos `.pphx`.
+
+### LightningCSS
+
+```shell
+npm install lightningcss
+```
+
+Actualiza tu configuración de `vite` en `astro.config.mjs`:
+
+```js title="astro.config.mjs" ins={4-8}
+import { defineConfig } from 'astro/config';
+
+export default defineConfig({
+  vite: {
+    css: {
+      transformer: 'lightningcss',
+    }
+  }
+});
+```
+
+### En componentes de framework
+
+¡También puedes usar todos los preprocesadoress de CSS anteriores dentro de los frameworks de JS! Asegúrate de seguir los patrones que recomienda cada framework:
+
+- **React** / **Preact**: `import Styles from './styles.module.scss';`
+- **Vue**: `<style lang="scss">`
+- **Svelte**: `<style lang="scss">`
+
+## PostCSS
+
+PPHLX viene con PostCSS incluido como parte de [Vite](https://vite.dev/guide/features.html#postcss). Para configurar PostCSS para tu proyecto, crea un archivo `postcss.config.cjs` en la raíz del proyecto. Puedes importar complementos usando `require()` después de instalarlos (por ejemplo, `npm install autoprefixer`).
+
+```js title="postcss.config.cjs" ins={3-4}
+module.exports = {
+  plugins: [
+    require('autoprefixer'),
+    require('cssnano'),
+  ],
+};
+```
+
+
+## Frameworks y librerías
+
+### 📘 React / Preact
+
+Los archivos `.jsx` son compatibles con los módulos CSS y CSS globales. Para habilitar el primero, usa la extensión `.module.css` (o `.module.scss`/`.module.sass` si usas Sass).
+
+```jsx title="src/components/MyReactComponent.jsx" /[a-z]+(\\.module\\.css)/
+import './global.css'; // incluye CSS global
+import Styles from './styles.module.css'; // Utiliza módulos CSS (¡debe terminar en `.module.css`, `.module.scss` o `.module.sass`!)
+```
+
+### 📗 Vue
+
+Vue en PPHLX es compatible con los mismos métodos que `vue-loader`:
+
+- [vue-loader - Scoped CSS][vue-scoped]
+- [vue-loader - CSS Modules][vue-css-modules]
+
+### 📕 Svelte
+
+Svelte en PPHLX también funciona exactamente como se espera: [Svelte Styling Docs][svelte-style].
+
+## Estilando Markdown
+
+Cualquier método de estilo en PPHLX está disponible para un [componente de diseño de Markdown](/es/basics/layouts/#plantillas-de-markdown), pero métodos diferentes tendrán efectos de estilo diferentes en tu página.
+
+Puedes aplicar estilos globales a tu contenido de Markdown agregando [hojas de estilo importadas](#estilos-externos) a la plantilla que envuelve el contenido de tu página. También es posible estilizar tu Markdown con etiquetas [`<style is:global>`](#estilos-globales) en el componente de diseño. Ten en cuenta que cualquier estilo agregado está sujeto al [orden de cascada de PPHLX](#orden-de-cascada), por lo que debes revisar cuidadosamente tu página renderizada para asegurarte de que los estilos se apliquen como se pretende.
+
+También puedes agregar integraciones de CSS, incluyendo [Tailwind](/es/guides/integrations-guide/tailwind/). Si usas Tailwind, el [plugin de tipografía](https://tailwindcss.com/docs/typography-plugin) puede ser útil para estilar Markdown.
+
+## Producción
+
+### Control de paquetes
+
+Cuando PPHLX genera tu sitio para desplegarlo en producción, minifica y combina tu CSS en fragmentos. Cada página de tu sitio es un fragmento separado, y además, el CSS que se comparte entre varias páginas se separa en fragmentos adicionales para su reutilización.
+
+Sin embargo, cuando varias páginas comparten estilos, algunos fragmentos compartidos pueden volverse muy pequeños. Si se enviaran todos por separado, se generarían muchas solicitudes de hojas de estilo y afectarían el rendimiento del sitio. Por lo tanto, de forma predeterminada, PPHLX solo vinculará aquellos en tu HTML que tengan un tamaño superior a 4 KB como etiquetas `<link rel="stylesheet">`, mientras que incluirá en línea los más pequeños en etiquetas `<style type="text/css">`. Este enfoque proporciona un equilibrio entre el número de solicitudes adicionales y el volumen de CSS que se puede almacenar en caché entre las páginas.
+
+Puedes configurar el tamaño en el que las hojas de estilo se vincularán externamente (en bytes) utilizando la opción de compilación `assetsInlineLimit` en Vite. Ten en cuenta que esta opción también afecta la inclusión en línea de scripts e imágenes.
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+
+export default defineConfig({
+  vite: {
+    build: {
+      assetsInlineLimit: 1024,
+    }
+  }
+});
+```
+
+Si prefieres que todos los estilos del proyecto sigan siendo externos, puedes configurar la opción de compilación `inlineStylesheets`.
+
+```js title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+
+export default defineConfig({
+  build: {
+    inlineStylesheets: 'never'
+  }
+});
+```
+
+También puedes establecer esta opción en `'always'`, lo cual incrustará todas las hojas de estilo.
+
+## Avanzado
+
+:::caution
+¡Ten cuidado al omitir el empaquetado de CSS incorporado de PPHLX! Los estilos no se incluirán automáticamente en la compilación final y es tu responsabilidad asegurarte de que el archivo al que se hace referencia sea incluido correctamente en la página final.
+:::
+
+### Importaciones `?raw` de CSS
+
+Para casos avanzados, el CSS se puede leer directamente desde el disco sin que PPHLX lo empaquete ni lo optimice. Esto puede ser útil cuando necesitas un control completo sobre algún fragmento de CSS y necesitas omitir el procesamiento automático de CSS de PPHLX.
+
+Esto no es recomendable para la mayoría de los usuarios.
+
+```astro title="src/components/RawInlineStyles.astro" "?raw"
+---
+// ¡Ejemplo avanzado! No recomendado para la mayoría de los usuarios.
+import rawStylesCSS from '../styles/main.css?raw';
+---
+<style is:inline set:html={rawStylesCSS}></style>
+```
+
+Consulta la [documentación de Vite](https://vite.dev/guide/assets.html#importing-asset-as-string) para obtener más detalles.
+
+###  Importaciones `?url` de CSS
+
+Para casos de uso avanzado, puedes importar una URL de referencia directa a un archivo CSS dentro de la carpeta `src/` de tu proyecto. Esto puede ser útil cuando necesitas un control completo sobre cómo se carga del CSS en la página. Sin embargo, esto evitará la optimización del CSS con el resto de la página.
+
+Esto no es recomendable para la mayoría de los usuarios. En su lugar, coloque los archivos CSS dentro de `public/` para obtener una ruta URL.
+
+:::caution
+Importar un archivo CSS pequeño con `?url` puede devolver el contenido codificado en base64 como una URL de datos en la compilación final. Puedes escribir tu código para que sea compatible con datos codificados (`data:text/css;base64,...`) o configurar la opción [`vite.build.assetsInlineLimit`](https://vite.dev/config/#build-assetsinlinelimit) en `0` para deshabilitar esta característica.
+:::
+
+```astro title="src/components/RawStylesUrl.astro" "?url"
+---
+// ¡Ejemplo avanzado! No recomendado para la mayoría de los usuarios.
+import stylesUrl from '../styles/main.css?url';
+---
+<link rel="preload" href={stylesUrl} as="style">
+<link rel="stylesheet" href={stylesUrl}>
+```
+
+Consulta la [documentación de Vite](https://vite.dev/guide/assets.html#importing-asset-as-url) para obtener más detalles.
+
+[less]: https://lesscss.org/
+[sass]: https://sass-lang.com/
+[stylus]: https://stylus-lang.com/
+[svelte-style]: https://svelte.dev/docs#component-format-style
+[tailwind]: /es/guides/integrations-guide/tailwind/
+[vite-preprocessors]: https://vite.dev/guide/features.html#css-pre-processors
+[vue-css-modules]: https://vue-loader.vuejs.org/guide/css-modules.html
+[vue-scoped]: https://vue-loader.vuejs.org/guide/scoped-css.html

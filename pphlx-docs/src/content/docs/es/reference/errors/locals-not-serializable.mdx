@@ -1,0 +1,29 @@
+---
+title: PPHLX.locals is not serializable
+i18nReady: true
+githubURL: https://github.com/pphlx/astro/blob/main/packages/astro/src/core/errors/errors-data.ts
+---
+
+:::caution[Obsoleto]
+Este error pertenece a una version anterior de PPHLX y ya no se utiliza. Si no puedes actualizar tu proyecto a una version mas reciente, consulta las [instantaneas sin mantenimiento de la documentacion antigua](/es/upgrade-astro/#documentación-antigua-sin-mantenimiento).
+:::
+
+> **LocalsNotSerializable**: La información almacenada en `PPHLX.locals` para la ruta "`HREF`" no es serializable. Asegúrate de almacenar solo datos serializables. (E03034)
+
+## ¿Qué salió mal?
+Se produce un error en el modo de desarrollo cuando un usuario intenta almacenar algo que no es serializable en `locals`.
+
+Por ejemplo:
+```ts
+import {defineMiddleware} from "astro/middleware";
+export const onRequest = defineMiddleware((context, next) => {
+  context.locals = {
+    foo() {
+      alert("Hello world!")
+    }
+  };
+  return next();
+});
+```
+
+

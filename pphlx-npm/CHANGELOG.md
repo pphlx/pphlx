@@ -5,6 +5,22 @@ All notable changes to the PPHLX Node.js compiler CLI will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5-1] - 2026-07-17
+
+### Changed
+- Updated README documentation with full CLI instructions and simplified `npm run` commands.
+
+---
+
+## [1.0.5] - 2026-07-17
+
+### Added
+- Integrated automatic script configuration on npm installation (registers `dev`, `start`, `watch`, `build`, `preview`, and `check` in the project's `package.json` via a `postinstall` lifecycle hook).
+- Added native `pphlx preview` mode: starts a local PHP development server pointing directly to the compiled production `dist` directory.
+- Added `pphlx check` subcommand in the Go compiler to run diagnostic syntax and component checks on template files.
+
+---
+
 ## [1.0.4-1] - 2026-07-15
 
 ### Fixed

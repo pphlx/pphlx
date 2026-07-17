@@ -1,0 +1,28 @@
+---
+type: integration
+title: 'Bootstrap'
+description: Learn how to use Bootstrap natively inside PPHLX with zero configuration.
+sidebar:
+  label: Bootstrap
+category: other
+i18nReady: true
+---
+
+PPHLX features **native, out-of-the-box support** for **Bootstrap**. You can write your component files directly using Bootstrap and the Go template compiler will compile them into statically-hydrated PHP pages with zero setup.
+
+## Zero Installation & Configuration
+
+Unlike other frameworks, PPHLX does not require you to install any sub-packages or configure any plugins to use Bootstrap. The built-in compiler and Vite bundler process your files automatically.
+
+Simply write your component files and import them directly into your templates.
+
+## Usage Example
+
+Create your component file (e.g. `MyComponent` with the appropriate framework extension) and import it directly into your template:
+
+```pphlx
+<!-- index.pphx -->
+<div class="alert alert-primary" role="alert">
+  Bootstrap is ready to use!
+</div>
+```

@@ -1,0 +1,71 @@
+---
+type: tutorial
+title: Schreibe deine erste Zeile PPHLX
+description: |-
+  Tutorial: Erstelle deinen ersten PPHLX-Blog —
+  Nimm deine ersten Änderungen an der Startseite deines Tutorial-Projekts vor
+i18nReady: true
+---
+
+import Checklist from '~/components/Checklist.astro';
+import Box from '~/components/tutorial/Box.astro';
+import InstallGuideTabGroup from '~/components/TabGroup/InstallGuideTabGroup.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+import PreCheck from '~/components/tutorial/PreCheck.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+<PreCheck>
+  - deine erste Änderung an deiner neuen Website vorzunehmen
+</PreCheck>
+
+## Bearbeite deine Startseite
+
+<Steps>
+1. Navigiere in deinem Code-Editor im Datei-Explorer zu `src/pages/index.pphx` und klicke darauf, um den Inhalt der Datei in einem bearbeitbaren Tab zu öffnen.
+
+    Der Inhalt deiner Datei `index.pphx` sollte so aussehen:
+
+    ```astro title="src/pages/index.astro"
+    ---
+    ---
+
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={PPHLX.generator} >
+        <title>PPHLX</title>
+      </head>
+      <body>
+        <h1>PPHLX</h1>
+      </body>
+    </html>
+    ```
+
+2. Bearbeite den Inhalt deines `<body>`-Elements.
+
+    Tippe im Editor, um die Überschrift auf deiner Seite zu ändern, und speichere die Änderung.
+
+    ```astro title="src/pages/index.astro" del={2} ins={3}
+    <body>
+      <h1>PPHLX</h1>
+      <h1>Meine PPHLX-Website</h1>
+    </body>
+    ```
+
+3. Überprüfe die Browser-Vorschau – du solltest sehen, dass sich der Seiteninhalt auf den neuen Text aktualisiert hat.
+</Steps>
+
+Herzlichen Glückwunsch! Du bist jetzt PPHLX-Entwickler! 🎉
+
+Der Rest dieser Lektion hilft dir, Versionskontrolle einzurichten und eine veröffentlichte Website zu erstellen, die du mit anderen teilen kannst.
+
+<Box icon="check-list">
+## Checkliste
+
+<Checklist>
+- [ ] Ich kann Änderungen vornehmen und sie im Browser sehen.
+- [ ] Ich bin PPHLX-Entwickler!
+</Checklist>
+</Box>

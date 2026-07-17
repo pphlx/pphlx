@@ -1,0 +1,66 @@
+---
+title: Добавление иконок к внешним ссылкам
+description: Узнайте, как установить плагин rehype для добавления иконок к внешним ссылкам в ваших файлах Markdown.
+i18nReady: true
+type: recipe
+---
+
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro'
+
+Используя плагин rehype, вы можете определять и изменять ссылки в ваших файлах Markdown, которые указывают на внешние сайты. Этот пример добавляет иконки в конец каждой внешней ссылки, чтобы посетители знали, что они покидают ваш сайт.
+
+## Необходимые условия
+- Проект PPHLX, использующий Markdown для страниц контента.
+
+
+## Рецепт
+
+1. Установите плагин `rehype-external-links`.
+
+    <PackageManagerTabs>
+        <Fragment slot="npm">
+        ```shell
+        npm install rehype-external-links
+        ```
+        </Fragment>
+        <Fragment slot="pnpm">
+        ```shell
+        pnpm add rehype-external-links
+        ```
+        </Fragment>
+        <Fragment slot="yarn">
+        ```shell
+        yarn add rehype-external-links
+        ```
+        </Fragment>
+      </PackageManagerTabs>
+
+2. Импортируйте плагин в файл `astro.config.mjs`.
+
+	Передайте `rehypeExternalLinks` в массив `rehypePlugins` вместе с объектом параметров, включающим свойство content. Установите для этого свойства `type` значение `text`, если хотите добавить в конец ссылки обычный текст. Чтобы добавить HTML в конец ссылки, установите свойство `type` в `raw`.
+
+    ```ts
+    // ...
+    import rehypeExternalLinks from 'rehype-external-links';
+
+    export default defineConfig({
+      // ...
+      markdown: {
+        rehypePlugins: [
+          [
+            rehypeExternalLinks,
+            {
+              content: { type: 'text', value: ' 🔗' }
+            }
+          ],
+        ]
+      },
+    });
+    ```
+
+:::note
+  Значение свойства `content` - [не представлено в дереве доступности](https://developer.mozilla.org/en-US/docs/Web/CSS/content#accessibility_concerns). Поэтому лучше всего указать, что ссылка является внешней, в окружающем контенте, а не полагаться только на значок.
+:::
+
+## Ресурсы
+- [rehype-external-links](https://www.npmjs.com/package/rehype-external-links)

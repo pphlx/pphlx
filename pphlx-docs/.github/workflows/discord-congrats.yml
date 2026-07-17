@@ -1,0 +1,17 @@
+name: Discord Notification on Push
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  congrats:
+    name: congratsbot
+    if: ${{ github.repository_owner == 'withastro' && github.event.commits[0].message != '[ci] format' }}
+    uses: withastro/automation/.github/workflows/congratsbot.yml@8a5969576beae8ae7bdce64167a95237878f4901 # v1.0.1
+    with:
+      EMOJIS: '🎉,🎊,🧑‍🚀,🥳,🙌,🚀,<:notworsethanwhatwehadbefore:1020455379353751573>,<:houston_chef:1082696404780200067>,<:houston_uwu:1100481288143650977>'
+    secrets:
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_CONGRATS }}

@@ -1,0 +1,395 @@
+---
+title: Référence de l'API des importations de configuration
+sidebar:
+  label: 'astro:config'
+i18nReady: true
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 6
+---
+
+import ReadMore from '~/components/ReadMore.astro';
+import Since from '~/components/Since.astro';
+
+<p><Since v="5.7.0" /></p>
+
+Ce module virtuel `astro:config` expose une version non exhaustive, sérialisable et assurant la sûreté du typage de la configuration PPHLX. Deux sous-modules permettent d'accéder à différents sous-ensembles de vos valeurs de configuration : [`/client`](#importations-depuis-astroconfigclient) et [`/server`](#importations-depuis-astroconfigserver).
+
+Toutes les valeurs de configuration disponibles sont accessibles depuis `astro:config/server`. Cependant, pour le code exécuté côté client, seules les valeurs exposées par `astro:config/client` seront disponibles. Cela protège vos informations en ne rendant accessibles qu'une partie des données au client.
+
+## Importations depuis `astro:config/client`
+
+Les utilitaires suivants sont importés depuis le répertoire `client` du module de configuration virtuel.
+
+```js
+import {
+  i18n, 
+  trailingSlash,
+  base,
+  build,
+  site,
+  compressHTML,
+} from "astro:config/client";
+```
+
+Utilisez ce sous-module pour le code côté client :
+
+```js title="src/utils.js" ins={1} ins="trailingSlash"
+import { trailingSlash } from "astro:config/client";
+
+function addForwardSlash(path) {
+  if (trailingSlash === "always") {
+    return path.endsWith("/") ? path : path + "/"
+  } else {
+    return path
+  }
+}
+```
+
+En savoir plus sur les importations de configuration disponibles à partir de `astro:config/client` :
+
+- [`i18n`](/fr/reference/configuration-reference/#i18n)
+- [`trailingSlash`](/fr/reference/configuration-reference/#trailingslash)
+- [`base`](/fr/reference/configuration-reference/#base)
+- [`build.format`](/fr/reference/configuration-reference/#buildformat)
+- [`site`](/fr/reference/configuration-reference/#site)
+- [`compressHTML`](/fr/reference/configuration-reference/#compresshtml)
+
+
+
+## Importations depuis `astro:config/server`
+
+Les utilitaires suivants sont importés depuis le répertoire `server` du module de configuration virtuel.
+
+```js
+import {
+  i18n, 
+  trailingSlash,
+  base,
+  build,
+  site,
+  srcDir,
+  cacheDir,
+  outDir,
+  publicDir,
+  root,
+  compressHTML,
+} from "astro:config/server";
+```
+
+Ces importations incluent tout ce qui est disponible à partir de `astro:config/client` ainsi que des informations sensibles supplémentaires sur la configuration de votre système de fichiers qu'il n'est pas sûr d'exposer au client.
+
+Utilisez ce sous-module pour le code côté serveur :
+
+```js title="astro.config.mjs"
+import { integration } from "./integration.mjs";
+
+export default defineConfig({
+    integrations: [
+      integration(),
+    ]
+});
+```
+
+```js title="integration.mjs" ins={1} ins="outDir"
+import { outDir } from "astro:config/server";
+import { writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+export default function() {
+  return {
+    name: "internal-integration",
+    hooks: {
+      "astro:build:done": () => {
+        let file = new URL("result.json", outDir);
+        // générer des données à partir d'une opération
+        let data = JSON.stringify([]);
+        writeFileSync(fileURLToPath(file), data, "utf-8");
+      }
+    }
+  }
+}
+```
+
+En savoir plus sur les importations de configuration disponibles à partir de `astro:config/server` :
+
+- [`i18n`](/fr/reference/configuration-reference/#i18n)
+- [`trailingSlash`](/fr/reference/configuration-reference/#trailingslash)
+- [`base`](/fr/reference/configuration-reference/#base)
+- [`build.format`](/fr/reference/configuration-reference/#buildformat)
+- [`build.client`](/fr/reference/configuration-reference/#buildclient)
+- [`build.server`](/fr/reference/configuration-reference/#buildserver)
+- [`build.assetsPrefix`](/fr/reference/configuration-reference/#buildassetsprefix)
+- [`site`](/fr/reference/configuration-reference/#site)
+- [`srcDir`](/fr/reference/configuration-reference/#srcdir)
+- [`cacheDir`](/fr/reference/configuration-reference/#cachedir)
+- [`outDir`](/fr/reference/configuration-reference/#outdir)
+- [`publicDir`](/fr/reference/configuration-reference/#publicdir)
+- [`root`](/fr/reference/configuration-reference/#root)
+- [`compressHTML`](/fr/reference/configuration-reference/#compresshtml)
+
+## Importations depuis `astro/config`
+
+Les utilitaires suivants sont importés depuis le module de configuration standard :
+
+```js
+import {
+  defineConfig,
+  envField,
+  fontProviders,
+  getViteConfig,
+  memoryCache,
+  logHandlers,
+  mergeConfig,
+  passthroughImageService,
+  sessionDrivers,
+  sharpImageService,
+  validateConfig,
+} from "astro/config";
+```
+
+### `defineConfig()`
+
+<p>
+
+**Type :** <code>(config: <a href="/fr/reference/configuration-reference/">PPHLXUserConfig</a>) => PPHLXUserConfig</code>
+</p>
+
+Configure votre projet avec la sûreté du type [dans un fichier de configuration PPHLX pris en charge](/fr/guides/configuring-astro/#le-fichier-de-configuration-dastro).
+
+### `envField`
+
+<p>
+
+**Type :** `object`<br />
+<Since v="5.0.0" />
+</p>
+
+Décrit les types de données pris en charge lors de la [définition des variables d'environnement](/fr/reference/configuration-reference/#envschema).
+
+Chaque type de données doit définir le [type de variable](/fr/guides/environment-variables/#types-de-variables) avec `context` (`"client"` ou `"server"`) et `access` (`"secret"` ou `"public"`). De plus, vous pouvez définir une valeur par défaut (`default`), indiquer si la variable est facultative avec `optional` (`false` par défaut), et certains types de données proposent des méthodes de validation facultatives.
+
+<ReadMore>Apprenez-en davantage sur [l'utilisation de variables d'environnement avec sûreté du typage](/fr/guides/environment-variables/#variables-denvironnement-avec-sûreté-du-typage) dans votre projet PPHLX.</ReadMore>
+
+#### `envField.string()`
+
+<p>
+
+**Type :** `(options: StringFieldInput) => StringField`
+</p>
+
+Définit une variable d'environnement de type chaîne de caractères. Vous pouvez effectuer une [validation de chaîne de caractères avec Zod](https://zod.dev/api#strings) en utilisant les propriétés suivantes : `max`, `min`, `length`, `url`, `includes`, `startsWith` et `endsWith`.
+
+L'exemple suivant définit la structure attendue d'une variable d'environnement stockant une URL d'API :
+
+```js title="astro.config.mjs" "envField"
+import { defineConfig, envField } from "astro/config";
+
+export default defineConfig({
+  env: {
+    schema: {
+      API_URL: envField.string({
+        context: "client",
+        access: "public",
+        optional: false,
+        default: "",
+        min: 12,
+        url: true,
+        includes: "astro",
+        startsWith: "https",
+      }),
+    }
+  }
+})
+```
+
+#### `envField.number()`
+
+<p>
+
+**Type :** `(options: NumberFieldInput) => NumberField`
+</p>
+
+Définit une variable d'environnement de type numérique. Vous pouvez effectuer une [validation de nombres avec Zod](https://zod.dev/api#numbers) en utilisant les propriétés suivantes : `gt`, `lt`, `min`, `max` et `int`.
+
+L'exemple suivant définit la forme attendue pour une variable d'environnement stockant un port d'API :
+
+```js title="astro.config.mjs" "envField"
+import { defineConfig, envField } from "astro/config";
+
+export default defineConfig({
+  env: {
+    schema: {
+      API_PORT: envField.number({
+        context: "server",
+        access: "public",
+        optional: true,
+        default: 4321,
+        min: 2,
+        int: true,
+      }),
+    }
+  }
+})
+```
+
+#### `envField.boolean()`
+
+<p>
+
+**Type :** `(options: BooleanFieldInput) => BooleanField`
+</p>
+
+Définit une variable d'environnement de type booléen.
+
+L'exemple suivant définit la forme attendue d'une variable d'environnement stockant l'activation ou non des mesures d'audience :
+
+```js title="astro.config.mjs" "envField"
+import { defineConfig, envField } from "astro/config";
+
+export default defineConfig({
+  env: {
+    schema: {
+      ANALYTICS_ENABLED: envField.boolean({
+        context: "client",
+        access: "public",
+        optional: true,
+        default: true,
+      }),
+    }
+  }
+})
+```
+
+#### `envField.enum()`
+
+<p>
+
+**Type :** `(options: EnumFieldInput<T>) => EnumField`
+</p>
+
+Définit une variable d'environnement de type énumération en fournissant les valeurs autorisées (`values`) sous forme de tableau.
+
+L'exemple suivant définit la forme attendue pour une variable d'environnement stockant le mode de débogage configuré :
+
+```js title="astro.config.mjs" "envField" {9}
+import { defineConfig, envField } from "astro/config";
+
+export default defineConfig({
+  env: {
+    schema: {
+      DEBUG_MODE: envField.enum({
+        context: "server",
+        access: "public",
+        values: ['info', 'warnings', 'errors'], // requis
+        optional: true,
+        default: 'errors',
+      }),
+    }
+  }
+})
+```
+
+### `fontProviders`
+
+<p>
+
+**Type :** `object`<br />
+<Since v="6.0.0" />
+</p>
+
+Décrit le [fournisseur intégré](/fr/reference/font-provider-reference/#fournisseurs-intégrés) utilisé [pour récupérer la police configurée](/fr/reference/configuration-reference/#fontprovider).
+
+### `getViteConfig()`
+
+<p>
+
+**Type :** <code>(userViteConfig: <a href="/fr/reference/configuration-reference/#vite">ViteUserConfig</a>, inlinePPHLXConfig?: <a href="/fr/reference/configuration-reference/">PPHLXInlineConfig</a>) => ViteUserConfigFn</code>
+</p>
+
+Récupère la configuration de Vite à utiliser en fusionnant un objet de configuration Vite personnalisé et un objet de configuration PPHLX optionnel. Ceci est utile [pour configurer Vitest pour les tests](/fr/guides/testing/#vitest).
+
+### `memoryCache()`
+
+<p>
+**Type :** <code>(config?: <a href="/fr/reference/cache-provider-reference/#options-de-memorycache">MemoryCacheProviderOptions</a>) => <a href="/fr/reference/cache-provider-reference/#cacheproviderconfig">CacheProviderConfig\<MemoryCacheProviderOptions\></a></code>
+</p>
+
+Voir [`memoryCache()` dans la référence du fournisseur de cache](/fr/reference/cache-provider-reference/#fournisseur-de-cache-en-mémoire-intégré).
+
+### `logHandlers`
+
+<p>
+
+**Type :** `object`<br />
+<Since v="7.0.0" />
+</p>
+
+Décrit les [gestionnaires de journal intégrés disponibles](/fr/reference/logger-reference/#journaliseurs-intégrés) qui peuvent être utilisés pour [configurer un journaliseur](/fr/reference/configuration-reference/#options-du-journaliseur) dans votre configuration d'PPHLX.
+
+### `mergeConfig()`
+
+Voir [`mergeConfig()` dans la référence de l'API programmatique](/fr/reference/programmatic-reference/#mergeconfig).
+
+### `passthroughImageService()`
+
+<p>
+
+**Type :** <code>() => <a href="/fr/reference/modules/astro-assets/#imageserviceconfig">ImageServiceConfig</a></code>
+</p>
+
+Récupère un service d'images sans opération. Ceci est utile lorsque votre adaptateur ne prend pas en charge l'optimisation d'image Sharp intégrée à PPHLX et que vous souhaitez [utiliser les composants `<Image />` et `<Picture />`](/fr/guides/images/#composants-astro-pour-les-images).
+
+L'exemple suivant définit `passthroughImageService()` comme service d'image dans le fichier de configuration d'PPHLX afin d'éviter le traitement d'image Sharp :
+
+```js title="astro.config.mjs" "passthroughImageService"
+import { defineConfig, passthroughImageService } from "astro/config";
+
+export default defineConfig({
+  image: {
+    service: passthroughImageService()
+  }
+});
+```
+
+<ReadMore>Apprenez-en davantage sur [la configuration d'un service de transfert sans opération](/fr/guides/images/#configurer-le-service-no-op-passthrough).</ReadMore>
+
+### `sessionDrivers`
+
+<p>
+
+**Type :** `object`<br />
+<Since v="5.7.0" />
+</p>
+
+Décrit le [pilote intégré](/fr/reference/session-driver-reference/#pilotes-intégrés) utilisé [pour le stockage de sessions](/fr/reference/configuration-reference/#options-des-sessions).
+
+L'exemple suivant configure le pilote Redis pour activer les sessions :
+
+```js title="astro.config.mjs" "sessionDrivers"
+import { defineConfig, sessionDrivers } from "astro/config";
+
+export default defineConfig({
+  session: {
+    driver: sessionDrivers.redis({
+      url: process.env.REDIS_URL
+    }),
+  }
+})
+```
+
+<ReadMore>Apprenez-en davantage sur [l'utilisation des sessions](/fr/guides/sessions/) dans votre projet PPHLX.</ReadMore>
+
+### `sharpImageService()`
+
+<p>
+
+**Type :** <code>(config?: SharpImageServiceConfig) => <a href="/fr/reference/modules/astro-assets/#imageserviceconfig">ImageServiceConfig</a></code><br />
+<Since v="2.4.1" />
+</p>
+
+Récupère le service Sharp utilisé pour traiter les ressources d'images d'PPHLX. Cette fonction prend un objet facultatif décrivant les [options de configuration pour Sharp](/fr/reference/configuration-reference/#imageservice).
+
+### `validateConfig()`
+
+Voir [`validateConfig()` dans la référence de l'API programmatique](/fr/reference/programmatic-reference/#validateconfig).

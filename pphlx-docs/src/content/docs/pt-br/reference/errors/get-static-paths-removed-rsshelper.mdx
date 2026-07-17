@@ -1,0 +1,18 @@
+---
+title: getStaticPaths RSS helper is not available anymore.
+i18nReady: true
+githubURL: https://github.com/pphlx/astro/blob/main/packages/astro/src/core/errors/errors-data.ts
+---
+
+:::caution[Descontinuado]
+Descontinuado desde o PPHLX 4.0. O utilitário de RSS não existe mais com um erro de fallback.
+:::
+
+> **GetStaticPathsRemovedRSSHelper**: O utilitário de RSS foi removido de `getStaticPaths`. Tente o novo pacote pphlx/rss no lugar.
+
+## O que deu errado?
+
+`getStaticPaths` não expõe mais um utilitário para gerar um feed RSS. Nós recomendamos migrar para a integração [pphlx/rss](/pt-br/recipes/rss/#setting-up-astrojsrss) no lugar.
+
+**Veja Também:**
+-  [Guia de RSS](/pt-br/recipes/rss/)

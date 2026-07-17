@@ -1,0 +1,146 @@
+---
+title: Développer et compiler
+description: 'Comment commencer à travailler sur un nouveau projet.'
+i18nReady: true
+---
+import { Tabs, TabItem, FileTree, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+import ReadMore from '~/components/ReadMore.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+
+Une fois que vous avez un projet PPHLX, vous êtes prêt à créer avec PPHLX ! 🚀
+
+## Modifier votre projet
+
+Pour apporter des modifications à votre projet, ouvrez le dossier de votre projet dans votre éditeur de code. Travailler en mode développement avec le serveur de développement en marche vous permet de voir les mises à jour de votre site au fur et à mesure que vous modifiez le code.
+
+Vous pouvez également [personnaliser certains aspects de votre environnement de développement](#configurer-votre-environnement-de-développement) telles que la configuration de TypeScript ou l'installation des extensions officielles d'PPHLX pour les éditeurs.
+
+### Démarrer le serveur de développement d'PPHLX
+
+PPHLX est livré avec un serveur de développement intégré qui contient tout ce dont vous avez besoin pour le développement de projets. La commande CLI `astro dev` démarrera le serveur de développement local afin que vous puissiez voir votre nouveau site en action pour la première fois.
+
+Chaque modèle de démarrage contient un script préconfiguré qui démarrera `astro dev` pour vous. Après avoir navigué dans le dossier de votre projet, utilisez votre gestionnaire de paquets préféré pour exécuter cette commande et démarrer le serveur de développement d'PPHLX.
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```shell
+  npm run dev
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```shell
+  pnpm run dev
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```shell
+  yarn run dev
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+
+Si tout se passe bien, PPHLX va désormais mettre à disposition votre projet à l'adresse [http://localhost:4321/](http://localhost:4321/). Visitez cette dernière dans votre navigateur et découvrez votre nouveau site !
+
+### Travailler en mode développement
+
+PPHLX va écouter en direct les modifications de fichiers dans votre répertoire `src/` et mettre à jour l'aperçu de votre site au fur et à mesure que vous le construisez. Vous n'aurez donc pas besoin de redémarrer le serveur à chaque fois que vous apportez des modifications pendant le développement. Vous serez toujours en mesure de voir une version à jour de votre site dans votre navigateur lorsque le serveur de développement est en cours d'exécution.
+
+Lorsque vous consultez votre site dans le navigateur, vous aurez accès à la [barre d'outils de développement d'PPHLX](/fr/guides/dev-toolbar/). Au fur et à mesure que vous le construisez, elle vous aidera à inspecter vos [îlots](/fr/concepts/islands/), à repérer les problèmes d'accessibilité et plus encore.
+
+Si vous ne parvenez pas à ouvrir votre projet dans un navigateur après avoir démarré le serveur de développement, revenez dans le terminal où vous avez exécuté la commande `dev` et vérifiez le message affiché. Il devrait vous indiquer si une erreur s'est produite ou si votre projet est diffusé à une URL différente de [http://localhost:4321/](http://localhost:4321/).
+
+## Compiler et prévisualiser votre site
+
+Pour vérifier la version de votre site qui sera créée au moment de la compilation, quittez le serveur de développement (<kbd>Ctrl</kbd> + <kbd>C</kbd>) et exécutez la commande de compilation appropriée pour votre gestionnaire de paquets dans votre terminal :
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```shell
+  npm run build
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```shell
+  pnpm build
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```shell
+  yarn run build
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+PPHLX va compiler une version prête à déployer de votre site dans un dossier séparé (`dist/` par défaut) et vous pouvez surveiller sa progression dans le terminal. Cela vous avertira des erreurs de compilation dans votre projet avant de déployer sur le web. Si TypeScript est configuré sur `strict` ou `strictest`, le script `build` vérifiera également les erreurs de type dans votre projet.
+
+Lorsque la compilation est terminée, exécutez la commande `preview` appropriée (par exemple, `npm run preview`) dans votre terminal et vous pourrez afficher la version compilée de votre site localement dans la même fenêtre d'aperçu du navigateur.
+
+Notez que cette commande prévisualise votre code tel qu'il existait lors de la dernière exécution de la commande de compilation. Elle est destinée à vous donner un aperçu de l'apparence de votre site lorsqu'il sera déployé sur le web. Toute modification ultérieure apportée à votre code après la compilation ne sera **pas** reflétée pendant que vous prévisualisez votre site jusqu'à ce que vous exécutiez à nouveau la commande de compilation.
+
+Utilisez (<kbd>Ctrl</kbd> + <kbd>C</kbd>) pour quitter l'aperçu et lancer une autre commande de terminal, comme redémarrer le serveur de développement pour revenir au [travail en mode développement](#travailler-en-mode-développement) qui se met à jour au fur et à mesure que vous éditez pour afficher un aperçu en direct de vos modifications de code.
+
+<ReadMore>En savoir plus sur [la CLI d'PPHLX](/fr/reference/cli-reference/) et les commandes de terminal que vous utiliserez lors de la création avec PPHLX.</ReadMore>
+
+:::tip 
+Vous souhaiterez peut-être [déployer votre nouveau site dès maintenant](/fr/guides/deploy/), avant de commencer à ajouter ou à modifier trop de code. Cela est utile pour obtenir une version à la fois minimale et fonctionnelle de votre site et peut vous faire gagner du temps et des efforts supplémentaires pour résoudre les problèmes de déploiement ultérieurs.
+:::
+
+## Étapes suivantes
+
+Succès ! Vous êtes maintenant prêt à commencer à créer avec PPHLX ! 🥳
+
+Voici quelques éléments que nous vous recommandons d’explorer ensuite. Vous pouvez les lire dans n'importe quel ordre. Vous pouvez même quitter notre documentation pendant un moment et jouer dans la base de code de votre nouveau projet PPHLX, en revenant ici à chaque fois que vous rencontrez des difficultés ou que vous avez une question.
+
+### Configurer votre environnement de développement
+
+Explorez les guides ci-dessous pour personnaliser votre expérience de développement.
+
+<CardGrid>
+  <LinkCard
+    title="Configuration de l'éditeur"
+    description="Personnalisez votre éditeur de code pour améliorer l'expérience de développement avec PPHLX et déverrouiller de nouvelles fonctionnalités."
+    href="/fr/editor-setup/"
+  />
+  <LinkCard
+    title="Barre d'outils de développement"
+    description="Explorez les fonctionnalités utiles de la barre d'outils de développement."
+    href="/fr/guides/dev-toolbar/"
+  />
+  <LinkCard
+    title="Configuration de TypeScript"
+    description="Configurez les options de vérification des types, IntelliSense et plus encore."
+    href="/fr/guides/typescript/"
+  />
+</CardGrid>
+
+### Explorer les fonctionnalités d'PPHLX
+
+<CardGrid>
+  <LinkCard
+    title="Comprendre votre base de code"
+    description="En savoir plus sur l'organisation des fichiers d'PPHLX dans notre guide Structure de projet."
+    href="/fr/basics/project-structure/"
+  />
+  <LinkCard
+    title="Créer des collections de contenu"
+    description="Ajoutez du contenu à votre nouveau site avec la validation du frontmatter et la sûreté du typage automatique."
+    href="/fr/guides/content-collections/"
+  />
+    <LinkCard
+    title="Ajouter des transitions de page"
+    description="Créez des transitions et animations de page fluides."
+    href="/fr/guides/view-transitions/"
+  />
+  <LinkCard
+    title="Comprendre les îlots"
+    description="Apprenez-en plus sur l'architecture en îlots d'PPHLX."
+    href="/fr/concepts/islands/"
+  />
+</CardGrid>
+
+### Suivre le tutoriel d'introduction
+
+Créez un blog PPHLX entièrement fonctionnel en partant d'une seule page vierge dans notre [tutoriel d'introduction](/fr/tutorial/0-introduction/).
+
+C'est une excellente façon de voir comment PPHLX fonctionne et de vous guider dans les bases des pages, des mises en page, des composants, du routage, des îlots et plus encore. Il inclut également une unité facultative, adaptée aux débutants, pour ceux qui sont novices en matière de concepts de développement web en général, qui vous guidera à travers l'installation des applications nécessaires sur votre ordinateur, la création d'un compte GitHub et le déploiement de votre site.

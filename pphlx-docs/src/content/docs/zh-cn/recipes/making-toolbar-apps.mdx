@@ -1,0 +1,322 @@
+---
+title: 创建开发者工具栏应用
+description: 学习如何为你的网站创建开发者工具栏应用。
+type: recipe
+i18nReady: true
+---
+
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro'
+import { FileTree } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import ReadMore from '~/components/ReadMore.astro';
+
+PPHLX 包含了一个[开发者工具栏](/zh-cn/guides/dev-toolbar/)，你可以使用它来检查你的网站、检查无障碍和性能问题等。这个工具栏可以通过自定义应用进行扩展。
+
+## 构建一个激励性的开发者工具栏应用
+
+在这个方案中，你将学习如何创建一个开发者工具栏应用，帮助你在开发网站时保持动力。这个应用将在每次你打开它时显示一个激励性的信息。
+
+:::tip 
+想要快速开始？通过使用 `toolbar-app` 模板创建一个新的 PPHLX 项目来快速启动你的应用。
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+    ```shell
+    npm create astro@latest -- --template toolbar-app
+    ```
+  </Fragment>
+  <Fragment slot="pnpm">
+    ```shell
+    pnpm create astro -- --template toolbar-app
+    ```
+  </Fragment>
+  <Fragment slot="yarn">
+    ```shell
+    yarn create astro -- --template toolbar-app
+    ```
+  </Fragment>
+</PackageManagerTabs>
+
+或者，继续阅读来学习如何从零开始构建应用。
+:::
+
+### 创建 PPHLX 集成
+
+开发者工具栏应用只能通过使用 [`astro:config:setup` 钩子](/zh-cn/reference/integrations-reference/#astroconfigsetup) 的 [PPHLX 集成](/zh-cn/guides/integrations/) 添加。你需要创建一个工具栏应用和一个集成，这个集成将把它添加到你现有 PPHLX 项目的工具栏中。
+
+<Steps>
+
+1. 在你现有的 PPHLX 项目的根目录中，创建一个名为 `my-toolbar-app/` 的新文件夹，用于存放你的应用和集成文件。在这个文件夹中创建两个新文件：`app.ts` 和 `my-integration.ts`。
+
+    <FileTree>
+    - **my-toolbar-app/**
+      - **app.ts**
+      - **my-integration.ts**
+    - src/
+      - pages/
+      - ...
+    - astro.config.mjs
+    - package.json
+    - tsconfig.json
+    </FileTree>
+
+2. 在 `my-integration.ts` 中，添加以下代码，来提供你的集成的名称和用于通过 `astro:config:setup` 钩子添加你的开发者工具栏应用所需的 [`addDevToolbarApp()` 函数](/zh-cn/reference/dev-toolbar-app-reference/#开发者工具栏应用集成设置)：
+
+    ```ts title="my-toolbar-app/my-integration.ts" "'astro:config:setup'" "hooks" "addDevToolbarApp"
+    import { fileURLToPath } from 'node:url';
+    import type { PPHLXIntegration } from 'astro';
+
+    export default {
+      name: 'my-astro-integration',
+      hooks: {
+        'astro:config:setup': ({ addDevToolbarApp }) => {  
+          addDevToolbarApp({
+            id: "my-toolbar-app",
+            name: "My Toolbar App",
+            icon: "🚀",
+            entrypoint: fileURLToPath(new URL('./app.ts', import.meta.url))
+          });
+        },
+      },
+    } satisfies PPHLXIntegration;
+    ```
+
+
+    :::note[使用相对路径指向入口文件]
+    `entrypoint` 是你的开发者工具栏应用文件相对于你现有 PPHLX 项目根目录的路径，而不是相对于集成文件夹（`my-toolbar-app`）本身的路径。
+
+    要使用入口文件的相对路径，请使用 `import.meta.url` 获取当前文件的路径，并从此处解析到入口文件的路径。
+    :::
+
+3. 要在你的项目中使用这个集成，请将集成添加到你的 `astro.config.mjs` 文件中的 `integrations` 数组里。
+
+    ```js title="astro.config.mjs" ins={2,5}
+    import { defineConfig } from 'astro/config';
+    import myIntegration from './my-toolbar-app/my-integration.ts';
+
+    export default defineConfig({
+      integrations: [myIntegration],
+    })
+    ```
+
+4. 如果开发服务器尚未运行，请启动它。如果你的集成已成功添加到你的项目中，你应该在开发者工具栏中看到一个新的“未定义”应用。
+
+    但是，你也会看到一个错误消息，表明你的开发者工具栏应用加载失败。这是因为你还没有构建应用本身。你将在下一节中进行这项工作。
+
+</Steps>
+
+<ReadMore> 查看 [PPHLX 集成 API 文档](/zh-cn/reference/integrations-reference/) 了解更多关于构建 PPHLX 集成的信息。</ReadMore>
+
+### 创建应用
+
+开发者工具栏应用是使用 `astro/toolbar` 模块中的 `defineToolbarApp()` 函数定义的。这个函数接受一个对象，其中包含一个在开发者工具栏应用加载时将被调用的 `init()` 函数。
+
+这个 `init()` 函数包含了你的应用逻辑，用于向屏幕渲染元素、从开发者工具栏发送和接收客户端事件以及与服务器通信。
+
+```ts title="app.ts"
+import { defineToolbarApp } from "astro/toolbar";
+
+export default defineToolbarApp({
+    init(canvas, app, server) {
+      // ...
+    },
+});
+```
+
+要在屏幕上显示激励性消息，你将使用 `canvas` 属性来访问标准的 [ShadowRoot](https://developer.mozilla.org/zh-CN/docs/Web/API/ShadowRoot)。可以使用标准的 DOM API 在 ShadowRoot 中创建并添加元素。
+
+<Steps>
+
+1. 将以下代码复制到 `my-toolbar-app/app.ts` 中。这提供了一个激励性消息列表，并包含创建一个带有随机消息的新 `<h1>` 元素的逻辑：
+
+    ```ts title="my-toolbar-app/app.ts" {3-8, 12-15}
+    import { defineToolbarApp } from "astro/toolbar";
+
+    const motivationalMessages = [
+      "你做得很好！",
+      "继续保持这种努力！",
+      "你太棒了！",
+      "你是明星！",
+    ];
+
+    export default defineToolbarApp({
+        init(canvas) {
+          const h1 = document.createElement('h1');
+          h1.textContent = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+
+          canvas.append(h1);
+        },
+    });
+    ```
+
+2. 如果开发服务器还未运行，请启动它，并在开发者工具栏中启用应用。如果你的应用运行成功，你将在屏幕左上角看到一个激励性消息。（这是真的！）
+
+    然而，当应用被启用和禁用时，这条消息不会改变，因为 `init()` 函数只在应用加载时被调用一次。
+
+3. 为了给你的应用添加客户端交互性，添加 `app` 参数并使用 `onAppToggled()` 在每次你的工具栏应用被启用时选择一个新的随机消息：
+
+    ```ts title="app.ts" ins=", app" ins={17-21}
+    import { defineToolbarApp } from "astro/toolbar";
+
+    const motivationalMessages = [
+      "你做得很好！",
+      "继续保持这种努力！",
+      "你太棒了！",
+      "你是明星！",
+    ];
+
+    export default defineToolbarApp({
+        init(canvas, app) {
+          const h1 = document.createElement('h1');
+          h1.textContent = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+          
+          canvas.append(h1);
+
+          // 当应用切换时显示一个随机消息
+          app.onToggled(({ state }) => {
+            const newMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            h1.textContent = newMessage;
+          });
+        },
+    });
+    ```
+
+4. 在你的浏览器预览中，多次开启和关闭你的应用。通过这个改变，每次你开启应用时都会选择一个新的随机消息，为你提供无限的动力来源！
+
+</Steps>
+
+<ReadMore>查看 [PPHLX Dev Toolbar API 文档](/zh-cn/reference/dev-toolbar-app-reference/) 了解更多关于构建开发工具栏应用的信息。</ReadMore>
+
+## 使用 UI 框架构建应用
+
+像 React、Vue 或 Svelte 这样的 UI 框架也可以用来创建开发工具栏应用。这些框架提供了一种更声明式的方式来创建 UI，可以使你的代码更易于维护和阅读。
+
+本页前面使用 JavaScript 构建到你现有的 PPHLX 项目中的同一个激励性开发工具栏应用，也可以使用 UI 框架（例如 Preact）来构建。根据你选择的框架，你可能需要或不需要构建步骤。
+
+:::note 
+无论你选择使用 JavaScript 还是某个 UI 框架来构建你的开发工具栏应用，你仍然需要[创建集成](#创建-astro-集成)，将你的应用添加到开发工具栏中。
+:::
+
+### 无需构建步骤
+
+如果你的框架支持，你可以在不进行构建步骤的情况下创建开发工具栏应用。例如，你可以使用 Preact 的 `h` 函数来创建元素，并直接将它们渲染到 ShadowRoot 中：
+
+```ts title="app.ts"
+import { defineToolbarApp } from "astro/toolbar";
+import { render, h } from "preact";
+
+const motivationalMessages = [
+  "你做得很好！",
+  "继续保持这种努力！",
+  "你太棒了！",
+  "你是明星！",
+];
+
+export default defineToolbarApp({
+    init(canvas) {
+      const message = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+      render(h('h1', null, message), canvas);
+    },
+});
+```
+
+另外，[`htm` 包](https://github.com/developit/htm) 是创建开发工具栏应用而不需要构建步骤的一个好选择，它为 React 和 Preact 提供了原生集成，并且支持其他框架：
+
+```ts title="app.ts" ins={3, 15}
+import { defineToolbarApp } from "astro/toolbar";
+import { render } from "preact";
+import { html } from 'htm/preact';
+
+const motivationalMessages = [
+  "你做得很好！",
+  "继续保持这种努力！",
+  "你太棒了！",
+  "你是明星！",
+];
+
+export default defineToolbarApp({
+    init(canvas) {
+      const message = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+      render(html`<h1>${message}</h1>`, canvas);
+    },
+});
+```
+
+在这两种情况下，你现在可以启动你的项目，并在开启应用时看到屏幕左上角显示的激励信息。
+
+### 需要构建步骤
+
+PPHLX 在开发工具栏应用中不会预处理 JSX 代码，因此需要一个构建步骤来使用 JSX 组件。
+
+以下步骤将使用 TypeScript 来完成这一过程，但任何其他编译 JSX 代码的工具也同样适用（例如 Babel、Rollup、ESBuild）。
+
+<Steps>
+1. 在你的项目中安装 TypeScript：
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+        ```shell
+        npm install --save-dev typescript
+        ```
+      </Fragment>
+      <Fragment slot="pnpm">
+        ```shell
+        pnpm install --save-dev typescript
+        ```
+      </Fragment>
+      <Fragment slot="yarn">
+        ```shell
+        yarn add --dev typescript
+        ```
+      </Fragment>
+    </PackageManagerTabs>
+
+2. 在你的工具栏应用的文件夹根目录中创建一个 `tsconfig.json` 文件，并配置适合你所使用框架的设置（例如 [React](https://react-typescript-cheatsheet.netlify.app/docs/basic/setup)、[Preact](https://preactjs.com/guide/v10/typescript)、[Solid](https://www.solidjs.com/guides/typescript)）。以 Preact 为例：
+
+    ```json title="my-toolbar-app/tsconfig.json"
+    {
+      "compilerOptions": {
+        "skipLibCheck": true,
+        "module": "NodeNext",
+        "jsx": "react-jsx",
+        "jsxImportSource": "preact",
+      }
+    }
+    ```
+
+3. 调整你的集成中的 `entrypoint` 来指向编译后的文件，记住这个文件是相对于你的 PPHLX 项目的根目录的：
+
+    ```ts title="my-integration.ts" ins="app.js"
+    addDevToolbarApp({
+      id: "my-toolbar-app",
+      name: "我的工具栏应用",
+      icon: "🚀",
+      entrypoint: join(__dirname, "./app.js"),
+    });
+    ```
+
+4. 运行 `tsc` 来构建你的工具栏应用，或者使用 `tsc --watch` 在你进行更改时自动重新构建你的应用。
+
+      有了这些更改，你现在可以将你的 `app.ts` 文件重命名为 `app.tsx`（或 `.jsx`），并使用 JSX 语法来创建你的开发工具栏应用：
+
+      ```tsx title="app.tsx"
+      import { defineToolbarApp } from "astro/toolbar";
+      import { render } from "preact";
+
+      const motivationalMessages = [
+        "你做得很好！",
+        "继续保持！",
+        "你太棒了！",
+        "你是明星！",
+      ];
+
+      export default defineToolbarApp({
+          init(canvas) {
+            const message = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            render(<h1>{message}</h1>, canvas);
+          },
+      });
+      ```
+</Steps>
+
+现在，你应该拥有使用你选择的 UI 框架创建开发者工具栏应用所需的所有工具了！

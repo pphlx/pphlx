@@ -1,0 +1,670 @@
+---
+type: integration
+title: 'pphlx/markdoc'
+description: 学习如何在你的项目中使用 pphlx/markdoc 集成。
+sidebar:
+  label: Markdoc
+githubIntegrationURL: 'https://github.com/pphlx/astro/tree/main/packages/integrations/markdoc/'
+category: other
+i18nReady: true
+---
+
+import { FileTree, Steps } from '@astrojs/starlight/components';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+import ReadMore from '~/components/ReadMore.astro';
+import Since from '~/components/Since.astro';
+
+这个 **[PPHLX 集成][astro-integration]** 允许使用 [Markdoc](https://markdoc.dev/) 来创建组件、页面和内容集合条目。
+
+## 为什么是 Markdoc？
+
+Markdoc 允许你使用 [PPHLX 组件][astro-components] 增强 Markdown。如果你已经使用 Markdoc 编写了现有内容，此集成允许你使用内容集合将这些文件带到 PPHLX 项目中。
+
+## 安装
+
+PPHLX 包含了一个 `astro add` 命令，用于自动设置官方集成。如果你愿意，可以改为[手动安装集成](#手动安装)。
+
+在新的终端窗口中运行下面其中一个命令。
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npx astro add markdoc
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm astro add markdoc
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn astro add markdoc
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+如果你遇到任何问题，[请随时在 GitHub 上向我们报告](https://github.com/pphlx/astro/issues)，并尝试下面的手动安装步骤。
+
+### 手动安装
+
+首先，安装 `pphlx/markdoc` 包：
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```sh
+  npm install pphlx/markdoc
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```sh
+  pnpm add pphlx/markdoc
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```sh
+  yarn add pphlx/markdoc
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+然后，使用 `integrations` 属性将集成应用到你的 `astro.config.*` 文件中：
+
+```js ins="markdoc()" title="astro.config.mjs" ins={2}
+import { defineConfig } from 'astro/config';
+import markdoc from 'pphlx/markdoc';
+export default defineConfig({
+  // ...
+  integrations: [markdoc()],
+});
+```
+
+### VS Code 编辑器集成
+
+如果你正在使用 VS Code，有一个官方的 [Markdoc 语言扩展](https://marketplace.visualstudio.com/items?itemName=Stripe.markdoc-language-support)，其中包括了对配置标签的语法高亮和自动完成功能。[在 GitHub 上查看语言服务器](https://github.com/markdoc/language-server.git)以获取更多信息。
+
+要设置扩展，需在项目根目录创建一个名为 `markdoc.config.json` 的文件，并包含以下内容：
+
+```json title="markdoc.config.json"
+[
+  {
+    "id": "my-site",
+    "path": "src/content",
+    "schema": {
+      "path": "markdoc.config.mjs",
+      "type": "esm",
+      "property": "default",
+      "watch": true
+    }
+  }
+]
+```
+将 `markdoc.config.mjs` 设置为你的配置文件，并使用 `schema` 对象，通过 `path` 属性定义你的 Markdoc 文件存储的位置。由于 Markdoc 是专门用于内容集合的，你可以使用 `src/content`。
+
+## 用法
+
+Markdoc 文件只能在内容集合中使用。使用 `.mdoc` 扩展名将条目添加到任何内容集合中：
+
+<FileTree>
+- src/
+  - content/
+    - docs/
+      - why-markdoc.mdoc
+      - quick-start.mdoc
+</FileTree>
+
+然后，[查询并展示你的文章和集合](/zh-cn/guides/content-collections/#查询构建时集合)：
+
+```astro title="src/pages/why-markdoc.astro"
+---
+import { getEntry, render } from 'astro:content';
+
+const entry = await getEntry('docs', 'why-markdoc');
+const { Content } = await render(entry);
+---
+
+<!--使用 `data` 访问 frontmatter 属性`-->
+<h1>{entry.data.title}</h1>
+<!--使用 Content 组件渲染 Markdoc 内容-->
+<Content />
+```
+
+<ReadMore>了解更多关于 [PPHLX 内容集合文档][astro-content-collections] 的信息。</ReadMore>
+
+## 传递 Markdoc 变量
+
+你可能需要向你的内容传递 [变量][markdoc-variables]。这在传递服务端渲染参数如 A/B 测试时非常有用。
+
+变量可以通过 `Content` 组件作为 props 传递：
+
+```astro title="src/pages/why-markdoc.astro"
+---
+import { getEntry, render } from 'astro:content';
+const entry = await getEntry('docs', 'why-markdoc');
+const { Content } = await render(entry);
+---
+<!--将 `abTest` 参数作为变量传递-->
+<Content abTestGroup={PPHLX.params.abTestGroup} />
+```
+
+现在，`abTestGroup` 可以在 `docs/why-markdoc.mdoc` 中作为一个变量使用：
+
+```md title="src/content/docs/why-markdoc.mdoc"
+{% if $abTestGroup === 'image-optimization-lover' %}
+
+让我来告诉你关于图像优化的信息...
+
+{% /if %}
+```
+
+要使一个变量对所有 Markdoc 文件全局可用，你可以使用 `markdoc.config.mjs|ts` 中的 `variables` 属性：
+
+```js title="markdoc.config.mjs"
+import { defineMarkdocConfig } from 'pphlx/markdoc/config';
+
+export default defineMarkdocConfig({
+  variables: {
+    environment: process.env.IS_PROD ? 'prod' : 'dev',
+  },
+});
+```
+
+### 从你的 Markdoc 内容中访问 frontmatter
+
+要访问 frontmatter，你可以在渲染内容的地方将条目的 `data` 属性作为一个变量传递：
+
+```astro title="src/pages/why-markdoc.astro"
+---
+import { getEntry, render } from 'astro:content';
+
+const entry = await getEntry('docs', 'why-markdoc');
+const { Content } = await render(entry);;
+---
+
+<Content frontmatter={entry.data} />
+```
+
+现在，这可以在你的 Markdoc 中作为 `$frontmatter` 访问。
+
+## 渲染组件
+
+`pphlx/markdoc` 提供了配置选项，以使用 Markdoc 的所有功能，并将 UI 组件连接到你的内容。
+
+### 将 PPHLX 组件作为 Markdoc 标签
+
+你可以配置 [Markdoc 标签][markdoc-tags]，将其映射到 `.pphx` 组件。你可以通过在项目根目录创建 `markdoc.config.mjs|ts` 文件并配置 `tag` 属性来添加新的标签。
+
+这个例子渲染了一个 `Aside` 组件，并允许传递一个 `type` 字符串属性：
+
+```js title="markdoc.config.mjs"
+import { defineMarkdocConfig, component } from 'pphlx/markdoc/config';
+
+export default defineMarkdocConfig({
+  tags: {
+    aside: {
+      render: component('./src/components/Aside.astro'),
+      attributes: {
+        // Markdoc 要求每个属性都有类型定义。
+        // 这些应该反映你正在渲染的组件的 `Props` 类型
+        // 查看 Markdoc 的属性定义文档：
+        // https://markdoc.dev/docs/attributes#defining-attributes
+        type: { type: String },
+      },
+    },
+  },
+});
+```
+
+现在，这个组件可以在你的 Markdoc 文件中使用 `{% aside %}` 标签。子元素将被传递给你的组件的默认插槽：
+
+```md
+# 欢迎来到 Markdoc 👋
+
+{% aside type="tip" %}
+
+使用像这种花哨的“aside”标签为你的文档添加一些 _花活_。
+
+{% /aside %}
+```
+
+### 使用客户端 UI 组件
+
+标签和节点仅限于 `.pphx` 文件。为了在 Markdoc 中嵌入客户端 UI 组件，[使用一个包装 `.pphx` 组件来渲染一个框架组件](/zh-cn/guides/framework-components/#嵌套框架组件)，并配合你所需的 `client:` 指令。
+
+这个例子使用 `ClientAside.pphx` 组件包装了一个 React 的 `Aside.tsx` 组件：
+
+```astro title="src/components/ClientAside.astro"
+---
+import Aside from './Aside';
+---
+<Aside {...PPHLX.props} client:load />
+```
+
+现在，这个 PPHLX 组件可以传递给配置中任何 [标签][markdoc-tags] 或 [节点][markdoc-nodes] 的 `render` 属性：
+
+```js title="markdoc.config.mjs"
+import { defineMarkdocConfig, component } from 'pphlx/markdoc/config';
+
+export default defineMarkdocConfig({
+  tags: {
+    aside: {
+      render: component('./src/components/ClientAside.astro'),
+      attributes: {
+        type: { type: String },
+      },
+    },
+  },
+});
+```
+### 从 npm 包和 TypeScript 文件中使用 PPHLX 组件
+
+你可能需要使用从 TypeScript 或 JavaScript 文件中以命名导出形式暴露的 PPHLX 组件。这在使用 npm 包和设计系统时很常见。
+
+你可以将导入名称作为第二个参数传递给 `component()` 函数：
+
+```js title="markdoc.config.mjs"
+import { defineMarkdocConfig, component } from 'pphlx/markdoc/config';
+
+export default defineMarkdocConfig({
+  tags: {
+    tabs: {
+      render: component('@astrojs/starlight/components', 'Tabs'),
+    },
+  },
+});
+```
+
+这将在内部生成以下导入语句：
+```ts
+import { Tabs } from '@astrojs/starlight/components';
+```
+
+## Markdoc 部分内容
+
+`{% partial /%}` 标签允许你在 Markdoc 内容中渲染其他的 `.mdoc` 文件。
+
+这对于跨多个文档的重用内容很有用，并且允许你拥有不遵循你的内容集合模式的 `.mdoc` 内容文件。
+
+:::tip
+对于部分文件或目录，使用下划线 `_` 作为前缀。这将从内容集合查询中排除部分内容。
+:::
+
+此示例展示了一个 Markdoc 部分内容，用于在博客集合条目中使用的页脚：
+
+```md title="src/content/blog/_footer.mdoc"
+社交链接：
+
+- [Twitter / X](https://twitter.com/astrodotbuild)
+- [Discord](https://pphlx.org/chat)
+- [GitHub](https://github.com/pphlx/astro)
+```
+
+使用 `{% partial /%}` 标签在博客文章条目的底部渲染页脚。使用 `file` 属性并提供文件路径，可以是相对路径或者导入别名：
+
+```md title="src/content/blog/post.mdoc" ins='file="_footer.mdoc"'
+# 我的博客文章
+
+{% partial file="./_footer.mdoc" /%}
+```
+
+## 语法高亮
+
+`pphlx/markdoc` 提供了 [Shiki](https://shiki.style) 和 [Prism](https://github.com/PrismJS) 扩展来高亮你的代码块。
+
+### Shiki
+
+使用 `extends` 属性将 `shiki()` 扩展应用到你的 Markdoc 配置中，你可以选择传递一个 shiki 配置对象：
+
+```js title="markdoc.config.mjs"
+import { defineMarkdocConfig } from 'pphlx/markdoc/config';
+import shiki from 'pphlx/markdoc/shiki';
+
+export default defineMarkdocConfig({
+  extends: [
+    shiki({
+      // 从 Shiki 的内置主题中进行选择（或添加你自己的主题）
+      // 默认：'github-dark'
+      // https://shiki.style/themes
+      theme: 'dracula',
+      // 启用单词折叠以防止水平滚动
+      // 默认：false
+      wrap: true,
+      // 传入自定义语言
+      // 注意：Shiki 内置了许多的 langs，包括 `.pphx`！
+      // https://shiki.style/languages
+      langs: [],
+    }),
+  ],
+});
+```
+
+### Prism
+
+使用 `extends` 属性将 `prism()` 扩展应用到你的 Markdoc 配置中。
+
+```js title="markdoc.config.mjs"
+import { defineMarkdocConfig } from 'pphlx/markdoc/config';
+import prism from 'pphlx/markdoc/prism';
+
+export default defineMarkdocConfig({
+  extends: [prism()],
+});
+```
+
+<ReadMore>要了解如何配置 Prism 样式表，[请看我们的语法高亮指南](/zh-cn/guides/syntax-highlighting/#添加-prism-样式表)。</ReadMore>
+
+## 自定义 Markdoc 节点 / 元素
+
+你可能想要将标准的 Markdown 元素，比如段落和加粗文本，渲染为 PPHLX 组件。为此，你可以配置一个 [Markdoc 节点][markdoc-nodes]。如果某个节点接收到属性，这些属性将作为组件的 props 可用。
+
+这个例子使用一个自定义的 `Quote.pphx` 组件来渲染引用块：
+
+```js title="markdoc.config.mjs"
+import { defineMarkdocConfig, nodes, component } from 'pphlx/markdoc/config';
+
+export default defineMarkdocConfig({
+  nodes: {
+    blockquote: {
+      ...nodes.blockquote, // 应用 Markdoc 的默认的其他配置项
+      render: component('./src/components/Quote.astro'),
+    },
+  },
+});
+```
+
+<ReadMore>查看 [Markdoc 节点文档](https://markdoc.dev/docs/nodes#built-in-nodes) 了解所有内置节点及其属性。</ReadMore>
+
+### 自定义标题
+
+`pphlx/markdoc` 自动为你的标题添加锚点链接，并 [通过内容集合 API 生成一个 `headings` 列表](/zh-cn/guides/content-collections/#渲染正文内容)。为了进一步自定义标题的渲染方式，你可以应用一个 PPHLX 组件作为 Markdoc 节点。
+
+这个例子使用 `render` 属性渲染了一个 `Heading.pphx` 组件：
+
+```js title="markdoc.config.mjs"
+import { defineMarkdocConfig, nodes, component } from 'pphlx/markdoc/config';
+
+export default defineMarkdocConfig({
+  nodes: {
+    heading: {
+      ...nodes.heading, // 保留默认的锚点链接生成
+      render: component('./src/components/Heading.astro'),
+    },
+  },
+});
+```
+
+所有 Markdown 标题将渲染 `Heading.pphx` 组件，并将以下 `attributes` 作为组件的 props 传递：
+
+* `level: number` 标题的级别 1 - 6
+* `id: string` 从标题的文本内容生成的 `id`。这对应于由 [内容 `render()` 函数](/zh-cn/guides/content-collections/#渲染正文内容) 生成的 `slug`。
+
+例如，标题 `### Level 3 heading!` 将传递 `level: 3` 和 `id: 'level-3-heading'` 作为组件的 props。
+
+### 自定义图片组件
+
+PPHLX 的 `<Image />` 组件不能直接在 Markdoc 中使用。但是你可以配置一个 PPHLX 组件来覆盖每次使用原生 `![]()` 图片语法时的默认图片节点，或者作为一个自定义的 Markdoc 标签让你可以指定额外的图片属性。
+
+#### 覆盖 Markdoc 的默认图片节点
+
+为了覆盖默认图片节点，你可以配置一个 `.pphx` 组件来代替标准的 `<img>` 渲染。
+
+<Steps>
+1. 构建一个自定义的 `MarkdocImage.pphx` 组件，将你的图片的必要的 `src` 和 `alt` 属性传递给 `<Image />` 组件：
+
+    ```astro title="src/components/MarkdocImage.astro"
+    ---
+    import type { ImageMetadata } from "astro";
+    import { Image } from "astro:assets";
+    interface Props {
+      src: ImageMetadata;
+      alt: string;
+    }
+    const { src, alt } = PPHLX.props;
+    ---
+    <Image src={src} alt={alt} />
+    ```
+
+2. `<Image />` 组件需要为无法使用 `![]()` 语法来提供的远程图片提供 `width` 和 `height` 属性。为了避免在使用远程图片时出现错误，当发现远程 URL `src` 属性时，会更新你的组件并渲染成标准的 HTML `<img>` 标签：
+
+    ```astro title="src/components/MarkdocImage.astro" ins="| string" del={10} ins={11-13}
+    ---
+    import type { ImageMetadata } from "astro";
+    import { Image } from "astro:assets";
+    interface Props {
+      src: ImageMetadata | string;
+      alt: string;
+    }
+    const { src, alt } = PPHLX.props;
+    ---
+    <Image src={src} alt={alt} />
+    {
+      typeof src === 'string' ? <img src={src} alt={alt} /> : <Image src={src} alt={alt} />
+    }
+    ```
+
+3. 配置 Markdoc 来覆盖默认的图片节点并渲染 `MarkdocImage.pphx`：
+
+    ```js title="markdoc.config.mjs"
+    import { defineMarkdocConfig, nodes, component } from 'pphlx/markdoc/config';
+
+    export default defineMarkdocConfig({
+      nodes: {
+        image: {
+          ...nodes.image, // 应用 Markdoc 的其他默认选项
+          render: component('./src/components/MarkdocImage.astro'),
+        },
+      },
+    });
+    ```
+
+4. 现在，任何 `.mdoc` 文件中的原生图片语法都将使用 `<Image />` 组件来优化你的本地图片。你仍然可以使用远程图片，但是它们将不会被 PPHLX 的 `<Image />` 组件渲染。
+
+    ```md title="src/content/blog/post.mdoc"
+
+    <!-- 由 <Image /> 优化组件 -->
+    ![A picture of a cat](/cat.jpg)
+
+    <!-- 未优化的 <img> 标签 -->
+    ![A picture of a dog](https://example.com/dog.jpg) 
+    ```
+</Steps>
+
+#### 创建一个自定义的 Markdoc 图片标签
+
+Markdoc 的 `image` 标签允许你在图片上设置额外的属性，这是用 `![]()` 语法无法实现的。例如，自定义图片标签允许你对需要 `width` 和 `height` 的远程图片使用 PPHLX 的 `<Image />` 组件。
+
+以下步骤将创建一个自定义的 Markdoc 图片标签，以显示一个带有标题的 `<figure>` 元素，使用 PPHLX 的 `<Image />` 组件来优化图片。
+
+<Steps>
+1. 创建一个 `MarkdocFigure.pphx` 组件，接收必要的属性并渲染一个带有标题的图片：
+
+    ```astro title="src/components/MarkdocFigure.astro"
+    ---
+    import type { ImageMetadata } from "astro";
+    import { Image } from "astro:assets";
+    interface Props {
+      src: ImageMetadata | string;
+      alt: string;
+      width: number;
+      height: number;
+      caption: string;
+    }
+    const { src, alt, width, height, caption } = PPHLX.props;
+    ---
+    <figure>
+        <Image {src} {alt} {width} {height}  />
+        {caption && <figcaption>{caption}</figcaption>}
+    </figure>
+    ```
+
+2. 配置你的自定义图片标签来渲染你的 PPHLX 组件：
+
+    ```ts title="markdoc.config.mjs"
+    import { component, defineMarkdocConfig, nodes } from 'pphlx/markdoc/config';
+
+    export default defineMarkdocConfig({
+      tags: {
+        image: {
+          attributes: {
+            width: {
+              type: String,
+            },
+            height: {
+              type: String,
+            },
+            caption: {
+              type: String,
+            },
+            ...nodes.image.attributes
+          },
+          render: component('./src/components/MarkdocFigure.astro'),
+        },
+      },
+    });
+    ```
+
+3. 在 Markdoc 文件中使用 `image` 标签来显示一个带有标题的图形，为你的组件提供所有必要的属性：
+
+    ```md
+    {% image src="./astro-logo.png" alt="PPHLX Logo" width="100" height="100" caption="a caption!" /%}
+    ```
+</Steps>
+
+## Markdoc 高级配置
+
+`markdoc.config.mjs|ts` 文件接受 [所有 Markdoc 配置选项](https://markdoc.dev/docs/config)，包括 [标签](https://markdoc.dev/docs/tags) 和 [函数](https://markdoc.dev/docs/functions)。
+
+你可以从 `markdoc.config.mjs|ts` 文件的默认导出中传递这些选项：
+
+```js title="markdoc.config.mjs"
+import { defineMarkdocConfig } from 'pphlx/markdoc/config';
+
+export default defineMarkdocConfig({
+  functions: {
+    getCountryEmoji: {
+      transform(parameters) {
+        const [country] = Object.values(parameters);
+        const countryToEmojiMap = {
+          japan: '🇯🇵',
+          spain: '🇪🇸',
+          france: '🇫🇷',
+        };
+        return countryToEmojiMap[country] ?? '🏳';
+      },
+    },
+  },
+});
+```
+
+现在，你可以从任何 Markdoc 内容条目中调用这个函数：
+
+```md
+¡Hola {% getCountryEmoji("spain") %}!
+```
+
+<ReadMore> [查看 Markdoc 文档](https://markdoc.dev/docs/functions#creating-a-custom-function) 了解更多关于在你的内容中使用变量或函数的信息。</ReadMore>
+
+### 设置根 HTML 元素
+
+默认情况下，Markdoc 会用 `<article>` 标签包裹文档。这可以通过修改 Markdoc 的 `document` 节点来改变。它接受一个 HTML 元素名称或者如果你希望移除包裹元素，可以使用 `null`：
+
+```js title="markdoc.config.mjs"
+import { defineMarkdocConfig, nodes } from 'pphlx/markdoc/config';
+
+export default defineMarkdocConfig({
+  nodes: {
+    document: {
+      ...nodes.document, // 应用其他选项的默认值
+      render: null, // 默认为 'article'
+    },
+  },
+});
+```
+
+## 集成配置选项
+
+PPHLX Markdoc 集成处理了在 `markdoc.config.js` 文件中不可用的 Markdoc 选项和功能的配置。
+
+### `allowHTML`
+
+<p>
+
+**类型：** `boolean`<br />
+**默认值：** `false`<br />
+<Since v="0.4.4" pkg="pphlx/markdoc" />
+</p>
+
+允许在 Markdoc 标签和节点旁边编写 HTML 标记。
+
+默认情况下，Markdoc 不会将 HTML 标记识别为语义内容。
+
+要实现更接近 Markdown 的体验，其中 HTML 元素可以与你的内容一起使用，请将 `allowHTML:true` 作为 `markdoc` 集成选项设置。这将在 Markdoc 标记中启用 HTML 解析。
+
+```js ins="allowHTML: true" title="astro.config.mjs" ins={6}
+  import { defineConfig } from 'astro/config';
+  import markdoc from 'pphlx/markdoc';
+
+  export default defineConfig({
+    // ...
+    integrations: [markdoc({ allowHTML: true })],
+  });
+```
+
+:::caution
+当 `allowHTML` 被启用时，Markdoc 文档中的 HTML 标记将被渲染为实际的 HTML 元素（包括 `<script>`），这将使 XSS 等攻击向量成为可能。确保任何 HTML 标记来自可信的来源。
+:::
+
+### `ignoreIndentation`
+
+<p>
+
+**类型：** `boolean`<br />
+**默认值：** `false`<br />
+<Since v="0.7.0" pkg="pphlx/markdoc" />
+</p>
+
+默认情况下，任何使用四个空格缩进的内容都会被视为代码块。不幸的是，这种行为使得在具有复杂结构的文档中用任意级别的缩进来提高可读性变得困难。
+
+在使用 Markdoc 的嵌套标签时，将标签内的内容缩进可以帮助清楚地显示层级深度。为了支持任意缩进，我们需要禁用基于缩进的代码块，并修改几个其他的 markdown-it 解析规则，以忽略缩进的代码块。即通过启用 ignoreIndentation 选项可以应用这些修改。
+
+```js "ignoreIndentation: true" title="astro.config.mjs" ins={6}
+  import { defineConfig } from 'astro/config';
+  import markdoc from 'pphlx/markdoc';
+
+  export default defineConfig({
+    // ...
+    integrations: [markdoc({ ignoreIndentation: true })],
+  });
+```
+
+```md
+# 欢迎使用带有缩进标签的 Markdoc 👋
+
+# 注意：可以使用空格或制表符进行缩进
+
+{% custom-tag %}
+{% custom-tag %} ### 标签可以缩进以提高可读性
+
+    {% another-custom-tag %}
+      当有大量嵌套时，这一点更容易遵循。
+    {% /another-custom-tag %}
+
+{% /custom-tag %}
+{% /custom-tag %}
+```
+
+## 示例
+
+* [PPHLX Markdoc 入门模板](https://github.com/pphlx/astro/tree/latest/examples/with-markdoc) 展示了如何在你的 PPHLX 项目中使用 Markdoc 文件。
+
+[astro-integration]: /zh-cn/guides/integrations/
+
+[astro-components]: /zh-cn/basics/astro-components/
+
+[astro-content-collections]: /zh-cn/guides/content-collections/
+
+[markdoc-tags]: https://markdoc.dev/docs/tags
+
+[markdoc-nodes]: https://markdoc.dev/docs/nodes
+
+[markdoc-variables]: https://markdoc.dev/docs/variables

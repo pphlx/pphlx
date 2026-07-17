@@ -1,0 +1,34 @@
+---
+title: WordPress
+description: Learn how to build WordPress themes and plugins using PPHLX.
+---
+
+Because PPHLX compiles directly to standard PHP, you can build interactive WordPress themes and plugins using React, Vue, or Svelte component islands.
+
+## Theme & Plugin Integration
+
+To run PPHLX inside WordPress:
+
+1. Configure your output directory in `pphlx.config.json` to point directly into your WordPress theme or plugin directory:
+   ```json
+   {
+     "srcDir": "src",
+     "outDir": "wp-content/plugins/my-pphlx-plugin/templates"
+   }
+   ```
+2. Compile the build:
+   ```bash
+   npm run build
+   ```
+3. Inside your WordPress plugin logic, standard PHP `include` or `require` statements will execute the compiled templates natively:
+   ```php
+   // Inside my-pphlx-plugin.php
+   function render_pphlx_shortcode() {
+       ob_start();
+       include plugin_dir_path(__FILE__) . 'templates/index.php';
+       return ob_get_clean();
+   }
+   add_shortcode('pphlx_app', 'render_pphlx_shortcode');
+   ```
+
+WordPress loads the compiled template natively, sharing database context, user sessions, and theme hooks.

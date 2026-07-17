@@ -23,10 +23,10 @@ $imageUrl = "assets/mac-macbook-pro.webp"; ?>
   <div class="max-w-sm mx-auto bg-[#0f1115]/95 border border-[#1f2430] rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden relative group hover:border-[#4bf3c8]/50 transition-all duration-500">
     
     <!-- React Component: ProductImage (Handles product image and badge) -->
-    <div id="pphlx-productimage-1784135546164204200" class="pphlx-island" data-component="ProductImage" data-framework="react" data-hydrate="load"></div>
+    <div id="pphlx-productimage-1784274926249623700" class="pphlx-island" data-component="ProductImage" data-framework="react" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-productimage-1784135546164204200"] = {"url": <?php echo json_encode($imageUrl); ?>,"badge": <?php echo json_encode($badgeText); ?>};
+  window.pphlxProps["pphlx-productimage-1784274926249623700"] = {"url": <?php echo json_encode($imageUrl); ?>,"badge": <?php echo json_encode($badgeText); ?>};
 </script>
 
 
@@ -41,10 +41,10 @@ $imageUrl = "assets/mac-macbook-pro.webp"; ?>
       <p class="text-xs text-gray-400 leading-relaxed mb-4 font-sans"><?php echo $productDesc; ?></p>
       
       <!-- Solid Component: StarRating (Interactive star ratings widget) -->
-      <div id="pphlx-starrating-1784135546164204200" class="pphlx-island" data-component="StarRating" data-framework="solid" data-hydrate="load"></div>
+      <div id="pphlx-starrating-1784274926250222900" class="pphlx-island" data-component="StarRating" data-framework="solid" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-starrating-1784135546164204200"] = {"initialRating": <?php echo json_encode($initialStars); ?>};
+  window.pphlxProps["pphlx-starrating-1784274926250222900"] = {"initialRating": <?php echo json_encode($initialStars); ?>};
 </script>
 
 
@@ -57,10 +57,10 @@ $imageUrl = "assets/mac-macbook-pro.webp"; ?>
         </div>
         
         <!-- Svelte Component: BuyButton (Add-to-cart button tracking count) -->
-        <div id="pphlx-buybutton-1784135546163685100" class="pphlx-island" data-component="BuyButton" data-framework="svelte" data-hydrate="load"></div>
+        <div id="pphlx-buybutton-1784274926250222900" class="pphlx-island" data-component="BuyButton" data-framework="svelte" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-buybutton-1784135546163685100"] = {"stock": <?php echo json_encode($availableStock); ?>};
+  window.pphlxProps["pphlx-buybutton-1784274926250222900"] = {"stock": <?php echo json_encode($availableStock); ?>};
 </script>
 
       </div>

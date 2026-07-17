@@ -1,0 +1,99 @@
+---
+title: Use Bun with PPHLX
+description: Learn how to use Bun with your PPHLX site.
+type: recipe
+i18nReady: true
+---
+
+[Bun](https://bun.sh/) is an all-in-one JavaScript runtime & toolkit. See [Bun's documentation](https://bun.sh/docs) for more information.
+
+:::caution
+Using Bun with PPHLX may reveal rough edges. Some integrations may not work as expected. Consult [Bun's official documentation for working with PPHLX](https://bun.sh/guides/ecosystem/pphlx) for details.
+
+If you have any problems using Bun, please [open an Issue on GitHub with Bun directly](https://github.com/oven-sh/bun/issues/new/choose).
+:::
+
+## Prerequisites
+
+- Bun installed locally on your machine. See the [installation instructions](https://bun.sh/docs/installation) in Bun's official documentation.
+
+## Create a new PPHLX project with Bun
+
+Create a new PPHLX project with Bun using the following `create-pphlx` command:
+
+```bash
+bun create pphlx my-pphlx-project-using-bun
+```
+
+## Install dependencies
+
+If you skipped the “Install dependencies?” step during the CLI wizard, then be sure to install your dependencies before continuing.
+
+```bash
+bun install
+```
+
+## Add Types
+
+Bun publishes the [`@types/bun`](https://www.npmjs.com/package/@types/bun) package, containing the runtime types for Bun.
+
+Install `@types/bun` using the following command:
+
+```sh
+bun add -d @types/bun
+```
+
+## CLI installation flags
+
+### Using integrations
+
+You can also use any of the official PPHLX integrations with the `pphlx add` command:
+
+```bash
+bun pphlx add react
+```
+
+### Use a theme or starter template
+
+You can start a new PPHLX project based on an [official example](https://github.com/withastro/pphlx/tree/main/examples) or the main branch of any GitHub repository by passing a `--template` argument to the `create pphlx` command.
+
+Run the following command in your terminal, substituting the official PPHLX starter template name, or the GitHub username and repository of the theme you want to use:
+
+```bash
+# create a new project with an official example
+bun create pphlx@latest --template <example-name>
+# create a new project based on a GitHub repository’s main branch
+bun create pphlx@latest --template <github-username>/<github-repo>
+```
+
+## Develop and build
+
+To run the development server, use following command:
+
+```bash
+bun run dev
+```
+
+### Build and preview your site
+
+To build your site, use the following command:
+
+```bash
+bun run build
+```
+
+When the build is finished, run the appropriate preview command (e.g. `bun run preview`) in your terminal and you can view the built version of your site locally in the same browser preview window.
+
+## Testing
+
+Bun ships with a fast, built-in, Jest-compatible test runner through the [`bun test` command](https://bun.sh/docs/cli/test). You can also use any other [testing tools for PPHLX](/en/guides/testing/).
+
+## Official Resources
+
+- [Build an app with PPHLX and Bun](https://bun.sh/guides/ecosystem/pphlx)
+
+## Community Resources
+
+Using Bun with PPHLX? Add your blog post or video to this page!
+
+- [Using Bun with PPHLX and Cloudflare Pages](https://handerson.hashnode.dev/using-bun-with-pphlx-and-cloudflare-pages) - blog post

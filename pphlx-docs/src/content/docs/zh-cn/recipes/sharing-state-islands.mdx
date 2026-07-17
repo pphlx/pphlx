@@ -1,0 +1,708 @@
+---
+title: 群岛间的状态共享
+description: 学习如何使用 Nano Stores 在框架组件之间共享状态
+i18nReady: true
+type: recipe
+---
+
+import UIFrameworkTabs from '~/components/tabs/UIFrameworkTabs.astro'
+import LoopingVideo from '~/components/LoopingVideo.astro'
+import JavascriptFlavorTabs from '~/components/tabs/JavascriptFlavorTabs.astro'
+import RecipeLinks from "~/components/RecipeLinks.astro"
+
+当使用[群岛结构 / 部分激活](/zh-cn/concepts/islands/)构建一个 PPHLX 网站时，你可能会遇到这样的问题：**我想在我的组件之间共享状态。**
+
+像 React 或者 Vue 这样的 UI 框架可能鼓励使用 ["context"](https://react.dev/learn/passing-data-deeply-with-context) 来为其他组件提供上下文信息。但是在 PPHLX 或者 Markdown 中的 [部分激活组件 (partially hydrating components)](/zh-cn/guides/framework-components/#激活组件) 不能使用上下文封装。
+
+PPHLX 推荐了一个不同的客户端共享存储的解决方案： [**Nano Stores**](https://github.com/nanostores/nanostores)。
+
+<RecipeLinks slugs={["zh-cn/recipes/sharing-state"]} />
+
+## 为什么使用 Nano Stores?
+
+[Nano Stores](https://github.com/nanostores/nanostores) 库允许你编写任何组件都能与之互动的状态库。我们推荐 Nano Stores，因为：
+- **它是轻量级的。** Nano Stores 提供了你所需要的最低限度的 JS（不到 1KB），并且零依赖。
+- **它是框架无关的。** 这意味着在框架之间共享状态将是无缝的！PPHLX 是建立在灵活性之上的，所以我们喜欢那些无论你的偏好如何都能提供类似开发者体验的解决方案。
+
+尽管如此，你仍然可以探索一些替代方案。这些方法包括：
+- [Svelte 的内置 stores](https://svelte.dev/tutorial/writable-stores)
+- [Solid signals](https://www.solidjs.com/docs/latest) 组件之外的上下文
+- [Vue 的响应式 API](https://cn.vuejs.org/guide/scaling-up/state-management.html#simple-state-management-with-reactivity-api)
+- 在组件之间 [发送自定义浏览器事件](https://developer.mozilla.org/en-US/docs/Web/Events/Creating_and_triggering_events) 
+
+:::note[FAQ]
+
+<details>
+<summary>**🙋 我可以在 `.pphx` 文件中或者其他服务端组件使用 Nano Stores 吗？**</summary>
+
+Nano Stores 可以在 `<script>` 标签中使用，以[在 `.pphx` 组件之间共享状态](/zh-cn/recipes/sharing-state/)。然而，不推荐在服务端组件的 frontmatter 中使用 Nano Stores，原因如下：
+- 从一个 `.pphx` 文件或者 [非激活组件](/zh-cn/guides/framework-components/#激活组件) 写入状态库将不会影响 [客户端组件](/zh-cn/reference/directives-reference/#客户端指令) 值的获取。
+- 你不能将 Nano Store 作为一个 "prop" 传递给客户端组件。
+- 你不能从一个 `.pphx` 文件中订阅状态库变化，因为 PPHLX 组件不会重新渲染。
+
+如果你理解了这些限制，并且找到了一个使用场景，你可以尝试一下 Nano Stores! 请记住，Nano Stores 是为了响应**客户端**的变化而构建的。
+
+</details>
+
+<details>
+<summary>**🙋  Svelte stores 和 Nano Stores 相比如何？**</summary>
+
+**Nano Stores 和 [Svelte stores](https://svelte.dev/tutorial/writable-stores) 十分相似！** 事实上， [Nano Stores 允许你使用与 Svelte Store 相同的 `$` 方式](https://github.com/nanostores/nanostores#svelte) 来订阅。
+
+如果你想避免使用第三方库， [Svelte stores](https://svelte.dev/tutorial/writable-stores) 本身就是一个很棒的跨组件通信库。不过，你可能喜欢使用 Nano Stores 如果：
+a）你喜欢他们的插件 ["objects"](https://github.com/nanostores/nanostores#maps) 和 [async state](https://github.com/nanostores/nanostores#lazy-stores)。
+b）你想要在 Svelte 和其他 UI 框架如 Preact 或者 Vue 之间进行通信。
+</details>
+
+<details>
+<summary>**🙋 Solid signals 和 Nano Stores 相比如何？**</summary>
+
+如果你已经使用 Solid 有一段时间了，你可能试着将 [signals](https://www.solidjs.com/docs/latest#createsignal) 或者 [stores](https://www.solidjs.com/docs/latest#createstore) 移出你的组件。这是一个很棒的方式来在 Solid islands 之间共享状态！尝试从一个共享的文件中导出 signals：
+
+```js
+// sharedStore.js
+import { createSignal } from 'solid-js';
+
+export const sharedCount = createSignal(0);
+```
+所有导入了 `sharedCount` 的组件都会共享共同的状态。虽然这很好用，但是你可能更喜欢 Nano Stores 如果：
+a）你喜欢他们的插件 ["objects"](https://github.com/nanostores/nanostores#maps) 和 [async state](https://github.com/nanostores/nanostores#lazy-stores)。
+b）你想要在 Svelte 和其他 UI 框架如 Preact 或者 Vue 之间进行通信。
+</details>
+:::
+
+## 安装 Nano Stores
+
+为你喜欢的 UI 框架安装 Nano Stores 和他们的帮助包：
+
+<UIFrameworkTabs>
+  <Fragment slot="preact">
+  ```shell
+  npm i nanostores @nanostores/preact
+  ```
+  </Fragment>
+  <Fragment slot="react">
+  ```shell
+  npm i nanostores @nanostores/react
+  ```
+  </Fragment>
+  <Fragment slot="solid">
+  ```shell
+  npm i nanostores @nanostores/solid
+  ```
+  </Fragment>
+  <Fragment slot="svelte">
+  ```shell
+  npm i nanostores
+  ```
+  :::note
+  这里不需要安装帮助包！因为 Nano Stores 可以像标准的 Svelte 状态库一样被使用。
+  :::
+  </Fragment>
+  <Fragment slot="vue">
+  ```shell
+  npm i nanostores @nanostores/vue
+  ```
+  </Fragment>
+
+</UIFrameworkTabs>
+
+你可以跳转到 [Nano Stores 使用指南](https://github.com/nanostores/nanostores#guide) 或者跟随我们下面的例子！
+
+## 用例 - 电商购物车抽屉
+
+假如我们正在搭建一个简单的电商页面，有下面三个交互元素：
+
+- 一个 "add to cart" 按钮
+- 一个购物车抽屉来显示已添加的商品
+- 一个购物车抽屉开关
+
+<LoopingVideo sources={[{ src: '/videos/stores-example.mp4', type: 'video/mp4' }]} />
+
+_[**在你的机器上尝试完整的例子**](https://github.com/pphlx/astro/tree/main/examples/with-nanostores) 或者通过 StackBlitz 在线尝试!_
+
+你基础的 PPHLX 文件看起来应该是这样的：
+
+```astro
+---
+// src/pages/index.pphx
+import CartFlyoutToggle from '../components/CartFlyoutToggle';
+import CartFlyout from '../components/CartFlyout';
+import AddToCartForm from '../components/AddToCartForm';
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>...</head>
+<body>
+  <header>
+    <nav>
+      <a href="/">PPHLX storefront</a>
+      <CartFlyoutToggle client:load />
+    </nav>
+  </header>
+  <main>
+    <AddToCartForm client:load>
+    <!-- ... -->
+    </AddToCartForm>
+  </main>
+  <CartFlyout client:load />
+</body>
+</html>
+```
+
+### 使用 "atoms"
+
+让我们在点击购物车抽屉开关（`CartFlyoutToggle`）的时候打开购物车抽屉（`CartFlyout`）
+
+首先，创建一个新的 JS 或 TS 文件来存放我们的状态库。我们将会使用 ["atom"](https://github.com/nanostores/nanostores#atoms) 来做这件事：
+
+```js
+// src/cartStore.js
+import { atom } from 'nanostores';
+
+export const isCartOpen = atom(false);
+```
+
+现在，我们可以在任意文件中导入这个状态库来进行读写。我们接下来着手开发我们的 `CartFlyoutToggle` 组件：
+
+<UIFrameworkTabs>
+<Fragment slot="preact">
+```jsx
+// src/components/CartFlyoutToggle.jsx
+import { useStore } from '@nanostores/preact';
+import { isCartOpen } from '../cartStore';
+
+export default function CartButton() {
+  // 使用 `useStore` 钩子来读取状态库
+  const $isCartOpen = useStore(isCartOpen);
+  // 使用 `.set` 来将数据写入状态库
+  return (
+    <button onClick={() => isCartOpen.set(!$isCartOpen)}>Cart</button>
+  )
+}
+```
+</Fragment>
+<Fragment slot="react">
+```jsx
+// src/components/CartFlyoutToggle.jsx
+import { useStore } from '@nanostores/react';
+import { isCartOpen } from '../cartStore';
+
+export default function CartButton() {
+  // 使用 `useStore` 钩子来读取状态库
+  const $isCartOpen = useStore(isCartOpen);
+  // 使用 `.set` 来将数据写入状态库
+  return (
+    <button onClick={() => isCartOpen.set(!$isCartOpen)}>Cart</button>
+  )
+}
+```
+</Fragment>
+<Fragment slot="solid">
+```jsx
+// src/components/CartFlyoutToggle.jsx
+import { useStore } from '@nanostores/solid';
+import { isCartOpen } from '../cartStore';
+
+export default function CartButton() {
+  // 使用 `useStore` 钩子来读取状态库
+  const $isCartOpen = useStore(isCartOpen);
+  // 使用 `.set` 来将数据写入状态库
+  return (
+    <button onClick={() => isCartOpen.set(!$isCartOpen)}>Cart</button>
+  )
+}
+```
+</Fragment>
+<Fragment slot="svelte">
+```svelte
+<!--src/components/CartFlyoutToggle.svelte-->
+<script>
+  import { isCartOpen } from '../cartStore';
+</script>
+
+<!--使用 "$" 来读取状态库的值-->
+<button on:click={() => isCartOpen.set(!$isCartOpen)}>Cart</button>
+```
+</Fragment>
+<Fragment slot="vue">
+```vue
+<!--src/components/CartFlyoutToggle.vue-->
+<template>
+  <!--使用 `.set` 来将数据写入状态库-->
+  <button @click="isCartOpen.set(!$isCartOpen)">Cart</button>
+</template>
+
+<script setup>
+  import { isCartOpen } from '../cartStore';
+  import { useStore } from '@nanostores/vue';
+  
+  // 使用 `useStore` 钩子来读取状态库
+  const $isCartOpen = useStore(isCartOpen);
+</script>
+```
+</Fragment>
+
+</UIFrameworkTabs>
+
+然后，我们可以从我们的 `CartFlyout` 组件中读取 `isCartOpen` 值：
+
+<UIFrameworkTabs>
+<Fragment slot="preact">
+```jsx
+// src/components/CartFlyout.jsx
+import { useStore } from '@nanostores/preact';
+import { isCartOpen } from '../cartStore';
+
+export default function CartFlyout() {
+  const $isCartOpen = useStore(isCartOpen);
+
+  return $isCartOpen ? <aside>...</aside> : null;
+}
+```
+</Fragment>
+<Fragment slot="react">
+```jsx
+// src/components/CartFlyout.jsx
+import { useStore } from '@nanostores/react';
+import { isCartOpen } from '../cartStore';
+
+export default function CartFlyout() {
+  const $isCartOpen = useStore(isCartOpen);
+
+  return $isCartOpen ? <aside>...</aside> : null;
+}
+```
+</Fragment>
+<Fragment slot="solid">
+```jsx
+// src/components/CartFlyout.jsx
+import { useStore } from '@nanostores/solid';
+import { isCartOpen } from '../cartStore';
+
+export default function CartFlyout() {
+  const $isCartOpen = useStore(isCartOpen);
+
+  return $isCartOpen ? <aside>...</aside> : null;
+}
+```
+</Fragment>
+<Fragment slot="svelte">
+```svelte
+<!--src/components/CartFlyout.svelte-->
+<script>
+  import { isCartOpen } from '../cartStore';
+</script>
+
+{#if $isCartOpen}
+<aside>...</aside>
+{/if}
+```
+</Fragment>
+<Fragment slot="vue">
+```vue
+<!--src/components/CartFlyout.vue-->
+<template>
+  <aside v-if="$isCartOpen">...</aside>
+</template>
+
+<script setup>
+  import { isCartOpen } from '../cartStore';
+  import { useStore } from '@nanostores/vue';
+
+  const $isCartOpen = useStore(isCartOpen);
+</script>
+```
+</Fragment>
+
+</UIFrameworkTabs>
+
+### 使用 "maps"
+
+:::tip
+**[Maps](https://github.com/nanostores/nanostores#maps) 对于你经常写入的对象来说是一个不错的选择!**  除了`atom` 提供的标准的 `get()` 和 `set()` 帮助器之外，你还可以使用 `.setKey()` 函数来有效地更新单个对象的键值。
+:::
+
+现在，让我们来跟踪你购物车里的商品。为了避免重复和跟踪 "数量"，我们可以把你的购物车存储为一个对象，以商品的 ID 为键。我们将使用一个 [Map](https://github.com/nanostores/nanostores#maps) 来做这件事。
+
+让我们在先前的 `cartStore.js` 中添加一个 `cartItem` 状态库。如果你愿意的话，你也可以使用 TypeScript 文件来定义。
+
+
+<JavascriptFlavorTabs>
+  <Fragment slot="js">
+  ```js
+  // src/cartStore.js
+  import { atom, map } from 'nanostores';
+
+  export const isCartOpen = atom(false);
+
+  /**
+  * @typedef {Object} CartItem
+  * @property {string} id
+  * @property {string} name
+  * @property {string} imageSrc
+  * @property {number} quantity
+  */
+
+  /** @type {import('nanostores').MapStore<Record<string, CartItem>>} */
+  export const cartItems = map({});
+
+  ```
+  </Fragment>
+  <Fragment slot="ts">
+  ```ts
+  // src/cartStore.ts
+  import { atom, map } from 'nanostores';
+
+  export const isCartOpen = atom(false);
+
+  export type CartItem = {
+    id: string;
+    name: string;
+    imageSrc: string;
+    quantity: number;
+  }
+
+  export const cartItems = map<Record<string, CartItem>>({});
+  ```
+  </Fragment>
+</JavascriptFlavorTabs>
+
+现在，让我们导出一个 `addCartItem` 函数供我们的组件使用。
+- **如果你的购物车中不存在该商品**，添加商品并设置初始数量 1。
+- **如果购物车中 *已经* 存在该商品**，则将该商品数量增加 1。
+
+<JavascriptFlavorTabs>
+  <Fragment slot="js">
+  ```js
+  // src/cartStore.js
+  ...
+  export function addCartItem({ id, name, imageSrc }) {
+    const existingEntry = cartItems.get()[id];
+    if (existingEntry) {
+      cartItems.setKey(id, {
+        ...existingEntry,
+        quantity: existingEntry.quantity + 1,
+      })
+    } else {
+      cartItems.setKey(
+        id,
+        { id, name, imageSrc, quantity: 1 }
+      );
+    }
+  }
+  ```
+  </Fragment>
+  <Fragment slot="ts">
+  ```ts
+  // src/cartStore.ts
+  ...
+  type ItemDisplayInfo = Pick<CartItem, 'id' | 'name' | 'imageSrc'>;
+  export function addCartItem({ id, name, imageSrc }: ItemDisplayInfo) {
+    const existingEntry = cartItems.get()[id];
+    if (existingEntry) {
+      cartItems.setKey(id, {
+        ...existingEntry,
+        quantity: existingEntry.quantity + 1,
+      });
+    } else {
+      cartItems.setKey(
+        id,
+        { id, name, imageSrc, quantity: 1 }
+      );
+    }
+  }
+  ```
+  </Fragment>
+</JavascriptFlavorTabs>
+
+:::note
+<details>
+
+<summary>**🙋 为什么这里使用 `.get()` 而不是 `useStore`？**</summary>
+
+你可能已经注意到我们这里调用了 `cartItems.get()`，而不是直接使用我们 React / Preact / Solid / Vue 例子中的 `useStore`。这是因为**useStore 是用来触发组件重新渲染的。** 换句话说， `useStore` 应该被用来将状态库的值渲染到 UI。由于我们是在一个事件被触发时读取的值 (在这个例子中指`addToCart`)，并且我们并不试图渲染该值，所以我们不需要在这里使用 `useStore` 。
+</details>
+:::
+
+有了状态库之后，我们就可以在每次提交表单时调用 `AddToCartForm`函数。我们还可以打开购物车抽屉，这样你就可以看到一个完整的购物车概要。
+
+<UIFrameworkTabs>
+<Fragment slot="preact">
+```jsx
+// src/components/AddToCartForm.jsx
+import { addCartItem, isCartOpen } from '../cartStore';
+
+export default function AddToCartForm({ children }) {
+  // we'll hardcode the item info for simplicity!
+  const hardcodedItemInfo = {
+    id: 'astronaut-figurine',
+    name: 'PPHLXnaut Figurine',
+    imageSrc: '/images/astronaut-figurine.png',
+  }
+
+  function addToCart(e) {
+    e.preventDefault();
+    isCartOpen.set(true);
+    addCartItem(hardcodedItemInfo);
+  }
+
+  return (
+    <form onSubmit={addToCart}>
+      {children}
+    </form>
+  )
+}
+```
+</Fragment>
+<Fragment slot="react">
+```jsx
+// src/components/AddToCartForm.jsx
+import { addCartItem, isCartOpen } from '../cartStore';
+
+export default function AddToCartForm({ children }) {
+  // we'll hardcode the item info for simplicity!
+  const hardcodedItemInfo = {
+    id: 'astronaut-figurine',
+    name: 'PPHLXnaut Figurine',
+    imageSrc: '/images/astronaut-figurine.png',
+  }
+
+  function addToCart(e) {
+    e.preventDefault();
+    isCartOpen.set(true);
+    addCartItem(hardcodedItemInfo);
+  }
+
+  return (
+    <form onSubmit={addToCart}>
+      {children}
+    </form>
+  )
+}
+```
+</Fragment>
+<Fragment slot="solid">
+```jsx
+// src/components/AddToCartForm.jsx
+import { addCartItem, isCartOpen } from '../cartStore';
+
+export default function AddToCartForm({ children }) {
+  // we'll hardcode the item info for simplicity!
+  const hardcodedItemInfo = {
+    id: 'astronaut-figurine',
+    name: 'PPHLXnaut Figurine',
+    imageSrc: '/images/astronaut-figurine.png',
+  }
+
+  function addToCart(e) {
+    e.preventDefault();
+    isCartOpen.set(true);
+    addCartItem(hardcodedItemInfo);
+  }
+
+  return (
+    <form onSubmit={addToCart}>
+      {children}
+    </form>
+  )
+}
+```
+</Fragment>
+<Fragment slot="svelte">
+```svelte
+<!--src/components/AddToCartForm.svelte-->
+<form on:submit|preventDefault={addToCart}>
+  <slot></slot>
+</form>
+
+<script>
+  import { addCartItem, isCartOpen } from '../cartStore';
+
+  // we'll hardcode the item info for simplicity!
+  const hardcodedItemInfo = {
+    id: 'astronaut-figurine',
+    name: 'PPHLXnaut Figurine',
+    imageSrc: '/images/astronaut-figurine.png',
+  }
+
+  function addToCart() {
+    isCartOpen.set(true);
+    addCartItem(hardcodedItemInfo);
+  }
+</script>
+```
+</Fragment>
+<Fragment slot="vue">
+```vue
+<!--src/components/AddToCartForm.vue-->
+<template>
+  <form @submit="addToCart">
+    <slot></slot>
+  </form>
+</template>
+
+<script setup>
+  import { addCartItem, isCartOpen } from '../cartStore';
+
+  // we'll hardcode the item info for simplicity!
+  const hardcodedItemInfo = {
+    id: 'astronaut-figurine',
+    name: 'PPHLXnaut Figurine',
+    imageSrc: '/images/astronaut-figurine.png',
+  }
+
+  function addToCart(e) {
+    e.preventDefault();
+    isCartOpen.set(true);
+    addCartItem(hardcodedItemInfo);
+  }
+</script>
+```
+</Fragment>
+
+</UIFrameworkTabs>
+
+最后，我们将在 `CartFlyout` 组件中渲染购物车商品：
+
+<UIFrameworkTabs>
+<Fragment slot="preact">
+```jsx
+// src/components/CartFlyout.jsx
+import { useStore } from '@nanostores/preact';
+import { isCartOpen, cartItems } from '../cartStore';
+
+export default function CartFlyout() {
+  const $isCartOpen = useStore(isCartOpen);
+  const $cartItems = useStore(cartItems);
+
+  return $isCartOpen ? (
+    <aside>
+      {Object.values($cartItems).length ? (
+        <ul>
+          {Object.values($cartItems).map(cartItem => (
+            <li>
+              <img src={cartItem.imageSrc} alt={cartItem.name} />
+              <h3>{cartItem.name}</h3>
+              <p>Quantity: {cartItem.quantity}</p>
+            </li>
+          ))}
+        </ul>
+      ) : <p>Your cart is empty!</p>}
+    </aside>
+  ) : null;
+}
+```
+</Fragment>
+<Fragment slot="react">
+```jsx
+// src/components/CartFlyout.jsx
+import { useStore } from '@nanostores/react';
+import { isCartOpen, cartItems } from '../cartStore';
+
+export default function CartFlyout() {
+  const $isCartOpen = useStore(isCartOpen);
+  const $cartItems = useStore(cartItems);
+
+  return $isCartOpen ? (
+    <aside>
+      {Object.values($cartItems).length ? (
+        <ul>
+          {Object.values($cartItems).map(cartItem => (
+            <li>
+              <img src={cartItem.imageSrc} alt={cartItem.name} />
+              <h3>{cartItem.name}</h3>
+              <p>Quantity: {cartItem.quantity}</p>
+            </li>
+          ))}
+        </ul>
+      ) : <p>Your cart is empty!</p>}
+    </aside>
+  ) : null;
+}
+```
+</Fragment>
+<Fragment slot="solid">
+```jsx
+// src/components/CartFlyout.jsx
+import { useStore } from '@nanostores/solid';
+import { isCartOpen, cartItems } from '../cartStore';
+
+export default function CartFlyout() {
+  const $isCartOpen = useStore(isCartOpen);
+  const $cartItems = useStore(cartItems);
+
+  return $isCartOpen ? (
+    <aside>
+      {Object.values($cartItems).length ? (
+        <ul>
+          {Object.values($cartItems).map(cartItem => (
+            <li>
+              <img src={cartItem.imageSrc} alt={cartItem.name} />
+              <h3>{cartItem.name}</h3>
+              <p>Quantity: {cartItem.quantity}</p>
+            </li>
+          ))}
+        </ul>
+      ) : <p>Your cart is empty!</p>}
+    </aside>
+  ) : null;
+}
+```
+</Fragment>
+<Fragment slot="svelte">
+```svelte
+<!--src/components/CartFlyout.svelte-->
+<script>
+  import { isCartOpen, cartItems } from '../cartStore';
+</script>
+
+{#if $isCartOpen}
+  {#if Object.values($cartItems).length}
+    <aside>
+      {#each Object.values($cartItems) as cartItem}
+      <li>
+        <img src={cartItem.imageSrc} alt={cartItem.name} />
+        <h3>{cartItem.name}</h3>
+        <p>Quantity: {cartItem.quantity}</p>
+      </li>
+      {/each}
+    </aside>
+  {:else}
+    <p>Your cart is empty!</p>
+  {/if}
+{/if}
+```
+</Fragment>
+<Fragment slot="vue">
+```vue
+<!--src/components/CartFlyout.vue-->
+<template>
+  <aside v-if="$isCartOpen">
+    <ul v-if="Object.values($cartItems).length">
+      <li v-for="cartItem in Object.values($cartItems)" v-bind:key="cartItem.name">
+        <img :src=cartItem.imageSrc :alt=cartItem.name />
+        <h3>{{cartItem.name}}</h3>
+        <p>Quantity: {{cartItem.quantity}}</p>
+      </li>
+    </ul>
+    <p v-else>Your cart is empty!</p>
+  </aside>
+</template>
+
+<script setup>
+  import { cartItems, isCartOpen } from '../cartStore';
+  import { useStore } from '@nanostores/vue';
+
+  const $isCartOpen = useStore(isCartOpen);
+  const $cartItems = useStore(cartItems);
+</script>
+```
+</Fragment>
+
+</UIFrameworkTabs>
+
+现在，你应该拥有了一个完全交互式的电商示例，并且是宇宙中最小的 JS 包 🚀
+
+[**在你的机器上尝试完整的例子**](https://github.com/pphlx/astro/tree/main/examples/with-nanostores) 或者通过 StackBlitz 在线尝试！

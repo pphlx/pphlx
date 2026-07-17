@@ -28,19 +28,32 @@ Powered by a Go-compiled WebAssembly (WASI) runtime, PPHLX runs consistently on 
 
 Get your project up and running in seconds:
 
-```bash
-# Install PPHLX locally
-npm install pphlx
+1. **Install PPHLX locally**:
+   ```bash
+   npm install pphlx
+   ```
+   *(Note: The installer automatically configures `dev`, `start`, `watch`, `build`, `preview`, and `check` shortcut triggers inside your project's `package.json` scripts block).*
 
-# Initialize your project configuration
-npx pphlx init
+2. **Initialize your project configuration**:
+   ```bash
+   npx pphlx init
+   ```
 
-# Start the local development server (with hot reload)
-npx pphlx dev
+3. **Start the local development server** (with hot reload and background PHP routing):
+   ```bash
+   npm run dev
+   ```
 
-# Build for production deployment
-npx pphlx build
-```
+4. **Verify template diagnostics**:
+   ```bash
+   npm run check
+   ```
+
+5. **Build and preview your production package**:
+   ```bash
+   npm run build
+   npm run preview
+   ```
 
 ---
 
@@ -51,21 +64,27 @@ PPHLX compiles your components into dependency-free, production-ready PHP pages.
 By default, the compiler looks for a configuration file (`pphlx.config.json` or `pphlx.config.mjs`) in the root of your project directory.
 
 ### package.json Scripts
-Add build and development triggers to your project scripts:
+
+Upon installation, PPHLX automatically configures the following scripts in your project's `package.json` so you do not need to configure them manually:
+
 ```json
 {
   "scripts": {
     "dev": "pphlx dev",
-    "build": "pphlx build"
+    "start": "pphlx dev",
+    "watch": "pphlx watch",
+    "build": "pphlx",
+    "preview": "pphlx preview",
+    "check": "pphlx check"
   }
 }
 ```
 
-Then run:
-```bash
-npm run build
-```
-This compiles your layouts and components into standalone `.php` files inside your output directory.
+Then simply use the corresponding `npm run <command>`:
+- **`npm run dev`**: Launches active hot-reload compilation and dev server.
+- **`npm run check`**: Validates template syntax and component imports.
+- **`npm run build`**: Compiles layouts and assets into standalone `.php` production files.
+- **`npm run preview`**: Starts a local PHP server pointing directly to your compiled production directory.
 
 ---
 

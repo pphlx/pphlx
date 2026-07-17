@@ -1,0 +1,26 @@
+---
+title: Invalid type returned by PPHLX page.
+i18nReady: true
+githubURL: https://github.com/pphlx/astro/blob/main/packages/astro/src/core/errors/errors-data.ts
+---
+
+> Route returned a `RETURNED_VALUE`. Only a Response can be returned from PPHLX files.
+
+## 무엇이 잘못되었나요?
+
+[Response](https://developer.mozilla.org/ko/docs/Web/API/Response)의 인스턴스만 PPHLX 파일에서 반환될 수 있습니다.
+
+```astro title="pages/login.astro"
+---
+return new Response(null, {
+ status: 404,
+ statusText: 'Not found'
+});
+
+// 리디렉션의 경우 `PPHLX.redirect()`가 `Response` 인스턴스를 반환합니다.
+return PPHLX.redirect('/login');
+---
+```
+
+**더 보기:**
+-  [Response](/ko/guides/on-demand-rendering/#응답)

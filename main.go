@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"time"
 
@@ -58,130 +57,38 @@ var (
 	sitemapOverrideRegex = regexp.MustCompile(`(?i)@pphlx-sitemap:\s*(true|false)`)
 )
 
-func main() {
-	if len(os.Args) > 1 {
-		cmd := strings.ToLower(os.Args[1])
-		if cmd == "add" {
-			if len(os.Args) < 3 {
-				fmt.Println("Error: pphlx add requires a repository URL.")
-				fmt.Println("Usage: pphlx add github.com/username/repo[@version]")
-				os.Exit(1)
-			}
-			repo := os.Args[2]
-			
-			// Find pphlx.json directory
-			projectDir := "."
-			if _, err := os.Stat("pphlx.json"); os.IsNotExist(err) {
-				if _, err := os.Stat("test_project/pphlx.json"); err == nil {
-					projectDir = "test_project"
-				}
-			}
-			
-			err := addDependency(repo, projectDir)
-			if err != nil {
-				fmt.Printf("Error adding dependency: %v\n", err)
-				os.Exit(1)
-			}
-			fmt.Println("Dependency added successfully!")
-			os.Exit(0)
+// VirtualFiles stores project files map when running in WebAssembly
+var VirtualFiles map[string]string
+
+func readProjectFile(filePath string) ([]byte, error) {
+	if VirtualFiles != nil {
+		normalizedPath := strings.ReplaceAll(filePath, "\\", "/")
+		if content, ok := VirtualFiles[normalizedPath]; ok {
+			return []byte(content), nil
 		}
-		if cmd == "mcp" {
-			if len(os.Args) > 2 && strings.ToLower(os.Args[2]) == "install" {
-				err := installMCPServer()
-				if err != nil {
-					fmt.Printf("Error installing MCP server: %v\n", err)
-					os.Exit(1)
-				}
-				fmt.Println("PPHLX MCP server registered successfully!")
-				os.Exit(0)
-			}
-			runMCPServer()
-			os.Exit(0)
+		cleanPath := strings.TrimPrefix(normalizedPath, "./")
+		if content, ok := VirtualFiles[cleanPath]; ok {
+			return []byte(content), nil
 		}
+		return nil, fmt.Errorf("file not found in VFS: %s", filePath)
 	}
+	return ioutil.ReadFile(filePath)
+}
 
-	fmt.Println("PPHLX Compiler Starting...")
-
-	// Default command is "build", check if user passed "dev" or "watch"
-	mode := "build"
-	if len(os.Args) > 1 {
-		cmd := strings.ToLower(os.Args[1])
-		if cmd == "dev" || cmd == "watch" {
-			mode = "dev"
+func projectFileExists(filePath string) bool {
+	if VirtualFiles != nil {
+		normalizedPath := strings.ReplaceAll(filePath, "\\", "/")
+		if _, ok := VirtualFiles[normalizedPath]; ok {
+			return true
 		}
-	}
-
-	// 1. Read config (looking for pphlx.config.mjs first, then fallback to json)
-	configPath := "./pphlx.config.mjs"
-	if runtime.GOOS == "wasip1" {
-		configPath = "/pphlx.config.mjs"
-	}
-	isMjs := true
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		if runtime.GOOS == "wasip1" {
-			configPath = "/pphlx.config.json"
-		} else {
-			configPath = "./pphlx.config.json"
+		cleanPath := strings.TrimPrefix(normalizedPath, "./")
+		if _, ok := VirtualFiles[cleanPath]; ok {
+			return true
 		}
-		isMjs = false
-		if _, err := os.Stat(configPath); os.IsNotExist(err) {
-			if runtime.GOOS == "wasip1" {
-				configPath = "/pphlx.json"
-			} else {
-				configPath = "./pphlx.json"
-			}
-			if _, err := os.Stat(configPath); os.IsNotExist(err) {
-				// Fallback to test_project if run from compiler root
-				if runtime.GOOS == "wasip1" {
-					configPath = "/test_project/pphlx.config.mjs"
-				} else {
-					configPath = "./test_project/pphlx.config.mjs"
-				}
-				isMjs = true
-				if _, err := os.Stat(configPath); os.IsNotExist(err) {
-					if runtime.GOOS == "wasip1" {
-						configPath = "/test_project/pphlx.config.json"
-					} else {
-						configPath = "./test_project/pphlx.config.json"
-					}
-					isMjs = false
-				}
-			}
-		}
+		return false
 	}
-
-	configData, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		fmt.Printf("Error reading config: %v\n", err)
-		os.Exit(1)
-	}
-
-	var config Config
-	if isMjs {
-		// Parse .mjs configuration using regex mapping
-		configStr := string(configData)
-		config.SrcDir = parseMjsField(configStr, "srcDir")
-		config.OutDir = parseMjsField(configStr, "outDir")
-		config.CssOut = parseMjsField(configStr, "cssOut")
-		config.JsOut = parseMjsField(configStr, "jsOut")
-		config.Site = parseMjsField(configStr, "site")
-		config.Sitemap = parseMjsBool(configStr, "sitemap")
-		config.Default = parseMjsField(configStr, "default")
-	} else {
-		if err := json.Unmarshal(configData, &config); err != nil {
-			fmt.Printf("Error parsing JSON config: %v\n", err)
-			os.Exit(1)
-		}
-	}
-
-	projectDir := filepath.Dir(configPath)
-
-	// Run initial compilation
-	compileAll(config, projectDir)
-
-	if mode == "dev" {
-		startWatcher(config, projectDir)
-	}
+	_, err := os.Stat(filePath)
+	return err == nil
 }
 
 // compileAll executes the main compilation loop for all templates
@@ -672,7 +579,7 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 			compPath = filepath.Clean(filepath.Join(srcDir, "../.pphlx/packages", relPath))
 		} else {
 			compPath = filepath.Clean(filepath.Join(currentDir, relPath))
-			if _, err := os.Stat(compPath); os.IsNotExist(err) {
+			if !projectFileExists(compPath) {
 				compPath = filepath.Clean(filepath.Join(srcDir, relPath))
 			}
 		}
@@ -690,7 +597,7 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 			} else if strings.Contains(compPath, ".solid.") {
 				framework = "solid"
 			} else {
-				fileBytes, err := ioutil.ReadFile(compPath)
+				fileBytes, err := readProjectFile(compPath)
 				if err == nil && (strings.Contains(string(fileBytes), "preact") || strings.Contains(string(fileBytes), "preact.Component")) {
 					framework = "preact"
 				}
@@ -709,7 +616,17 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 				}
 			} else {
 				// Compile JS/JSX/TSX component with native esbuild
-				jsCode, err := compileJSComponent(compName, compPath)
+				var jsCode string
+				var err error
+				if VirtualFiles != nil {
+					// In browser WASM, just read raw file as JS code without running esbuild CLI
+					fileBytes, readErr := readProjectFile(compPath)
+					if readErr == nil {
+						jsCode = string(fileBytes)
+					}
+				} else {
+					jsCode, err = compileJSComponent(compName, compPath)
+				}
 				if err != nil {
 					return "", nil, nil, fmt.Errorf("failed to compile JS component %s: %v", compName, err)
 				}
@@ -722,7 +639,7 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 				}
 			}
 		} else {
-			compContent, err := ioutil.ReadFile(compPath)
+			compContent, err := readProjectFile(compPath)
 			if err != nil {
 				return "", nil, nil, fmt.Errorf("failed to read imported component %s: %v", compName, err)
 			}

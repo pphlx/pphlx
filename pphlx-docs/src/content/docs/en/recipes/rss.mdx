@@ -1,0 +1,84 @@
+---
+title: Add an RSS feed
+description: Learn how to generate a dynamic RSS feed in PPHLX using native PHP routes.
+i18nReady: true
+type: recipe
+---
+import { Steps } from '@astrojs/starlight/components';
+
+PPHLX compiles your pages down to native PHP code blocks and static layouts. Because of this, generating an RSS feed does not require complex Node.js build-time packages like `@astrojs/rss`. Instead, you can write a simple, dynamic RSS feed directly in PHP, which updates automatically in real-time as you publish content.
+
+---
+
+## Setting up a PHP-native RSS Feed
+
+To create an RSS feed, you can write a custom PHP script in your `src/pages/` directory that fetches your content (either from a database, local JSON, or a Markdown parser) and outputs valid XML.
+
+<Steps>
+1. Create a new file in your `src/pages/` directory called `rss.xml.php` (or `rss.xml.pphx` if using PPHLX template compilation). This file will serve the feed at `your-domain.com/rss.xml`.
+
+2. Copy the following code into `src/pages/rss.xml.php`:
+
+   ```php
+   <?php
+   // 1. Set the response header to serve XML content
+   header('Content-Type: application/xml; charset=utf-8');
+
+   $siteUrl = "https://your-domain.com";
+
+   // 2. Fetch your blog posts (e.g. from your database, local SQLite, or a JSON file)
+   $postsJson = file_exists(__DIR__ . '/../content/posts.json') 
+       ? file_get_contents(__DIR__ . '/../content/posts.json') 
+       : '[]';
+   $posts = json_decode($postsJson, true);
+
+   // Sort posts by date (newest first)
+   usort($posts, function($a, $b) {
+       return strtotime($b['publishDate']) - strtotime($a['publishDate']);
+   });
+
+   // 3. Output the XML structure
+   echo '<?xml version="1.0" encoding="UTF-8" ?>';
+   ?>
+   <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+     <channel>
+       <title>Buzz’s Blog</title>
+       <description>A humble PPHLX developer’s guide to the stars</description>
+       <link><?php echo $siteUrl; ?></link>
+       <atom:link href="<?php echo $siteUrl; ?>/rss.xml" rel="self" type="application/rss+xml" />
+       <language>en-us</language>
+       <lastBuildDate><?php echo date(DATE_RSS); ?></lastBuildDate>
+
+       <?php foreach ($posts as $post): ?>
+       <item>
+         <title><?php echo htmlspecialchars($post['title'], ENT_XML1, 'UTF-8'); ?></title>
+         <link><?php echo $siteUrl; ?>/blog/<?php echo htmlspecialchars($post['slug'], ENT_XML1, 'UTF-8'); ?></link>
+         <guid><?php echo $siteUrl; ?>/blog/<?php echo htmlspecialchars($post['slug'], ENT_XML1, 'UTF-8'); ?></guid>
+         <pubDate><?php echo date(DATE_RSS, strtotime($post['publishDate'])); ?></pubDate>
+         <description><?php echo htmlspecialchars($post['description'], ENT_XML1, 'UTF-8'); ?></description>
+       </item>
+       <?php endforeach; ?>
+     </channel>
+   </rss>
+   ```
+</Steps>
+
+---
+
+## Enabling RSS Feed Auto-Discovery
+
+To make it easy for RSS readers and web browsers to discover your feed automatically from your homepage, add a `<link>` tag to the `<head>` of your main layout template:
+
+```html
+<!-- src/layouts/Layout.pphx -->
+<head>
+  <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Buzz's Blog RSS Feed"
+      href="/rss.xml"
+  />
+</head>
+```
+
+With this tag in place, users can enter your site's base URL directly into their feed reader (like Feedly or NetNewsWire) to subscribe to your posts instantly.

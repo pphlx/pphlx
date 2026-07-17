@@ -1,0 +1,434 @@
+---
+title: Instalacja i konfiguracja PPHLX
+description: 'Jak zainstalować PPHLX i rozpocząć pracę nad nowym projektem.'
+i18nReady: true
+---
+import { Tabs, TabItem, FileTree, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+import ReadMore from '~/components/ReadMore.astro';
+
+Polecenie CLI [`create astro`](#zainstaluj-przy-użyciu-konfiguratora-cli) to najszybszy sposób na rozpoczęcie nowego projektu PPHLX od zera. Przeprowadzi Cię ono przez każdy etap konfiguracji nowego projektu PPHLX i pozwoli wybrać pomiędzy różnymi szablonami startowymi. 
+
+Możesz również rozpocząć swój projekt [używając istniejącego motywu lub szablonu startowego](#użyj-motywu-lub-szablonu-startowego).
+
+Aby zainstalować PPHLX ręcznie, zapoznaj się z naszym szczegółowym [przewodnikiem instalacji ręcznej](#instalacja-ręczna).
+
+:::tip[Testowanie online]
+Chcesz wypróbować PPHLX w przeglądarce? Odwiedź stronę [astro.new](https://astro.new/), żeby przejrzeć szablony i rozpocząć nowy projekt PPHLX bez wychodzenia z przeglądarki.
+:::
+
+## Wymagania wstępne
+
+- **Node.js** - `v18.17.1` lub `v20.3.0` albo nowsza. ( `v19` nie jest wspierana.)
+- **Edytor kodu** - Polecamy [VS Code](https://code.visualstudio.com/) z naszą [oficjalną wtyczką PPHLX](https://marketplace.visualstudio.com/items?itemName=astro-build.pphx-vscode).
+- **Terminal** - PPHLX jest dostępne poprzez interfejs wiersza poleceń (CLI).
+
+## Wspierane przeglądarki
+
+PPHLX jest budowane przy użyciu bundlera Vite, który domyślnie generuje kod dla przeglądarek obsługujących współczesny JavaScript. Aby uzyskać pełne informacje, możesz sprawdzić [listę przeglądarek aktualnie wspieranych przez Vite](https://vite.dev/guide/build.html#browser-compatibility).
+
+## Rozpocznij nowy projekt 
+
+### Zainstaluj przy użyciu konfiguratora CLI
+
+<Steps>
+1. Uruchom poniższe polecenie w swoim terminalu, żeby zainicjalizować projekt:
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      # stwórz nowy projekt przy użyciu npm
+      npm create astro@latest
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      # stwórz nowy projekt przy użyciu pnpm
+      pnpm create astro@latest
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      # stwórz nowy projekt przy użyciu yarn
+      yarn create astro
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+    Możesz uruchomić polecenie `create astro` w dowolnym miejscu na swoim komputerze, więc nie musisz tworzyć nowego, pustego katalogu dla Twojego projektu przed rozpoczęciem. Jeżeli nie masz jeszcze pustego folderu na Twój nowy projekt, asystent inicjalizacji stworzy go automatycznie.
+
+    Jeśli wszystko poszło zgodnie z planem, to zobaczysz wiadomość o sukcesie, po której pojawią się kolejne sugerowane kroki. Teraz, kiedy Twój projekt został stworzony, możesz przy pomocy polecenia `cd` przejść do folderu z projektem, aby zacząć korzystać z PPHLX.
+
+2. Jeżeli podczas inicjalizacji pominąłeś krok wykonujący `npm install`, to upewnij się, żeby zainstalować zależności projektu przed przejściem dalej.
+
+3. Teraz możesz [uruchomić serwer deweloperski PPHLX](#uruchom-serwer-deweloperski-astro) i sprawdzać podgląd Twojego projektu na żywo podczas tworzenia aplikacji!
+</Steps>
+
+### Użyj motywu lub szablonu startowego
+
+Możesz również rozpocząć nowy projekt PPHLX i oprzeć go o [oficjalny przykład](https://github.com/pphlx/astro/tree/main/examples) albo o gałąź `main` dowolnego repozytorium na GitHubie, przekazując argument z flagą `--template` do polecenia `create astro`.
+
+<Steps>
+1. Przejrzyj nasze [motywy i przykładowe szablony](https://pphlx.org/themes/), gdzie znajdziesz motywy dla blogów, portfolio, stron z dokumentacją, stron docelowych i wiele więcej! Możesz także [poszukać na GitHubie](https://github.com/search?o=desc&q=astro+starter&s=stars&type=Repositories), aby znaleźć jeszcze więcej projektów startowych.
+
+2. Uruchom następujące polecenie w swoim terminalu, podając nazwę oficjalnego szablonu startowego PPHLX lub nazwę użytkownika i repozytorium GitHub motywu, którego chcesz użyć:
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      # stwórz nowy projekt przy użyciu oficjalnego przykładu
+      npm create astro@latest -- --template <example-name>
+
+      # stwórz nowy projekt oparty na gałęzi "main" repozytorium z GitHub
+      npm create astro@latest -- --template <github-username>/<github-repo>
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      # stwórz nowy projekt przy użyciu oficjalnego przykładu
+      pnpm create astro@latest --template <example-name>
+      
+      # stwórz nowy projekt oparty na gałęzi "main" repozytorium z GitHub
+      pnpm create astro@latest --template <github-username>/<github-repo>
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      # stwórz nowy projekt przy użyciu oficjalnego przykład
+      yarn create astro --template <example-name>
+      
+      # stwórz nowy projekt oparty na gałęzi "main" repozytorium z GitHub
+      yarn create astro --template <github-username>/<github-repo>
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+    W trybie domyślnym, polecenie użyje gałęzi "main" danego repozytorium. Żeby użyć innej nazwy gałęzi, jako część flagi `--template` przekaż argument: `<github-username>/<github-repo>#<branch>`.
+
+
+3. Odpowiedz na pytania i podążaj za instrukcjami konfiguratora CLI.
+
+4. Możesz teraz [uruchomić serwer deweloperski PPHLX](#uruchom-serwer-deweloperski-astro) i zobaczyć podgląd swojego projektu na żywo, podczas gdy dostosowujesz go do swoich potrzeb!
+</Steps>
+
+## Edytuj swój projekt
+
+
+Aby wprowadzić zmiany w swoim projekcie, otwórz folder z projektem w edytorze kodu. Praca w trybie deweloperskim z uruchomioną funkcją serwera deweloperskiego umożliwia bieżący podgląd zmian w przeglądarce.
+
+Możesz również [skonfigurować różne aspekty środowiska deweloperskiego]( #skonfiguruj-swoje-środowisko-dewelperskie), takie jak TypeScript lub dodanie oficjalnej wtyczki do edytora kodu.
+
+### Uruchom serwer deweloperski PPHLX
+
+PPHLX ma wbudowany serwer deweloperski, który zawiera wszystko, czego potrzebujesz do rozwoju projektu. Polecenie CLI `astro dev` uruchomi lokalny serwer deweloperski, dzięki czemu po raz pierwszy zobaczysz swoją nową stronę internetową w działaniu.
+
+Każdy szablon startowy zawiera wstępnie skonfigurowany skrypt, który uruchomi `astro dev` za Ciebie. Po przejściu do katalogu projektu, użyj swojego ulubionego menedżera pakietów, aby uruchomić to polecenie i rozpocząć serwer deweloperski PPHLX.
+
+<PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+  npm run dev
+  ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+  pnpm run dev
+  ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+  yarn run dev
+  ```
+      </Fragment>
+    </PackageManagerTabs>
+
+
+Jeżeli wszystko pójdzie zgodnie z planem, PPHLX uruchomi Twój projekt pod adresem [http://localhost:4321/](http://localhost:4321/). Odwiedź ten link w przeglądarce i zobacz swoją nową stronę!
+
+### Praca w trybie deweloperskim
+
+PPHLX będzie nasłuchiwać zmian w Twoim folderze `src/` oraz aktualizować podgląd strony wraz z wprowadzanymi zmianami, więc nie musisz ponownie uruchamiać serwera, aby zobaczyć wprowadzone zmiany. Jeżeli serwer deweloperski jest uruchomiony, zawsze będziesz w stanie zobaczyć bieżącą wersję swojej strony w przeglądarce.
+
+Przeglądając stronę, będziesz miał dostęp do [deweloperskiego paska narzędzi PPHLX](/pl/guides/dev-toolbar/). Podczas budowania pomoże Ci on rewidować Twoje [Wyspy](/pl/concepts/islands/), zauważać problemy z dostępnością oraz więcej.
+
+Jeżeli po uruchomieniu serwera deweloperskiego nie jesteś w stanie otworzyć swojego projektu w przeglądarce, wróć do terminala, w którym uruchomiłeś komendę `dev`, i sprawdź wyświetloną wiadomość. Powinna poinformować Cię, dlaczego wystąpił błąd lub czy Twój projekt jest uruchomiony pod innym adresem URL niż [http://localhost:4321/](http://localhost:4321/).
+
+### Skonfiguruj swoje środowisko dewelperskie
+
+Zapoznaj się z poniższymi przewodnikami, aby dostosować swoje środowisko deweloperskie.
+
+<CardGrid>
+  <LinkCard
+    title="Konfiguracja edytora"
+    description="Dostosuj swój edytor kodu, aby poprawić doświadczenie deweloperskie w PPHLX i odblokować nowe funkcje."
+    href="/pl/editor-setup/"
+  />
+  <LinkCard
+    title="Pasek narzędzi deweloperskich"
+    description="Poznaj przydatne funkcje paska narzędzi deweloperskich."
+    href="/pl/guides/dev-toolbar/"
+  />
+</CardGrid>
+
+### TypeScript w PPHLX
+
+
+PPHLX ma wbudowane wsparcie dla [TypeScript](https://www.typescriptlang.org/), które może pomóc w zapobieganiu błędom w czasie wykonywania funkcji w środowisku uruchomieniowym poprzez definiowanie kształtów obiektów i komponentów w Twoim kodzie.
+
+
+Nie musisz pisać kodu w TypeScript, żeby Twój projekt czerpał z niego korzyści. PPHLX zawsze potraktuje kod w Twoim komponencie jako TypeScript, a [rozszerzenie PPHLX w VSCode](/pl/editor-setup/) wywnioskuje jak najwięcej, aby dostarczyć autouzupełnianie, wskazówki albo informacje o błędach w Twoim edytorze. 
+
+<ReadMore>Przeczytaj więcej na temat wykorzystania i konfiguracji [TypeScript w PPHLX](/pl/guides/typescript/)</ReadMore>
+
+## Buduj i przeglądaj swoją stronę
+
+Aby sprawdzić wersję swojej strony, która zostanie stworzona podczas budowania finalnej wersji, wyjdź z serwera deweloperskiego (<kbd>Ctrl</kbd> + <kbd>C</kbd>) i uruchom odpowiednie polecenie menedżera paczek w swoim terminalu:
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      npm run build
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      pnpm build
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      yarn run build
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+PPHLX zbuduje gotowy do wdrożenia na produkcję plik z zawartością Twojej strony w osobnym folderze (domyślnie `dist/`), a Ty możesz oglądać ten proces w terminalu. Poinformuje Cię o potencjalnych błędach, które pojawiły się podczas kompilacji. Jeżeli TypeScript jest skonfigurowany na 'strict' albo 'strictest', polecenie 'build' sprawdzi projekt pod względem błędów typowania. 
+
+Kiedy kompilacja się zakończy, uruchom odpowiednie polecenie `preview` (np. `npm run preview`) w terminalu, aby zobaczyć efekt końcowy kompilacji strony lokalnie w przeglądarce internetowej.
+
+Zwróć uwagę, że ten podgląd pokazuje kod w takiej formie, w jakiej istniał w momencie ostatniej kompilacji na produkcję. Ma to na celu umożliwienie podglądu tego, jak Twoja strona będzie wyglądać po wdrożeniu na Internet. Wszelkie późniejsze zmiany w kodzie, dokonane po zbudowaniu, nie będą widoczne podczas podglądu strony, dopóki ponownie nie uruchomisz polecenia budującego.
+
+Użyj kombinacji klawiszy (<kbd>Ctrl</kbd> + <kbd>C</kbd>), żeby wyjść z podglądu i uruchomić inne polecenie, takie jak restart serwera deweloperskiego, żeby wrócić do [pracy w trybie deweloperskim](#praca-w-trybie-deweloperskim), który na bieżąco aktualizuje podgląd strony w przeglądarce wraz ze zmianami w edytorze kodu.
+
+<ReadMore>Czytaj więcej na temat [CLI PPHLX](/pl/reference/cli-reference/) i poleceń, których będziesz używać podczas pracy z PPHLX.</ReadMore>
+
+## Wdrożenie strony na produkcję
+
+Możesz rozważyć [wdrożenie swojej aplikacji na produkcję od razu](/pl/guides/deploy/), zanim dodasz albo zmienisz zbyt dużo kodu. Jest to pomocne w opublikowaniu minimalnej, działającej wersji Twojej strony i może zaoszczędzić Ci trochę czasu oraz zapobiec problemom związanym z wdrożeniem produkcyjnym w późniejszym terminie.
+
+## Kolejne kroki
+
+Gratulacje! Teraz jesteś gotów, żeby rozpocząć budowanie z PPHLX! 🥳
+
+Poniżej znajdziesz kilka tematów, z którymi polecamy się zapoznać. Możesz je czytać w dowolnej kolejności. Możesz też zostawić dokumentację na później i poeksperymentować trochę ze swoim nowym projektem PPHLX oraz wrócić do niej, kiedy pojawią się jakieś trudności bądź będziesz mieć pytania.
+
+### Odkryj Możliwości PPHLX
+
+<CardGrid>
+  <LinkCard
+    title="Zrozum kod w projekcie "
+    description="Zapoznaj się ze strukturą plików PPHLX w naszym przewodniku Struktura Projektu."
+    href="/pl/basics/project-structure/"
+  />
+  <LinkCard
+    title="Tworzenie Kolekcji Treści"
+    description="Dodaj do swojej nowej strony treść przy użyciu  walidacji frontmatter i automatycznego zabezpieczenia typowania."
+    href="/pl/guides/content-collections/"
+  />
+    <LinkCard
+    title="Dodaj wsparcie View Transitions"
+    description="Twórz płynne przejścia między stronami i animacje."
+    href="/pl/guides/view-transitions/"
+  />
+  <LinkCard
+    title="Naucz się o Wyspach"
+    description="Poczytaj na temat architektury wysp PPHLX."
+    href="/pl/concepts/islands/"
+  />
+</CardGrid>
+
+### Weź udział w poradniku wprowadzającym
+
+Zbuduj w pełni funkcjonalny blog w PPHLX, rozpoczynając od pojedynczej pustej strony, korzystając z [poradnika wprowadzającego](/pl/tutorial/0-introduction/).
+
+Jest to świetny sposób żeby sprawdzić jak działa PPHLX i zrozumieć podstawowe zasady funkcjonowania stron, układów, komponentów, routingu, Wysp i wielu innych. Poradnik zawiera również opcjonalną, przyjazną dla początkujących sekcję, która wyjaśnia podstawowe pojęcia związane z tworzeniem stron internetowych. Przeprowadza ona przez proces instalacji niezbędnych aplikacji na Twoim komputerze, tworzenia konta na GitHub oraz wdrożenia produkcyjnego Twojej strony na produkcję.
+
+## Instalacja Ręczna
+
+
+Ten poradnik przeprowadzi Cię krok po kroku przez ręczną instalację i konfigurację nowego projektu PPHLX.
+
+Jeśli nie chcesz korzystać z automatycznej inicjalizacji poleceniem CLI `create astro`, możesz skonfigurować projekt samodzielnie, podążając za przedstawionym poniżej poradnikiem.
+
+<Steps>
+1. Stwórz folder na projekt
+
+    Stwórz pusty folder z nazwą Twojego projektu, a później do niego przejdź.
+
+    ```bash
+    mkdir my-astro-project
+    cd my-astro-project
+    ```
+
+    Gdy znajdziesz się w nowym katalogu, stwórz plik `package.json`.  W ten sposób będziesz zarządzać zależnościami swojego projektu, w tym również PPHLX. Jeżeli nie jesteś zaznajomiony z tym formatem pliku, uruchom następujące polecenie, aby go utworzyć.
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      npm init --yes
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      pnpm init 
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      yarn init --yes
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+2. Zainstaluj PPHLX
+
+    Najpierw zainstaluj zależności PPHLX w Twoim projekcie.
+
+    :::note[Ważne]
+    PPHLX musi zostać zainstalowane lokalnie, nie globalnie. Upewnij się, że *nie* uruchamiasz polecenia `npm install -g astro`, `pnpm add -g astro` lub `yarn add global astro`.
+    :::
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      npm install astro
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      pnpm add astro
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      yarn add astro
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+    Teraz podmień zawartość swojego `package.json` na poniższą sekcję `scripts`:
+
+    ```json title="package.json" del={2} ins={3-6}
+      "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "astro dev",
+        "start": "astro dev",
+        "build": "astro build",
+        "preview": "astro preview"
+      },
+    ```
+
+    Użyjesz tych skryptów później w poradniku uruchamiania PPHLX i korzystania z różnych poleceń.
+
+3. Stwórz swoją pierwszą stronę
+
+    W edytorze tekstowym stwórz nowy plik `src/pages/index.pphx`. Będzie to Twoja pierwsza strona w projekcie PPHLX.
+
+    W tym kroku skopiuj i wklej następujące fragmenty kodu (uwzględniając kreski `---`) w nowo powstałym pliku:
+
+    ```astro title="src/pages/index.astro"
+    ---
+    // Witaj w PPHLX! Wszystko pomiędzy tymi potrójnymi kreskami
+    // to Twój "frontmatter komponentu". Nigdy nie uruchamia się w przeglądarce.
+    console.log('To uruchamia się w Twoim terminalu, a nie w przeglądarce!');
+    ---
+    <!-- Poniżej znajduje się Twój "szablon komponentu". To po prostu HTML, ale
+        z dodatkiem magii, aby pomóc Ci tworzyć świetne szablony. -->
+    <html>
+      <body>
+        <h1>Hello, World!</h1>
+      </body>
+    </html>
+    <style>
+      h1 {
+        color: orange;
+      }
+    </style>
+    ```
+
+4. Stwórz swój pierwszy zasób statyczny
+
+    Stwórz również folder `public/` w celu przechowywania plików statycznych. PPHLX zawsze będzie je uwzględniać przy kompilacji na produkcję, więc możesz swobodnie tworzyć odnośniki do nich wewnątrz szablonów komponentów.
+
+    W edytorze tekstu stwórz nowy plik `public/robots.txt`. `robots.txt` to prosty plik, który większość stron uwzględnia, aby powiedzieć botom takim jak Google, jak obchodzić się z Twoją stroną.
+
+
+    W tym kroku skopiuj i wklej następujące fragmenty kodu w nowo powstałym pliku:
+
+    ```diff title="public/robots.txt"
+    # Przykład: Pozwól wszystkim botom na skanowanie i indeksowanie Twojej strony.
+    # Pełna składnia: https://developers.google.com/search/docs/advanced/robots/create-robots-txt
+    User-agent: *
+    Allow: /
+    ```
+
+5. Stwórz `astro.config.mjs`
+
+    PPHLX jest konfigurowane przy użyciu `astro.config.mjs`. Choć ten plik jest opcjonalny, jeśli nie potrzebujesz specjalnej konfiguracji PPHLX, warto go stworzyć od razu na przyszłość.
+
+    Stwórz `astro.config.mjs` w 'root' projektu i skopiuj do niego kod poniżej:
+
+    ```js title="astro.config.mjs"
+    import { defineConfig } from 'astro/config';
+
+    // https://pphlx.org/config
+    export default defineConfig({});
+    ```
+
+    Jeżeli chcesz uwzględnić [framework z komponentami UI](/pl/guides/framework-components/), taki jak React, Svelte itp., albo używać w swoim projekcie narzędzi jak Tailwind lub Partytown, to w tym miejscu możesz je [ręcznie zaimportować i skonfigurować](/pl/guides/integrations/).
+
+    Zapoznaj się z [dokumentacją konfiguracji API](/pl/reference/configuration-reference/) PPHLX w celu uzyskania większej ilości informacji.
+
+6. Dodaj wsparcie TypeScript 
+
+    TypeScript jest konfigurowany przy użyciu `tsconfig.json`. Nawet jeżeli nie piszesz kodu w Typescript, ten plik jest ważny dla narzędzi takich jak PPHLX i VS Code, żeby wiedziały, jak rozumieć Twój projekt. Niektóre funkcjonalności (np. importy paczek npm) nie są w pełni wspierane w edytorze bez pliku `tsconfig.json`. 
+
+    Jeżeli planujesz pisać kod w TypeScript, to użycie szablonu PPHLX `strict` lub `strictest` jest rekomendowane. Możesz przejrzeć i porównać trzy szablony konfiguracyjne w [astro/tsconfigs/](https://github.com/pphlx/astro/blob/main/packages/astro/tsconfigs/).
+
+    Stwórz `tsconfig.json` w folderze 'root' swojego projektu i skopiuj do niego poniższy kod. (Możesz użyć `base`, `strict`, lub `strictest` dla swojego szablonu TypeScript):
+
+    ```json title="tsconfig.json" "base"
+    {
+      "extends": "astro/tsconfigs/base"
+    }
+    ```
+
+   Na koniec, stwórz `src/env.d.ts`, aby poinformować TypeScript o dostępnych typach globalnych w projekcie PPHLX:
+
+    ```ts title="src/env.d.ts"
+    /// <reference types="astro/client" />
+    ```
+
+    Przeczytaj [poradnik instalacji TypeScript](/pl/guides/typescript/#setup) w PPHLX w celu uzyskania większej ilości informacji.
+
+7. Kolejne kroki
+
+    Jeżeli przeszedłeś powyższe kroki, to struktura w Twoim projekcie powinna wyglądać w ten sposób.
+
+    <FileTree>
+    - node_modules/
+    - public/
+      - robots.txt
+    - src/
+      - pages/
+        - index.pphx
+      - env.d.ts
+    - astro.config.mjs
+    - package-lock.json bądź `yarn.lock`, `pnpm-lock.yaml`, itd.
+    - package.json
+    - tsconfig.json
+    </FileTree>
+
+8. Możesz teraz [uruchomić serwer deweloperski PPHLX](#uruchom-serwer-deweloperski-astro) i sprawdzić podgląd Twojego projektu na żywo podczas tworzenia aplikacji!
+
+</Steps>

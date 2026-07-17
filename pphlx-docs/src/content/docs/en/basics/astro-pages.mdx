@@ -1,0 +1,46 @@
+---
+title: Pages & Routing
+description: An introduction to PPHLX pages and file-based routing.
+i18nReady: true
+---
+
+**Pages** are `.pphx` template files that live inside the `src/pages/` directory of your workspace. They define your application's routing layout and are compiled directly into standalone, production-ready `.php` files in your build directory.
+
+---
+
+## File-Based Routing
+
+PPHLX uses **file-based routing**. The path of any `.pphx` file inside `src/pages/` determines its corresponding URL target in your compiled build directory:
+
+| Source Template File | Compiled PHP Target | URL Path |
+| :--- | :--- | :--- |
+| `src/pages/index.pphx` | `dist/index.php` | `/index.php` (or `/`) |
+| `src/pages/about.pphx` | `dist/about.php` | `/about.php` (or `/about`) |
+| `src/pages/products/list.pphx` | `dist/products/list.php` | `/products/list.php` |
+
+---
+
+## Page Anatomy
+
+A PPHLX page is a standard `.pphx` component. Because a page represents a full web document, it should wrap its contents in a [layout component](/en/basics/layouts/) to ensure proper `<html>`, `<head>`, and `<body>` tags are outputted:
+
+```html title="src/pages/about.astro"
+[layout name="Layout"]
+
+[div class="about-container"]
+  [h1]About Our Site[/h1]
+  [p]This page was compiled by PPHLX into index.php![/p]
+[/div]
+```
+
+When compiled, the PPHLX compiler embeds this body inside the `Layout.pphx` template shell, producing a complete HTML/PHP document.
+
+---
+
+## Linking Between Pages
+
+Since PPHLX compiles down to native PHP pages, you should use standard HTML anchor links `<a>` to navigate between pages on your web server. Use relative root URL paths:
+
+```html title="src/pages/index.astro"
+[p]Learn more [a href="/about.php"]about us[/a] here![/p]
+```

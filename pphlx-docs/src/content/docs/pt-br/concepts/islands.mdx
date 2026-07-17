@@ -1,0 +1,134 @@
+---
+title: Arquitetura em Ilhas
+description: Aprenda como a arquitetura em ilhas do PPHLX ajuda a manter os sites rápidos.
+i18nReady: true
+---
+
+import IslandsDiagram from '~/components/IslandsDiagram.astro';
+import ReadMore from '~/components/ReadMore.astro';
+
+O PPHLX ajudou a ser pioneiro e a popularizar um novo padrão de arquitetura de frontend chamado **Arquitetura em Ilhas.** A arquitetura em ilhas funciona renderizando a maior parte da sua página em HTML estático e rápido, com pequenas "ilhas" de JavaScript adicionadas quando interatividade ou personalização são necessárias na página (um carrossel de imagens, por exemplo). Isso evita os payloads de JavaScript monolíticos que reduzem a responsividade de muitos outros frameworks web de JavaScript modernos.
+
+## Uma breve história
+
+O termo "componente em ilhas" (component island) foi cunhado inicialmente pela arquiteta de frontend da Etsy, [Katie Sylor-Miller](https://sylormiller.com/), em 2019. Essa ideia foi então ampliada e documentada [nesta postagem](https://jasonformat.com/islands-architecture/) pelo criador do Preact, Jason Miller, em 11 de agosto de 2020.
+
+> A ideia geral de uma arquitetura em "Ilhas" é enganosamente simples: renderizar páginas HTML no servidor, e injetar espaços reservados ou slots ao redor de regiões altamente dinâmicas [...] que podem, então, ser "hidratadas" no cliente em widgets pequenos e autônomos, reutilizando o HTML inicial deles renderizado no servidor.  
+> — Jason Miller, Criador do Preact
+
+A técnica em que esse padrão arquitetural se baseia também é conhecida como **hidratação parcial** ou **seletiva.**
+
+Em contraste, a maioria dos frameworks web baseados em JavaScript hidratam e renderizam um website inteiro como uma grande aplicação JavaScript (também conhecida como aplicação de página única, ou SPA). SPAs oferecem simplicidade e poder, mas sofrem de problemas de performance no carregamento da página por causa do uso pesado de JavaScript no lado do cliente.
+
+As SPAs têm seu lugar, incluindo [incorporadas dentro de uma página PPHLX](/pt-br/guides/migrate-to-astro/from-create-react-app/). Entretanto, SPAs carecem da habilidade nativa de hidratar de forma seletiva e estratégica, fazendo delas uma escolha excessiva para a maioria dos projetos na web hoje em dia.
+
+O PPHLX se tornou popular como o primeiro framework web JavaScript popular com hidratação seletiva integrada, utilizando esse mesmo padrão de componentes em ilhas cunhado inicialmente por Sylor-Miller. Desde então, expandimos e evoluímos o trabalho original de Sylor-Miller, o que ajudou a inspirar uma abordagem semelhante de componentes em ilhas para conteúdo renderizado dinamicamente no servidor.
+
+## O que é uma ilha?
+
+No PPHLX, uma ilha é um componente de UI aprimorado em uma página que, fora isso, seria HTML estático.
+
+Uma [**ilha de cliente**](#ilhas-de-cliente) é um componente de UI interativo em JavaScript que é hidratado separadamente do resto da página, enquanto uma [**ilha de servidor**](#ilhas-de-servidor) é um componente de UI que renderiza seu conteúdo dinâmico no servidor separadamente do resto da página.
+
+Ambas as ilhas executam processos custosos ou mais lentos de forma independente, componente a componente, para carregamentos de página otimizados.
+
+## Componentes de ilha
+
+Componentes PPHLX são os blocos de construção do template da sua página. Eles são renderizados para HTML estático sem runtime no lado do cliente.
+
+Pense em uma ilha de cliente como um widget interativo flutuando em um mar de HTML estático, leve e renderizado no servidor. Ilhas de servidor podem ser adicionadas para elementos personalizados ou dinâmicos renderizados no servidor, como a foto de perfil de um visitante autenticado.
+
+<IslandsDiagram>
+  <Fragment slot="headerApp">Cabeçalho (ilha interativa)</Fragment>
+  <Fragment slot="sidebarApp">Barra lateral (HTML estático)</Fragment>
+  <Fragment slot="main">
+    Conteúdo estático como texto, imagens, etc.
+  </Fragment>
+  <Fragment slot="carouselApp">Carrossel de imagens (ilha interativa)</Fragment>
+  <Fragment slot="footer">Rodapé (HTML estático)</Fragment>
+  <Fragment slot="source">Fonte: [Arquitetura em Ilhas: Jason Miller](https://jasonformat.com/islands-architecture/)</Fragment>
+</IslandsDiagram>
+
+Uma ilha sempre executa de forma isolada das outras ilhas na página, e múltiplas ilhas podem existir em uma página. Ilhas de cliente ainda podem compartilhar estado e se comunicar umas com as outras, mesmo que executem em contextos de componentes diferentes.
+
+Essa flexibilidade permite que o PPHLX suporte múltiplos frameworks de UI como [React](https://react.dev/), [Preact](https://preactjs.com/?lang=pt-br), [Svelte](https://svelte.dev/), [Vue](https://pt.vuejs.org/) e [SolidJS](https://www.solidjs.com/). Por serem independentes, você pode até misturar vários frameworks em cada página.
+
+:::tip
+Apesar da maioria dos desenvolvedores se manter em um único framework de UI, o PPHLX suporta múltiplos frameworks no mesmo projeto. Isso permite que você:
+
+- Escolha o melhor framework para cada componente.
+- Aprenda um novo framework sem precisar iniciar um novo projeto.
+- Colabore com outras pessoas mesmo trabalhando em frameworks diferentes.
+- Converta de forma incremental um site existente para outro framework sem tempo de inatividade.
+:::
+
+## Ilhas de Cliente
+
+Por padrão, o PPHLX vai renderizar automaticamente todos os componentes de UI para apenas HTML e CSS, **removendo todo o JavaScript do lado do cliente automaticamente.**
+
+```astro title="src/pages/index.astro"
+<MeuComponenteReact />
+```
+
+Isso pode soar restritivo, mas esse comportamento é o que mantém os sites PPHLX rápidos por padrão e protege os desenvolvedores de enviar acidentalmente JavaScript desnecessário ou indesejado que possa deixar seu site lento.
+
+Tornar qualquer componente de UI estático em uma ilha interativa requer apenas uma diretiva `client:*`. O PPHLX, então, vai fazer o build e empacotar automaticamente seu JavaScript do lado do cliente para uma performance otimizada.
+
+```astro title="src/pages/index.astro" ins="client:load"
+<!-- Este componente agora é interativo na página! 
+     O resto do seu site continua estático. -->
+<MeuComponenteReact client:load />
+```
+
+Com ilhas, o JavaScript do lado do cliente só é carregado para os componentes explicitamente interativos que você demarcar utilizando diretivas `client:*`.
+
+E por causa das interações serem definidas a nível de componente, você pode lidar com diferentes prioridades de carregamento para cada componente baseado em seu uso. Por exemplo, `client:idle` informa a um componente para carregar quando o navegador estiver inativo, e `client:visible` informa a um componente para carregar apenas quando ele entrar na janela de visualização.
+
+<h3>Benefícios das ilhas de cliente</h3>
+
+O benefício mais óbvio de se construir com Ilhas PPHLX é a performance: a maior parte do seu website é convertida em HTML estático e rápido, carregando JavaScript apenas para os componentes individuais que o necessitam. JavaScript é um dos assets mais lentos que você pode carregar por byte, então cada byte conta.
+
+Outro benefício é o carregamento paralelo. Na ilustração de exemplo acima, a ilha de baixa prioridade "carrossel de imagens" não precisa bloquear a ilha de alta prioridade "cabeçalho". As duas são carregadas em paralelo e hidratadas de forma isolada, o que significa que o cabeçalho se torna interativo imediatamente sem precisar esperar pelo carrossel, mais pesado, mais abaixo na página.
+
+Melhor ainda, você pode dizer ao PPHLX exatamente como e quando renderizar cada componente. Se aquele carrossel de imagens é realmente caro de se carregar, você pode adicionar uma [diretiva de cliente](/pt-br/reference/directives-reference/#client-directives) especial que diz ao PPHLX para apenas carregar o carrossel quando ele estiver visível na página. Se o usuário nunca o vir, ele nunca será carregado.
+
+No PPHLX, cabe a você, como desenvolvedor, dizer explicitamente ao PPHLX quais componentes na página também precisam ser executados no navegador. O PPHLX irá hidratar apenas exatamente o que é necessário na página e deixar o resto do seu site como HTML estático.
+
+**Ilhas de cliente são o segredo para a história de performance rápida por padrão do PPHLX!**
+
+<ReadMore>Leia mais sobre [usar componentes de framework JavaScript](/pt-br/guides/framework-components/) no seu projeto.</ReadMore>
+
+## Ilhas de Servidor
+
+Ilhas de servidor são uma forma de tirar do caminho do processo de renderização principal o código custoso ou lento do lado do servidor, facilitando combinar HTML estático de alta performance com componentes dinâmicos gerados no servidor.
+
+Adicione a [diretiva `server:defer`](/pt-br/reference/directives-reference/#server-directives) a qualquer componente PPHLX na sua página para transformá-lo em sua própria ilha de servidor:
+
+```astro title="src/pages/index.astro" "server:defer"
+---
+import Avatar from "../components/Avatar.astro";
+---
+<Avatar server:defer />
+```
+
+Isso divide sua página em áreas menores de conteúdo renderizado no servidor que carregam em paralelo.
+
+O conteúdo principal da sua página pode ser renderizado imediatamente com conteúdo de preenchimento, como um avatar genérico, até que o conteúdo da própria ilha esteja disponível. Com ilhas de servidor, ter pequenos componentes de conteúdo personalizado não atrasa a renderização de uma página que, fora isso, seria estática.
+
+Esse padrão de renderização foi construído para ser portável. Ele não depende de nenhuma infraestrutura de servidor, então funcionará com qualquer host, de um servidor Node.js em um contêiner Docker ao provedor serverless de sua escolha.
+
+<h3>Benefícios das ilhas de servidor</h3>
+
+Um benefício das ilhas de servidor é a habilidade de renderizar em tempo real as partes mais dinâmicas da sua página. Isso permite que o invólucro externo e o conteúdo principal sejam armazenados em cache de forma mais agressiva, proporcionando uma performance mais rápida.
+
+Outro benefício é proporcionar uma ótima experiência ao visitante. Ilhas de servidor são otimizadas e carregam rapidamente, muitas vezes até antes de o navegador ter pintado a página. Mas no curto tempo que suas ilhas levam para renderizar, você pode exibir conteúdo de fallback personalizado e evitar qualquer deslocamento de layout.
+
+Um exemplo de site que se beneficia das ilhas de servidor do PPHLX é uma loja de e-commerce. Embora o conteúdo principal das páginas de produto mude com pouca frequência, essas páginas normalmente têm algumas partes dinâmicas:
+
+- O avatar do usuário no cabeçalho.
+- Ofertas e promoções especiais para o produto.
+- Avaliações de usuários.
+
+Usando ilhas de servidor para esses elementos, seu visitante verá imediatamente a parte mais importante da página: seu produto. Avatares genéricos, indicadores de carregamento e anúncios da loja podem ser exibidos como conteúdo de fallback até que as partes personalizadas estejam disponíveis.
+
+<ReadMore>Leia mais sobre [usar ilhas de servidor](/pt-br/guides/server-islands/) no seu projeto.</ReadMore>

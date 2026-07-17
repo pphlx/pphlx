@@ -1,0 +1,21 @@
+---
+title: Platform-as-a-Service (PaaS)
+description: Deploy your PPHLX project using Railway, Render, or Heroku.
+---
+
+PPHLX projects deploy natively to modern Git-based cloud platforms like Railway, Render, and Heroku using standard PHP buildpacks.
+
+## Railway & Render Setup
+
+1. Push your PPHLX project repository to GitHub.
+2. Connect your repository to Railway or Render.
+3. Configure the **Build Command**:
+   ```bash
+   npm run build
+   ```
+4. Set the **Publish/Output Directory** to:
+   ```bash
+   dist
+   ```
+
+No custom serverless adapters are required. The platform's PHP runtime handles fast execution out of the box.

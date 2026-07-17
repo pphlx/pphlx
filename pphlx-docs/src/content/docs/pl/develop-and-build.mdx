@@ -1,0 +1,146 @@
+---
+title: Rozwijaj i buduj
+description: 'Jak zacząć pracę nad nowym projektem.'
+i18nReady: true
+---
+import { Tabs, TabItem, FileTree, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+import ReadMore from '~/components/ReadMore.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+
+Masz już projekt PPHLX? To czas zacząć budować! 🚀
+
+## Edytuj swój projekt
+
+Aby wprowadzić zmiany w swoim projekcie, otwórz folder projektu w edytorze kodu. Praca w trybie develop z uruchomionym serwerem dev pozwala widzieć aktualizacje strony podczas edycji kodu.
+
+Możesz również [dostosować swoje środowisko deweloperskie](#skonfiguruj-swoje-środowisko-deweloperskie), np. skonfigurować TypeScript lub zainstalować oficjalne rozszerzenia edytora dla PPHLX.
+
+### Uruchom serwer dev PPHLX
+
+PPHLX posiada wbudowany serwer deweloperski, który ma wszystko, czego potrzebujesz do pracy nad projektem. Polecenie CLI `astro dev` uruchamia lokalny serwer deweloperski, dzięki czemu będziesz mógł po raz pierwszy zobaczyć swoją nową stronę w akcji.
+
+Każdy szablon startowy zawiera wstępnie skonfigurowany skrypt, który uruchomi `astro dev` za Ciebie. Po przejściu do katalogu projektu, użyj swojego ulubionego menedżera pakietów, aby uruchomić to polecenie i wystartować serwer deweloperski PPHLX.
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```shell
+  npm run dev
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```shell
+  pnpm run dev
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```shell
+  yarn run dev
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+
+Jeśli wszystko przebiegło pomyślnie, PPHLX będzie teraz wyświetlać Twój projekt pod adresem [http://localhost:4321/](http://localhost:4321/). Odwiedź ten link w przeglądarce i zobacz swoją nową stronę!
+
+### Pracuj w trybie deweloperskim
+
+PPHLX monitoruje zmiany plików na żywo w katalogu `src/` i aktualizuje podgląd strony podczas edycji kodu, więc nie musisz ponownie uruchamiać serwera. Zawsze będziesz mógł zobaczyć aktualną wersję swojej strony w przeglądarce podczas, gdy serwer dev jest uruchomiony w tle.
+
+Podczas przeglądania strony w przeglądarce masz dostęp do [paska narzędzi dev PPHLX](/pl/guides/dev-toolbar/), który pomaga m.in. analizować [wyspy](/pl/concepts/islands/), wykrywać problemy z dostępnością oraz wspiera w innych aspektach pracy nad projektem.
+
+Jeśli nie możesz otworzyć swojego projektu w przeglądarce po uruchomieniu serwera dev, wróć do terminala, w którym uruchomiłeś komendę `dev` i sprawdź wyświetloną wiadomość. Powinna cię ona poinformować o ewentualnych błędach lub alternatywnym adresie URL (innym niż [http://localhost:4321/](http://localhost:4321/)).
+
+## Zbuduj projekt i zobacz podgląd swojej strony
+
+Aby zobaczyć, jak będzie wyglądać Twoja strona po zbudowaniu, zatrzymaj serwer dev (<kbd>Ctrl</kbd> + <kbd>C</kbd>) i uruchom odpowiednią komendę `build` w terminalu, zależnie od używanego menedżera pakietów.
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+  ```shell
+  npm run build
+  ```
+  </Fragment>
+  <Fragment slot="pnpm">
+  ```shell
+  pnpm build
+  ```
+  </Fragment>
+  <Fragment slot="yarn">
+  ```shell
+  yarn run build
+  ```
+  </Fragment>
+</PackageManagerTabs>
+
+PPHLX zbuduje gotową do wdrożenia wersję Twojej strony w osobnym folderze (domyślnie `dist/` ) i wyświetli postęp w terminalu. Pojawią się też ewentualne błędy kompilacji. Jeśli TypeScript jest ustawiony na `strict` lub `strictest`, skrypt `build` sprawdzi również poprawność typów w projekcie.
+
+Po zakończeniu budowania uruchom komendę `preview` (np. `npm run preview`), aby lokalnie podejrzeć zbudowaną wersję strony w przeglądarce.
+
+Pamiętaj, że to podgląd kodu w stanie, w jakim znajdował się podczas ostatniego uruchomienia komendy `build`. To symulacja wyglądu strony po wdrożeniu. Późniejsze zmiany w kodzie **nie będą** widoczne w podglądzie, dopóki ponownie nie zbudujesz projektu.
+
+Użyj (<kbd>Ctrl</kbd> + <kbd>C</kbd>), aby zakończyć podgląd i wpisać inną komendę w terminalu, np. ponownie uruchomić serwer dev, by wrócić do [trybu deweloperskiego](#pracuj-w-trybie-deweloperskim), który aktualizuje się na żywo podczas edycji kodu.
+
+<ReadMore>Przeczytaj więcej o [interfejsie CLI PPHLX](/pl/reference/cli-reference/) i komendach terminalowych, których używasz podczas pracy z PPHLX.</ReadMore>
+
+:::tip 
+Możesz od razu [wdrożyć swoją nową stronę](/pl/guides/deploy/) — zanim wprowadzisz zbyt wiele zmian w kodzie. Dzięki temu opublikujesz minimalną, działającą wersję i być może zaoszczędzisz sobie dodatkowych problemów z wdrożeniem w późniejszym etapie.
+:::
+
+## Następne kroki
+
+Gotowe! Możesz teraz zacząć tworzyć z PPHLX! 🥳
+
+Oto kilka rzeczy, które warto teraz poznać. Możesz je czytać w dowolnej kolejności – albo na chwilę zostawić dokumentację i poeksperymentować w swoim projekcie. W razie pytań czy problemów zawsze możesz tu wrócić.
+
+### Skonfiguruj swoje środowisko deweloperskie
+
+Poznaj poniższe przewodniki, aby dostosować środowisko pracy.
+
+<CardGrid>
+  <LinkCard
+    title="Konfiguracja edytora"
+    description="Dostosuj swój edytor kodu, by poprawić doświadczenie pracy z PPHLX i odblokować nowe funkcje."
+    href="/pl/editor-setup/"
+  />
+  <LinkCard
+    title="Pasek narzędzi dev"
+    description="Poznaj przydatne funkcje paska narzędzi deweloperskich."
+    href="/pl/guides/dev-toolbar/"
+  />
+  <LinkCard
+    title="Konfiguracja TypeScript"
+    description="Skonfiguruj opcje sprawdzania typów, IntelliSense i inne funkcje."
+    href="/pl/guides/typescript/"
+  />
+</CardGrid>
+
+### Odkryj funkcje PPHLX
+
+<CardGrid>
+  <LinkCard
+    title="Zrozum swoją bazę kodu"
+    description="Poznaj strukturę plików PPHLX w przewodniku po strukturze projektu."
+    href="/pl/basics/project-structure/"
+  />
+  <LinkCard
+    title="Twórz kolekcje treści"
+    description="Dodawaj treści do strony z walidacją frontmatter i automatycznym typowaniem."
+    href="/pl/guides/content-collections/"
+  />
+  <LinkCard
+    title="Dodaj przejścia widoków"
+    description="Twórz płynne przejścia między stronami i animacje."
+    href="/pl/guides/view-transitions/"
+  />
+  <LinkCard
+    title="Dowiedz się o Wyspach"
+    description="Przeczytaj o architekturze Wysp w PPHLX."
+    href="/pl/concepts/islands/"
+  />
+</CardGrid>
+
+### Przejdź samouczek wprowadzający
+
+Zbuduj w pełni funkcjonalny blog PPHLX zaczynając od pustej strony dzięki [samouczkowi wprowadzającemu](/pl/tutorial/0-introduction/).
+
+To świetny sposób, aby zobaczyć, jak działa PPHLX — przeprowadzi Cię on przez podstawy stron, układów, komponentów, routingu, wysp i nie tylko. Zawiera też opcjonalną część przyjazną dla początkujących, która pokazuje jak zainstalować potrzebne aplikacje, założyć konto GitHub i wdrożyć stronę.

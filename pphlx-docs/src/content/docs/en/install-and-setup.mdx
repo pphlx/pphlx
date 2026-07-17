@@ -1,0 +1,130 @@
+---
+title: Install PPHLX
+sidebar:
+  label: Installation
+description: 'How to install the PPHLX compiler and set up a new local workspace.'
+i18nReady: true
+---
+import { Tabs, TabItem, FileTree, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+
+The fastest way to start a new project with PPHLX is by installing our compiler CLI. PPHLX is a fast, zero-dependency compiler written in Go that compiles component-based template structures (`.pphx`) into native, server-side `.php` files.
+
+## Prerequisites
+
+*   **Node.js** - `v18.0.0` or higher (for npm CLI wrapper).
+*   **Go** - `1.21` or higher (only if you want to build the compiler from source).
+*   **Text Editor** - We recommend [VS Code](https://code.visualstudio.com/) with our official PPHLX extension for syntax highlighting.
+
+---
+
+## Installation Options
+
+You can install the PPHLX compiler CLI utility using one of the following channels:
+
+<Tabs>
+  <TabItem label="NPM (Global)">
+    ```shell
+    # Install the PPHLX CLI utility globally
+    npm install -g pphlx
+    ```
+  </TabItem>
+  <TabItem label="Homebrew (macOS/Linux)">
+    ```shell
+    # Tap the PPHLX formula repository
+    brew tap pphlx/tap
+    
+    # Install the compiler binary
+    brew install pphlx
+    ```
+  </TabItem>
+  <TabItem label="Manual Release">
+    Download the compiled executable (e.g. `pphlx.exe` for Windows, `pphlx` for Linux/macOS) directly from our [GitHub Releases](https://github.com/pphlx/pphlx/releases) page and add it to your system's `PATH`.
+  </TabItem>
+</Tabs>
+
+---
+
+## Create a New Project
+
+<Steps>
+1. **Initialize the workspace template**:
+
+    Use the initialization command to create a new folder and set up a clean starting directory:
+    ```shell
+    npx pphlx init my-pphlx-app
+    ```
+
+2. **Navigate to the directory**:
+
+    ```shell
+    cd my-pphlx-app
+    ```
+
+3. **Start the local dev compiler**:
+
+    Launch the hot-rebuilding compiler tool which watches files for changes:
+    ```shell
+    pphlx dev
+    ```
+</Steps>
+
+---
+
+## Manual Workspace Setup
+
+If you prefer to configure the file layout manually, follow these steps:
+
+<Steps>
+1. **Create the workspace directories**:
+
+    ```shell
+    mkdir my-pphlx-app
+    cd my-pphlx-app
+    mkdir src
+    ```
+
+2. **Create the manifests**:
+    
+    PPHLX separates metadata configuration from build pipeline properties. Create two files in the root folder:
+
+    *   `pphlx.json` (Project Manifest): Holds dependency list, name, and script triggers.
+        ```json
+        {
+          "name": "my-pphlx-app",
+          "version": "1.0.0",
+          "scripts": {
+            "build": "pphlx build",
+            "dev": "pphlx dev"
+          }
+        }
+        ```
+    
+    *   `pphlx.config.json` (Compiler settings): Holds compiler input/output paths.
+        ```json
+        {
+          "srcDir": "src",
+          "outDir": "dist",
+          "cssOut": "dist/assets/css/app.css",
+          "jsOut": "dist/assets/js/app.js"
+        }
+        ```
+
+3. **Create your first template page**:
+
+    Create a template file named `src/index.pphx`:
+    ```html
+    [div class="welcome"]
+      [h1]Welcome to PPHLX![/h1]
+      [p]Your manually configured workspace is ready.[/p]
+    [/div]
+    ```
+
+4. **Run the compiler**:
+
+    ```shell
+    pphlx build
+    ```
+</Steps>
+
+Your compiled PHP files will now be outputted inside the `dist` directory according to your configuration.

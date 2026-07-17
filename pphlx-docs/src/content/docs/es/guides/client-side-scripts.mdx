@@ -1,0 +1,222 @@
+---
+title: Scripts y manejo de eventos
+description: Cómo agregar interactividad del lado del cliente a los componentes de PPHLX usando las API de JavaScript nativas del navegador.
+i18nReady: true
+---
+import ReadMore from '~/components/ReadMore.astro'
+
+Puedes enviar JavaScript al navegador y añadir funcionalidad a tus componentes de PPHLX utilizando etiquetas `<script>` en la plantilla del componente.
+
+Los scripts añaden interactividad a tu sitio web, como la gestión de eventos o la actualización dinámica de contenidos, sin necesidad de utilizar un [framework de UI](/es/guides/framework-components/) como React, Svelte o Vue. Esto evita la sobrecarga que supone enviar el JavaScript del framework y no requiere que conozcas ningún framework adicional para crear un sitio web o una aplicación con todas las funciones.
+
+## Scripts del lado del cliente
+
+Los scripts pueden ser usados para agregar event listeners, enviar datos de analítica, reproducir animaciones y todo lo que JavaScript puede hacer en la web.
+
+PPHLX mejora automáticamente la etiqueta estándar HTML `<script>` con empaquetado, TypeScript y mucho más. Consulta [cómo procesa PPHLX los scripts](#procesamiento-de-scripts) para obtener más detalles.
+
+```astro title="src/components/ConfettiButton.astro"
+<!-- src/components/ConfettiButton.pphx -->
+<button data-confetti-button>¡Celebrar!</button>
+
+<script>
+  // Importa desde el paquete de npm.
+  import confetti from 'canvas-confetti';
+
+  // Encuentra nuestro componente en la página.
+  const buttons = document.querySelectorAll('[data-confetti-button]');
+
+  // Agrega event listeners para disparar confetti cuando un botón es clickeado.
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => confetti());
+  });
+</script>
+```
+
+<ReadMore>Consulta [cuándo no se procesarán tus scripts](#scripts-no-procesados) para solucionar problemas relacionados con el comportamiento de los scripts o para aprender a desactivar este procesamiento de forma intencionada.</ReadMore>
+
+## Procesamiento de scripts
+
+De forma predeterminada, PPHLX procesa las etiquetas `<script>` que no contienen atributos (aparte de `src`) de las siguientes maneras:
+
+- **Compatibilidad con TypeScript:** Todos los scripts son TypeScript de forma predeterminada.
+- **Empaquetado de importaciones:** Importa archivos locales o módulos de npm, que se empaquetaran juntos.
+- **Tipo de módulo:** Los scripts procesados se convierten automáticamente en [`type="module"`](https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Modules).
+- **Deduplicación:** Si un componente que contiene un `<script>` se utiliza varias veces en una página, el script solo se incluirá una vez.
+- **Inline automático:** Si el script es lo suficientemente pequeño, PPHLX lo insertará directamente en el HTML para reducir el número de solicitudes.
+
+```astro title="src/components/Example.astro"
+<script>
+  // ¡Procesado! ¡Empaquetado! ¡TypeScript!
+  // La importación de scripts locales y paquetes de npm funciona.
+</script>
+```
+
+### Scripts no procesados
+
+PPHLX no procesará una etiqueta `<script>` si tiene algún atributo distinto de `src`.
+
+Puedes añadir la directiva [`is:inline`](/es/reference/directives-reference/#isinline) para excluir intencionadamente el procesamiento de un script.
+
+```astro title="src/components/InlineScript.astro" "is:inline"
+<script is:inline>
+  // Sin transformar: sin TypeScript y sin resolución de importaciones por parte de PPHLX.
+  // Si se utiliza dentro de un componente, este código se duplica para cada instancia.
+</script>
+```
+
+### Incluye archivos de JavaScript en tu página
+
+Es posible que quieras escribir tus scripts como archivos separados `.js`/`.ts` o necesites referenciar un script externo. Puedes hacerlo referenciándolos en una etiqueta `<script>` con el atributo `src`.
+
+#### Importando scripts locales
+
+**Cuándo usar esto:** Cuando tu script se encuentra dentro de `src/`.
+
+PPHLX procesará estos scripts de acuerdo con las [reglas de procesamiento de scripts](#procesamiento-de-scripts).
+
+```astro title="src/components/LocalScripts.astro"
+<!-- ruta relativa al script en `src/scripts/local.js` -->
+<script src="../scripts/local.js"></script>
+
+<!-- también funciona para archivos TypeScript locales -->
+<script src="./script-with-types.ts"></script>
+```
+
+#### Cargando scripts externos
+
+**Cuando usar esto:** Cuando tu archivo JavaScript se encuentra dentro de `public/` o en un CDN.
+
+Para cargar scripts fuera del directorio `src/` de tu proyecto, incluye la directiva `is:inline`. Este enfoque omite el procesamiento, agrupación y optimización de JavaScript que proporciona PPHLX cuando importa scripts como se describe anteriormente.
+
+```astro title="src/components/ExternalScripts.astro" "is:inline"
+<!-- ruta absoluta a un script en `public/my-script.js` -->
+<script is:inline src="/my-script.js"></script>
+
+<!-- URL completa a un script en un servidor remoto -->
+<script is:inline src="https://my-analytics.com/script.js"></script>
+```
+
+## Patrones comunes de script
+
+### Manejar `onclick` y otros eventos
+
+Algunos frameworks usan una sintaxis especial para manejar eventos como `onClick={...}` (React/Preact) o `@click="..."` (Vue). PPHLX sigue más de cerca el estándar HTML y no usa una sintaxis especial para eventos.
+
+En su lugar, puedes usar [`addEventListener`](https://developer.mozilla.org/es/docs/Web/API/EventTarget/addEventListener) en una etiqueta `<script>` para manejar interaciones de usuario.
+
+```astro title="src/components/AlertButton.astro"
+<button class="alert">¡Haz Click!</button>
+
+<script>
+  // Encuentra todos los botones con la clase `alert` en la página.
+  const buttons = document.querySelectorAll('button.alert');
+
+  // Maneja los clics en cada botón.
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => {
+      alert('¡El botón ha sido clickeado!');
+    });
+  });
+</script>
+```
+
+Si tienes múltiples componentes `<AlertButton />` en una página, PPHLX no ejecutará el script múltiples veces. Los scripts son empaquetados y solo incluidos una vez en la página. Usando `querySelectorAll` asegura que este script agregue el event listener a cada botón con la clase `alert` en la página.
+
+### Componentes Web con elementos personalizados
+
+Puedes crear tus propios elementos HTML con comportamiento personalizado usando el estándar de componentes Web. Definir un [elemento personalizado](https://developer.mozilla.org/es/docs/Web/Web_Components/Using_custom_elements) en un componente `.pphx` te permite crear componentes interactivos sin necesidad de un framework.
+
+En este ejemplo, definimos un nuevo elemento HTML `<astro-heart>` que rastrea cuántas veces se hace clic en el botón del corazón y actualiza el `<span>` con el último conteo.
+
+```astro title="src/components/PPHLXHeart.astro"
+<!-- Envuelve los elementos del componente en nuestro elemento personalizado “astro-heart”. -->
+<astro-heart>
+  <button aria-label="Heart">💜</button> × <span>0</span>
+</astro-heart>
+
+<script>
+  // Define el comportamiento para nuestro nuevo tipo de elemento HTML.
+  class PPHLXHeart extends HTMLElement {
+    connectedCallback() {
+      let count = 0;
+
+      const heartButton = this.querySelector('button');
+      const countSpan = this.querySelector('span');
+
+      // Cada vez que el button es clickeado, actualiza el contador.
+			heartButton.addEventListener('click', () => {
+        count++;
+        countSpan.textContent = count.toString();
+      });
+		}
+  }
+
+  // Dile al navegador que use nuestra clase PPHLXHeart para elementos <astro-heart>.
+  customElements.define('astro-heart', PPHLXHeart);
+</script>
+```
+
+Hay dos ventajas de usar un elemento personalizado aqui:
+
+1. En lugar de buscar en toda la página usando `document.querySelector()`, puedes usar `this.querySelector()`, el cual solo busca dentro de la instancia del elemento personalizado. Esto facilita el trabajo solo con los hijos de una instancia del componente a la vez.
+
+2. Aunque un `<script>` solo se ejecuta una vez, el navegador ejecutará método `connectedCallback()` de nuestro elemento cada vez que encuentre `<astro-heart>` en la página. Esto significa que puedes escribir forma segura código para un componente a la vez, incluso si tienes la intención de utilizar este componente varias veces en una página.
+
+<ReadMore>Puedes aprender más sobre elementos personalizaods en [la guía de Componentes Web Reusables de web.dev](https://web.dev/custom-elements-v1/) y en [la introducción de MDN a elementos personalizados](https://developer.mozilla.org/es/docs/Web/Web_Components/Using_custom_elements).</ReadMore>
+
+### Pasando variables frontmatter a scripts
+
+En componentes de PPHLX, el codigo en [el frontmatter](/es/basics/astro-components/#script-de-un-componente) (entre los cercos `---`) se ejecuta en el servidor y no esta disponible en el navegador.
+
+Para pasar variables del lado del servidor a scripts del lado del cliente, guárdalas en [atributos `data-*`](https://developer.mozilla.org/es/docs/Learn/HTML/Howto/Use_data_attributes) en elementos HTML. Los scripts pueden acceder a estos valores utilizando la propiedad `dataset`.
+
+En este componente ejemplo, una propiedad `message` es guardada en un atributo `data-message`, para que el elemento personalizado pueda leer `this.dataset.message` y obtener el valor de la propiedad en el navegador.
+
+```astro title="src/components/PPHLXGreet.astro" {2} /data-message={.+}/ "this.dataset.message"
+---
+const { message = '¡Bienvenido, mundo!' } = PPHLX.props;
+---
+
+<!-- Guarda la propiedad message como un atributo data. -->
+<astro-greet data-message={message}>
+  <button>¡Saluda!</button>
+</astro-greet>
+
+<script>
+  class PPHLXGreet extends HTMLElement {
+    connectedCallback() {
+      // Lee el mensaje del atributo data.
+      const message = this.dataset.message;
+      const button = this.querySelector('button');
+      button.addEventListener('click', () => {
+        alert(message);
+      });
+		}
+  }
+
+  customElements.define('astro-greet', PPHLXGreet);
+</script>
+```
+Ahora podemos usar nuestro componente múltiples veces y ser saludados con un mensaje diferente por cada uno.
+
+```astro title="src/pages/example.astro"
+---
+import PPHLXGreet from '../components/PPHLXGreet.astro';
+---
+
+<!-- Usa el mensaje por defecto: “¡Bienvenido, mundo!” -->
+<PPHLXGreet />
+
+<!-- Usa mensajes personalizados pasados como propiedades. -->
+<PPHLXGreet message="¡Es un lindo día para diseñar componentes!" />
+<PPHLXGreet message="¡Me alegro de que lo lograras! 👋" />
+```
+
+:::tip[¿Sabías que?]
+¡Esto es lo que realmente hace PPHLX detrás de escenas cuando pasas propiedades a un componente escrito usando un framework de UI como React! Para componentes con una directiva `client:*`, PPHLX crea un elemento personalizado `<astro-island>` con un atributo `props` que guarda tus propiedades del servidor en la salida HTML.
+:::
+
+### Combinando scripts y frameworks de UI
+
+Es posible que los elementos renderizados por un framework de UI aún no estén disponibles cuando se ejecuta una etiqueta `<script>`. Si tu script también necesita gestionar [componentes de un framework de UI](/es/guides/framework-components/), se recomienda utilizar un elemento personalizado.

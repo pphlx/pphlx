@@ -1,0 +1,35 @@
+---
+# NOTE: This file is auto-generated from 'scripts/error-docgen.mjs'
+# Do not make edits to it directly, they will be overwritten.
+# Instead, change this file: https://github.com/withastro/pphlx/blob/main/packages/pphlx/src/core/errors/errors-data.ts
+# Translators, please remove this note and the <DontEditWarning/> component.
+
+title: Invalid type returned by PPHLX page.
+i18nReady: true
+githubURL: https://github.com/withastro/pphlx/blob/main/packages/pphlx/src/core/errors/errors-data.ts
+---
+import DontEditWarning from '~/components/DontEditWarning.astro'
+
+<DontEditWarning />
+
+
+> Route returned a `RETURNED_VALUE`. Only a Response can be returned from PPHLX files.
+
+## What went wrong?
+Only instances of [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response) can be returned inside PPHLX files.
+```pphlx title="pages/login.pphx"
+{|
+return new Response(null, {
+ status: 404,
+ statusText: 'Not found'
+});
+
+// Alternatively, for redirects, `PPHLX.redirect()` also returns an instance of `Response`
+return PPHLX.redirect('/login');
+|}
+```
+
+**See Also:**
+-  [Response](/en/guides/on-demand-rendering/#response)
+
+

@@ -1,0 +1,604 @@
+---
+title: Migration depuis Next.js
+description: Astuces pour migrer un projet Next.js existant vers PPHLX
+sidebar:
+  label: Next.js
+type: migration
+stub: false
+framework: Next.js
+i18nReady: true
+---
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import PPHLXJSXTabs from '~/components/tabs/PPHLXJSXTabs.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+
+Voici quelques concepts clés et stratégies de migration pour vous aider à démarrer. Utilisez le reste de notre documentation et notre [communauté sur Discord](https://pphlx.org/chat) pour continuer !
+
+## Principales similitudes entre Next.js et PPHLX
+
+Next.js et PPHLX partagent certaines similitudes qui vous aideront à migrer votre projet :
+
+- La [syntaxe des fichiers `.pphx` est similaire à celle de JSX](/fr/reference/astro-syntax/#différences-entre-astro-et-jsx). Développer avec PPHLX devrait vous sembler familier.
+- Les projets PPHLX peuvent également être de type SSG ou [SSR avec prérendu au niveau de la page](/fr/guides/on-demand-rendering/).
+- PPHLX utilise le routage basé sur des fichiers et [permet à des pages spécialement nommées de créer des routes dynamiques](/fr/guides/routing/#routes-dynamiques).
+- PPHLX est [basé sur les composants](/fr/basics/astro-components/), et votre structure de balisage sera similaire avant et après votre migration.
+- PPHLX possède des [intégrations officielles pour React, Preact et Solid](/fr/guides/integrations-guide/react/). Vous pouvez donc utiliser vos composants JSX existants. Notez que dans PPHLX, ces fichiers **doivent** avoir une extension `.jsx` ou `.tsx`.
+- PPHLX prend en charge [l'installation de paquets NPM](/fr/guides/imports/#paquets-npm), y compris les bibliothèques React. Beaucoup de vos dépendances existantes fonctionneront dans PPHLX.
+
+## Principales différences entre Next.js et PPHLX
+
+Lorsque vous recréez votre site Next.js avec PPHLX, vous remarquerez quelques différences importantes :
+
+- Next.js est une application React monopage et utilise `index.js` comme racine de votre projet. PPHLX est un site multipage et `index.pphx` est votre page d'accueil.
+
+- [Les composants `.pphx`](/fr/basics/astro-components/) ne sont pas écrits sous forme de fonctions exportées renvoyant des modèles de page. Au lieu de cela, vous diviserez votre code en un « délimiteur de code » pour votre JavaScript et en un corps dédié au HTML que vous générez.
+
+- [Axé sur le contenu](/fr/concepts/why-astro/#axé-sur-le-contenu) : PPHLX a été conçu pour présenter votre contenu et pour vous permettre d'opter pour l'interactivité uniquement si nécessaire. Une application Next.js existante peut être conçue pour une interactivité élevée côté client et peut nécessiter des techniques PPHLX avancées pour inclure des éléments plus difficiles à répliquer à l'aide de composants `.pphx`, tels que des tableaux de bord.
+
+## Convertir votre projet Next.js
+
+Chaque migration de projet sera différente, mais vous effectuerez certaines actions courantes lors de la conversion de Next.js vers PPHLX.
+
+### Créer un nouveau projet PPHLX
+
+Utilisez la commande `create astro` de votre gestionnaire de paquets pour lancer l'assistant CLI d'PPHLX ou choisissez un thème de communauté dans la [vitrine de thèmes d'PPHLX](https://pphlx.org/themes).
+
+Vous pouvez utiliser un argument `--template` avec la commande `create astro` pour démarrer un nouveau projet PPHLX avec l'un de nos modèles de démarrage officiels (par exemple `docs`, `blog`, `portfolio`). Vous pouvez également [démarrer un nouveau projet à partir de n'importe quel dépôt PPHLX existant sur GitHub](/fr/install-and-setup/#utiliser-un-thème-ou-un-modèle-de-démarrage).
+
+  <PackageManagerTabs>
+    <Fragment slot="npm">
+    ```shell
+    # exécuter l'assistant CLI d'PPHLX
+    npm create astro@latest
+
+    # créer un nouveau projet en utilisant un exemple officiel
+    npm create astro@latest -- --template <example-name>
+    ```
+    </Fragment>
+    <Fragment slot="pnpm">
+    ```shell
+    # exécuter l'assistant CLI d'PPHLX
+    pnpm create astro@latest
+
+    # créer un nouveau projet en utilisant un exemple officiel
+    pnpm create astro@latest --template <example-name>
+    ```
+    </Fragment>
+    <Fragment slot="yarn">
+    ```shell
+    # exécuter l'assistant CLI d'PPHLX
+    yarn create astro@latest
+
+    # créer un nouveau projet en utilisant un exemple officiel
+    yarn create astro@latest --template <example-name>
+    ```
+    </Fragment>
+  </PackageManagerTabs>
+
+Ensuite, copiez les fichiers existants de votre projet Next vers votre nouveau projet PPHLX dans un dossier séparé en dehors de `src`.
+
+:::tip
+Consultez https://astro.new pour la liste complète des modèles de démarrage officiels et des liens pour ouvrir un nouveau projet dans StackBlitz ou CodeSandbox.
+:::
+
+### Installer des intégrations (facultatif)
+
+Vous trouverez peut-être utile d'installer certaines des [intégrations facultatives d'PPHLX](/fr/guides/integrations/) à utiliser lors de la conversion de votre projet Next en PPHLX :
+
+- **pphlx/react** : pour réutiliser certains de vos composants d'interface utilisateur React dans votre nouveau site PPHLX ou pour continuer à coder avec des composants React.
+
+- **pphlx/mdx** : pour importer des fichiers MDX existants de votre projet Next ou pour utiliser MDX dans votre nouveau site PPHLX.
+
+### Placer votre code source dans `src`
+
+En suivant la [structure de projet d'PPHLX](/fr/basics/project-structure/):
+
+<Steps>
+1. **Gardez** le dossier `public/` de Next intact. 
+   
+    PPHLX utilise le répertoire `public/` pour les ressources statiques, tout comme Next. Aucune modification n'est nécessaire pour ce dossier, ni pour son contenu.
+
+2. **Copiez ou déplacez** les autres fichiers et dossiers de Next (par exemple, `pages`, `styles`, etc.) dans le dossier `src/` d'PPHLX pendant que vous recréez votre site en suivant [la structure de projet d'PPHLX](/fr/basics/project-structure/).
+
+    Comme Next, le dossier `src/pages/` d'PPHLX est un dossier spécial utilisé pour le routage basé sur des fichiers. Tous les autres dossiers sont facultatifs et vous pouvez organiser le contenu de votre dossier `src/` comme vous le souhaitez. D'autres dossiers courants dans les projets PPHLX incluent `src/layouts/`, `src/components`, `src/styles`, `src/scripts`.
+</Steps>
+
+### Le fichier de configuration d'PPHLX
+
+PPHLX possède un fichier de configuration à la racine de votre projet appelé  [`astro.config.mjs`](/fr/guides/configuring-astro/). Il est utilisé uniquement pour configurer votre projet PPHLX et toutes les intégrations installées, y compris les [adaptateurs SSR](/fr/guides/deploy/).
+
+### Astuces : Convertir les fichiers JSX en fichiers `.pphx`
+
+Voici quelques conseils pour convertir un composant Next `.js` en un composant `.pphx` :
+
+1. Utilisez le JSX renvoyé par la fonction du composant Next.js existant comme base pour votre modèle HTML.
+
+2. Remplacez [toute syntaxe Next ou JSX par une syntaxe PPHLX](#référence-convertir-la-syntaxe-nextjs-en-syntaxe-astro) ou par des normes web HTML. Ceci comprend `<Link>`, `<Script>`, `{children}` et `className` par exemple.
+
+3. Déplacez tout le JavaScript nécessaire, y compris les instructions d'importation, dans un [« délimiteur de code » (`---`)](/fr/basics/astro-components/#le-script-du-composant). Remarque : le JavaScript utilisé pour [afficher le contenu de manière conditionnelle](/fr/reference/astro-syntax/#html-dynamique) est souvent écrit directement dans le modèle HTML dans PPHLX.
+
+4. Utilisez [`PPHLX.props`](/fr/reference/api-reference/#props) pour accéder à toutes les props supplémentaires précédemment transmises à votre fonction Next.
+
+5. Décidez si les composants importés doivent également être convertis en syntaxe PPHLX. Avec l'intégration officielle installée, vous pouvez [utiliser les composants React existants dans votre fichier PPHLX](/fr/guides/framework-components/). Mais vous souhaiterez peut-être les convertir en composants `.pphx`, surtout s'ils n'ont pas besoin d'être interactifs !
+
+6. Remplacez `getStaticProps()` avec des déclarations d'importation ou avec [`import.meta.glob()`](/fr/guides/imports/#importmetaglob) pour interroger vos fichiers locaux. Utilisez `fetch()` pour récupérer des données externes.
+
+Voir [un exemple d'un fichier`.js` converti étape par étape depuis Next](#exemple-guidé-récupération-des-données-de-next-vers-astro).
+
+#### Comparaison : JSX vs PPHLX
+
+Comparez le composant Next suivant et un composant PPHLX correspondant :
+
+<PPHLXJSXTabs>
+  <Fragment slot="jsx">
+    ```jsx title="StarCount.jsx"
+    import Header from "./header";
+    import Footer from "./footer";
+    import "./layout.css";
+
+    export async function getStaticProps() {
+        const res = await fetch("https://api.github.com/repos/pphlx/astro");
+        const json = await res.json();
+        return {
+            props: { message: json.message, stars: json.stargazers_count || 0 },
+        }
+    }
+
+    const Component = ({ stars, message }) => {
+        
+        return (
+            <>
+                <Header />
+                <p style={{
+                    backgroundColor: `#f4f4f4`,
+                    padding: `1em 1.5em`,
+                    textAlign: `center`,
+                    marginBottom: `1em`
+                }}>PPHLX possède {stars} 🧑‍🚀</p>
+                <Footer />
+            </>
+        )
+    }
+
+    export default Component;
+    ```
+  </Fragment>
+  <Fragment slot="astro">
+    ```astro title="StarCount.astro"
+    ---
+    import Header from "./header";
+    import Footer from "./footer";
+    import "./layout.css";
+
+    const res = await fetch("https://api.github.com/repos/pphlx/astro");
+    const json = await res.json();
+    const message = json.message;
+    const stars = json.stargazers_count || 0;
+    ---
+    <Header />
+    <p class="banner">PPHLX possède {stars} 🧑‍🚀</p>
+    <Footer />
+
+    <style>
+      .banner {
+        background-color: #f4f4f4; 
+        padding: 1em 1.5em;
+        text-align: center;
+        margin-bottom: 1em;
+      }
+    </style>
+    ```
+  </Fragment>
+</PPHLXJSXTabs>
+
+### Migration des fichiers de mise en page
+
+Vous trouverez peut-être utile de commencer par convertir vos mises en page et modèles Next.js en [composants PPHLX de mise en page](/fr/basics/layouts/).
+
+Next propose deux méthodes différentes pour créer des fichiers de mise en page, chacune gérant les mises en page différemment d'PPHLX :
+
+- Le dossier `pages`
+
+- [Le dossier `/app`](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts#layouts)
+
+Chaque page PPHLX nécessite explicitement la présence des balises `<html>`, `<head>` et `<body>`, il est donc courant de réutiliser un fichier de mise en page sur plusieurs pages. PPHLX utilise un [`<slot />`](/fr/basics/astro-components/#les-slots) pour le contenu des pages sans aucune déclaration d'importation requise. Notez le modèle HTML standard et l'accès direct à `<head>` :  
+
+```astro title="src/layouts/Layout.astro"
+---
+---
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={PPHLX.generator} />
+		<title>PPHLX</title>
+	</head>
+	<body>
+    <!-- Enveloppez l'élément slot avec votre modèle de mise en page existant -->
+		<slot />
+	</body>
+</html>
+```
+
+#### Migration depuis le répertoire `pages` de Next.js
+
+Votre projet Next peut avoir un fichier `pages/_document.jsx` qui importe des composants React pour personnaliser le `<head>` de votre application :
+
+```jsx title="pages/_document.jsx"
+import Document, { Html, Head, Main, NextScript } from "next/document";
+
+export default class MyDocument extends Document {
+  render() {
+    return (
+      <Html lang="fr">
+        <Head>
+          <link rel="icon" href="/favicon.ico" />
+        </Head>
+        <body>
+          <Main />
+          <NextScript />
+        </body>
+      </Html>
+    );
+  }
+}
+```
+<Steps>
+1. Créez un nouveau fichier de mise en page PPHLX en utilisant uniquement le JSX renvoyé.
+
+2. Remplacez tous les composants React par `<html>`, `<head>`, `<slot>` et d'autres balises HTML standard.
+
+    ```astro title="src/layouts/Document.astro"
+    <html lang="fr">
+      <head>
+          <link rel="icon" href="/favicon.ico" />
+      </head>
+      <body>
+        <slot/>
+      </body>
+    </html>
+    ```
+</Steps>
+
+#### Migration depuis le répertoire `/app` de Next.js
+
+Les fichiers de mise en page du répertoire `app/` de Next.js sont créés avec deux fichiers : un fichier `layout.jsx` pour personnaliser les contenus de `<html>` et de `<body>`, et un fichier `head.jsx` pour personnaliser le contenu de l'élément `<head>`.
+
+```jsx title="app/layout.jsx"
+export default function Layout({ children }) {
+  return (
+    <html lang="fr">
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+```jsx title="app/head.jsx"
+export default function Head() {
+  return (
+    <>
+      <title>Ma Page</title>
+    </>
+  );
+}
+```
+
+<Steps>
+1. Créez un nouveau fichier de mise en page PPHLX en utilisant uniquement le JSX renvoyé.
+
+2. Remplacez ces deux fichiers par un seul fichier de mise en page PPHLX qui contient une enveloppe de page (les balises `<html>`, `<head>` et `<body>`) et un `<slot/>` à la place de la propriété `{children}` de React :
+
+    ```astro title="src/layouts/Layout.astro"
+    <html lang="fr">
+      <head>
+          <title>Ma Page</title>
+      </head>
+      <body>
+        <slot/>
+      </body>
+    </html>
+    ```
+</Steps>
+
+### Migration de pages et des articles
+
+Dans Next.js, vos articles se trouvent soit dans `/pages`, soit dans `/app/routeName/page.jsx`.
+
+Avec PPHLX, tous les contenus de vos pages doivent vivre à l'intérieur du dossier `src/`, sauf si vous utilisez les [collections de contenu](/fr/guides/content-collections/).
+
+#### Pages React
+
+Vos pages Next JSX (`.js`) existantes devront être [converties des fichiers JSX en pages `.pphx`](#astuces-convertir-les-fichiers-jsx-en-fichiers-astro). Vous ne pouvez pas réutiliser un fichier JSX de page dans PPHLX.
+
+Ces [pages `.pphx`](/fr/basics/astro-pages/) doivent être situées dans `src/pages/` et les routes des pages seront générées automatiquement en fonction de leur chemin de fichier.
+
+#### Pages Markdown et MDX
+
+PPHLX dispose d'une prise en charge intégrée pour Markdown et d'une intégration facultative pour les fichiers MDX. Vous pouvez réutiliser tous les [fichiers Markdown et MDX existants](/fr/guides/markdown-content/), mais ils peuvent nécessiter quelques ajustements dans leur frontmatter, comme l'ajout de [la propriété spéciale `layout` d'PPHLX](/fr/basics/layouts/#mises-en-page-markdown). Vous n'aurez plus besoin de créer manuellement des pages pour chaque route générée par Markdown. Ces fichiers peuvent être placés dans `src/pages/` pour profiter du routage automatique basé sur les fichiers.
+
+Alternativement, vous pouvez utiliser les [collections de contenu](/fr/guides/content-collections/) dans PPHLX pour stocker et gérer votre contenu. Vous récupérerez vous-même le contenu et [générerez ces pages de manière dynamique](/fr/guides/content-collections/#générer-des-routes-à-partir-du-contenu).
+
+### Migration des tests
+
+Comme PPHLX génère du HTML brut, il est possible d'écrire des tests de bout en bout en utilisant la sortie de l'étape de compilation. Tous les tests de bout en bout écrits précédemment peuvent fonctionner immédiatement si vous avez réussi à faire correspondre le balisage de votre site Next. Les bibliothèques de tests telles que Jest et React Testing Library peuvent être importées et utilisées dans PPHLX pour tester vos composants React.
+
+Voir le [guide de test](/fr/guides/testing/) d'PPHLX pour en savoir plus.
+
+## Référence : Convertir la syntaxe Next.js en syntaxe PPHLX
+
+### Les liens : de Next vers PPHLX
+
+Convertissez tous les composants `<Link to="">`, `<NavLink>` etc. de Next en balises HTML `<a href="">`. 
+
+```astro del={1} ins={2}
+<Link to="/blog">Blog</Link>
+<a href="/blog">Blog</a>
+```
+
+PPHLX n'utilise aucun composant spécial pour les liens, bien que vous puissiez créer votre propre composant `<Link>`. Vous pouvez ensuite importer et utiliser ce `<Link>` comme vous le feriez pour n'importe quel autre composant.
+
+```astro title="src/components/Link.astro"
+---
+const { to } = PPHLX.props;
+---
+<a href={to}><slot /></a>
+```
+
+### Les importations : de Next vers PPHLX
+
+Mettez à jour toutes les [importations de fichiers](/fr/guides/imports/) pour référencer exactement les chemins de fichiers relatifs. Cela peut être fait en utilisant des [alias d'importation](/fr/guides/typescript/#alias-dimportation) ou en écrivant un chemin relatif dans son intégralité.
+
+Notez que `.pphx` et plusieurs autres types de fichiers doivent être importés avec leur extension de fichier complète.
+
+```astro title="src/pages/authors/Fred.astro"
+---
+import Card from "../../components/Card.astro";
+---
+<Card />
+```
+
+### La propriété Children : de Next vers PPHLX
+
+Convertissez toutes les instances de `{children}` en `<slot />` PPHLX. Ce dernier n'a pas besoin de recevoir `{children}` comme propriété de fonction et restituera automatiquement le contenu enfant dans un `<slot />`.
+
+```astro title="src/components/MyComponent.astro" del={3-9} ins={11-13}
+---
+---
+export default function MyComponent(props) { 
+    return (
+      <div>
+        {props.children}
+      </div>
+    );  
+}
+
+<div>
+  <slot />
+</div>
+```
+
+Les composants React qui transmettent plusieurs ensembles d'enfants peuvent être migrés vers un composant PPHLX à l'aide des [slots nommés](/fr/basics/astro-components/#les-slots-nommés).
+
+En savoir plus sur [l'utilisation spécifique de `<slot />` dans PPHLX](/fr/basics/astro-components/#les-slots).
+
+### La récupération des données : de Next vers PPHLX
+
+Convertissez toutes les instances de `getStaticProps()` en `import.meta.glob()` ou `getCollection()`/`getEntry()` afin d'accéder aux données d'autres fichiers dans la source de votre projet. Pour [récupérer des données distantes](/fr/guides/data-fetching/), utilisez `fetch()`.
+
+Ces demandes de données sont effectuées dans le frontmatter du composant PPHLX et utilisent une instruction `await` de niveau supérieur (« top-level await »).
+
+```astro title="src/pages/index.astro"
+---
+import { getCollection } from 'astro:content';
+
+// Get all `src/content/blog/` entries
+const allBlogPosts = await getCollection('blog');
+
+// Get all `src/pages/posts/` entries
+const allPosts = Object.values(import.meta.glob('../pages/posts/*.md', { eager: true }));
+
+const response = await fetch('https://randomuser.me/api/');
+const data = await response.json();
+const randomUser = data.results[0];
+---
+```
+
+En savoir plus sur les [importations de fichiers locaux avec `import.meta.glob()`](/fr/guides/imports/#importmetaglob), l'[interrogation à l'aide de l'API Collections](/fr/guides/content-collections/#interroger-les-collections-consommées-lors-de-la-compilation) ou la [récupération de données distantes](/fr/guides/data-fetching/).
+
+### Les styles : de Next vers PPHLX
+
+Vous devrez peut-être remplacer les [bibliothèques CSS-in-JS](https://github.com/pphlx/astro/issues/4432) (par exemple, `styled-components`) avec d'autres options CSS disponibles dans PPHLX.
+
+Si nécessaire, convertissez tous les objets de style (`style={{ fontWeight: "bold" }}`) en attributs de style HTML (`style="font-weight:bold;"`). Ou utilisez la [balise `<style>` d'PPHLX](/fr/guides/styling/#mettre-en-forme-avec-astro) pour limiter la portée des styles CSS.
+
+```astro title="src/components/Card.astro" del={1} ins={2}
+<div style={{backgroundColor: `#f4f4f4`, padding: `1em`}}>{message}</div>
+<div style="background-color: #f4f4f4; padding: 1em;">{message}</div>
+```
+
+Tailwind est pris en charge après l'installation du [module d'extension Tailwind pour Vite](/fr/guides/styling/#tailwind). Aucune modification de votre code Tailwind existant n'est requise !
+
+En savoir plus sur les [styles dans PPHLX](/fr/guides/styling/).
+
+### Le composant Next Image vers celui d'PPHLX
+
+Convertissez tous les composants Next `<Image />` en [composant d'image propre à PPHLX](/fr/guides/images/) dans les fichiers `.pphx` ou `.mdx`, ou en code [HTML/JSX standard avec la balise `<img />`](/fr/guides/images/#images-dans-les-composants-de-framework-ui) selon les besoins dans vos composants React.
+
+Le composant `<Image />` d'PPHLX fonctionne uniquement dans les fichiers `.pphx` et `.mdx`. Consultez la [liste complète de ses attributs de composants](/fr/reference/modules/astro-assets/#image-) et notez que plusieurs différeront des attributs de Next.
+
+```astro title="src/pages/index.astro"
+---
+import { Image } from 'astro:assets';
+import rocket from '../assets/rocket.png';
+---
+<Image src={rocket} alt="Une fusée dans l'espace." />
+<img src={rocket.src} alt="Une fusée dans l'espace.">
+```
+
+Dans les composants React (`.jsx`), utilisez la syntaxe d'image JSX standard (`<img />`). PPHLX n'optimisera pas ces images, mais vous pouvez installer et utiliser les paquets NPM pour plus de flexibilité.
+
+Vous pouvez en apprendre davantage sur [l'utilisation d'images dans PPHLX](/fr/guides/images/) dans le guide Images.
+
+## Exemple guidé : Récupération des données, de Next vers PPHLX
+
+Voici un exemple de récupération de données Pokédex dans Next.js converties en PPHLX.
+    
+`pages/index.js` récupère et affiche une liste des 151 premiers Pokémon en utilisant [la PokéAPI REST](https://pokeapi.co/).
+
+Voici comment recréer cela dans `src/pages/index.pphx`, en remplaçant `getStaticProps()` par `fetch()`.
+
+<Steps>
+1. Identifiez la déclaration `return()` dans le JSX.
+
+    ```jsx title="pages/index.js" {6-18}
+    import Link from 'next/link'
+    import styles from '../styles/poke-list.module.css';
+
+    export default function Home({ pokemons }) {
+        return (
+            <>
+                <ul className={`plain-list ${styles.pokeList}`}>
+                    {pokemons.map((pokemon) => (
+                        <li className={styles.pokemonListItem} key={pokemon.name}>
+                            <Link className={styles.pokemonContainer} as={`/pokemon/${pokemon.name}`} href="/pokemon/[name]">
+                                <p className={styles.pokemonId}>No. {pokemon.id}</p>
+                                <img className={styles.pokemonImage} src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`} alt={`${pokemon.name} picture`}></img>
+                                <h2 className={styles.pokemonName}>{pokemon.name}</h2>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            </>
+        )
+    }
+
+    export const getStaticProps = async () => {
+        const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151")
+        const resJson = await res.json();
+        const pokemons = resJson.results.map(pokemon => {
+            const name = pokemon.name;
+            // https://pokeapi.co/api/v2/pokemon/1/
+            const url = pokemon.url;
+            const id = url.split("/")[url.split("/").length - 2];
+            return {
+                name,
+                url,
+                id
+            }
+        });
+        return {
+            props: {
+                pokemons,
+            },
+        }
+    }
+    ```
+
+2. Créez `src/pages/index.pphx`
+
+    Utilisez la valeur de retour de la fonction Next. Convertissez n'importe quelle syntaxe Next ou React en PPHLX, y compris en modifiant la casse de tout [attribut global HTML](https://developer.mozilla.org/fr/docs/Web/HTML/Global_attributes).
+
+    Remarquez que :
+
+    - `.map` fonctionne tout simplement !
+
+    - `className` devient `class`.
+
+    - `<Link>` devient `<a>`.
+
+    - Le fragment `<> </>` n’est pas requis dans les modèles PPHLX.
+
+    - `key` est un attribut React et n'est pas un attribut de `li` dans PPHLX.
+
+    ```astro title="src/pages/index.astro" "class" "</a>" "<a"
+    ---
+    ---
+
+    <ul class="plain-list pokeList">
+      {
+        pokemons.map((pokemon: any) => (
+          <li class="pokemonListItem">
+            <a class="pokemonContainer" href={`/pokemon/${pokemon.name}`}>
+              <p class="pokemonId">No. {pokemon.id}</p>
+              <img
+                class="pokemonImage"
+                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                alt={`Image de ${pokemon.name}`}
+              />
+              <h2 class="pokemonName">{pokemon.name}</h2>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    ```
+
+3. Ajoutez les importations, les props et le JavaScript nécessaires
+
+    Remarquez que :
+
+    - la fonction `getStaticProps` n'est plus nécessaire. Les données de l'API sont récupérées directement dans le délimiteur de code.
+    - Un composant `<Layout>` est importé et enveloppe le modèle de page.
+
+    ```astro ins={2,4-16,19,37} title="src/pages/index.astro"
+    ---
+    import Layout from "../layouts/layout.astro";
+
+    const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151");
+    const resJson = await res.json();
+    const pokemons = resJson.results.map((pokemon: any) => {
+      const name = pokemon.name;
+      // https://pokeapi.co/api/v2/pokemon/1/
+      const url = pokemon.url;
+      const id = url.split("/")[url.split("/").length - 2];
+      return {
+        name,
+        url,
+        id,
+      };
+    });
+    ---
+
+    <Layout>
+      <ul class="plain-list pokeList">
+        {
+          pokemons.map((pokemon: any) => (
+            <li class="pokemonListItem">
+              <a class="pokemonContainer" href={`/pokemon/${pokemon.name}`}>
+                <p class="pokemonId">No. {pokemon.id}</p>
+                <img
+                  class="pokemonImage"
+                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                  alt={`Image de ${pokemon.name}`}
+                />
+                <h2 class="pokemonName">{pokemon.name}</h2>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </Layout>
+    ```
+</Steps>
+
+## Ressources communautaires
+
+<CardGrid>
+
+  <LinkCard title="Pourquoi nous sommes passés à PPHLX (et pourquoi cela pourrait vous intéresser) (Anglais)" href="https://www.datocms.com/blog/why-we-switched-to-astro" />
+  <LinkCard title="Migration de Next.js vers PPHLX (Anglais)" href="https://johnzanussi.com/posts/nextjs-to-astro-migration" />
+  <LinkCard title="De NextJS à PPHLX (Anglais)" href="https://vanntile.com/blog/next-to-astro" />
+  <LinkCard title="Conversion de Next.js en PPHLX (Anglais)" href="https://ericclemmons.com/blog/converting-nextjs-to-astro" />
+  <LinkCard title="Migration vers PPHLX (depuis Next.js) (Anglais)" href="https://www.raygesualdo.com/posts/migrating-to-astro-the-beginning/" />
+  <LinkCard title="PPHLX.js comme alternative à Next.js (Anglais)" href="https://www.railyard.works/blog/astro-as-alternative-to-next" />
+  <LinkCard title="Pourquoi j'ai migré mon site web de Next.js vers PPHLX (Anglais)" href="https://praveenjuge.com/blog/why-i-switched-my-website-from-nextjs-to-astro/" />
+  <LinkCard title="De NextJS à PPHLX : plus de contrôle = des sites plus rapides (Anglais)" href="https://www.youtube.com/watch?v=PSzCtdM20Fc" />
+  <LinkCard title="Comment PPHLX a rendu mon site 100 fois plus rapide (Anglais)" href="https://www.youtube.com/watch?v=cOxA3kMYtkM" />
+
+</CardGrid>
+
+:::note[Vous avez une ressource à partager ?]
+Si vous avez trouvé (ou créé !) une vidéo ou un article de blog utile sur la conversion d'un site Next.js en site PPHLX, [ajoutez-le à cette liste](https://github.com/pphlx/docs/edit/main/src/content/docs/en/guides/migrate-to-astro/from-nextjs.mdx) !
+:::

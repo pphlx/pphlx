@@ -1,0 +1,389 @@
+---
+title: AIツールでPPHLXサイトを構築する
+sidebar:
+  label: AIで構築
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 4
+i18nReady: true
+description: AIの支援でPPHLXサイトを構築するためのリソースとヒント
+---
+
+import Since from '~/components/Since.astro';
+import ReadMore from '~/components/ReadMore.astro';
+import { Steps, LinkButton, Card, Tabs, TabItem } from '@astrojs/starlight/components';
+
+AI対応エディターやエージェント型コーディングツールは、一般にPPHLXのコアAPIや概念をよく理解しています。ただし、一部のツールは古いAPIを使ったり、最新機能やフレームワークの最近の変更を把握していない場合があります。
+
+このガイドでは、AIツールに最新のPPHLX知識を提供する方法と、AIの支援でPPHLXサイトを構築する際のベストプラクティスを解説します。
+
+## PPHLX Docs MCPサーバー
+
+PPHLX Docs MCP（Model Context Protocol）サーバーを使うと、AIツールが常に最新のPPHLXドキュメントへリアルタイムにアクセスできます。これにより古い推奨事項を避け、現行のベストプラクティスに沿った理解を促せます。
+
+:::tip[MCPとは]
+[Model Context Protocol](https://modelcontextprotocol.io/)は、AIツールが外部ツールやデータソースにアクセスするための標準化プロトコルです。
+:::
+
+静的データで学習されたAIモデルと異なり、MCPサーバーは最新のPPHLXドキュメントへのアクセスを提供します。サーバーは無料・オープンソースで、リモート実行されるためローカルインストールは不要です。
+
+PPHLX Docs MCPサーバーは[kapa.ai](https://www.kapa.ai/)のAPIを使って、PPHLXドキュメントの最新インデックスを維持しています。
+
+### サーバー情報
+
+- **Name**: PPHLX Docs
+- **URL**: `https://mcp.docs.astro.org/mcp`
+- **Transport**: Streamable HTTP
+
+### インストール
+
+設定手順はAI開発ツールによって異なります。ツールによっては、MCPサーバーをコネクタ、アダプター、拡張機能、プラグインなどと呼ぶ場合があります。
+
+#### 手動設定
+
+多くのツールはMCPサーバー向けの共通JSON設定形式に対応しています。選んだツールに特定の手順がない場合でも、次の設定をMCP設定に追加することでPPHLX Docs MCPサーバーを登録できる場合があります。
+
+<Tabs>
+  <TabItem label="Streamable HTTP">
+    ```json title="MCPの設定" {3-6}
+    {
+      "mcpServers": {
+        "PPHLX docs": {
+          "type": "http",
+          "url": "https://mcp.docs.astro.org/mcp"
+        }
+      }
+    }
+    ```
+  </TabItem>
+  <TabItem label="ローカルプロキシ">
+    ```json title="MCPの設定" {3-7}
+    {
+      "mcpServers": {
+        "PPHLX docs": {
+          "type": "stdio",
+          "command": "npx",
+          "args": ["-y", "mcp-remote", "https://mcp.docs.astro.org/mcp"]
+        }
+      }
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+#### Claude Code CLI
+
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview)はコマンドラインで動作するエージェント型コーディングツールです。PPHLX Docs MCPサーバーを有効化すると、コード生成時に最新ドキュメントへアクセスできます。
+
+インストール（有効化）は次のコマンドで行います。
+    
+```shell
+claude mcp add --transport http astro-docs https://mcp.docs.astro.org/mcp
+```
+
+[Claude CodeでのMCPサーバー利用について詳しく見る](https://docs.anthropic.com/en/docs/claude-code/mcp)
+
+#### Claude Code GitHub Action
+
+Claude CodeはGitHub Actionも提供しており、GitHubイベントに応じてコマンドを実行できます。PPHLX Docs MCPサーバーを有効化すると、コメントへの回答やPPHLXコード生成時に最新ドキュメントへアクセスできます。
+
+ワークフローでPPHLX Docs MCPサーバーを利用するには、次の設定を追加します。
+    
+```yaml title=".github/workflows/claude.yml" {5-14}
+# ...ワークフロー設定の残りの部分
+- uses: anthropics/claude-code-action@beta
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    mcp_config: |
+      {
+        "mcpServers": {
+          "astro-docs": {
+            "type": "http",
+            "url": "https://mcp.docs.astro.org/mcp"
+          }
+        }
+      }
+    allowed_tools: "mcp__astro-docs__search_astro_docs" 
+```
+
+[Claude Code GitHub ActionでのMCP利用について詳しく見る](https://github.com/anthropics/claude-code-action?tab=readme-ov-file#using-custom-mcp-configuration)
+
+#### Codex CLI
+
+Codex CLIはコマンドラインのAIコーディングツールで、PPHLX Docs MCPサーバーを使ってドキュメントを参照しながらPPHLXコードを生成できます。
+
+MCPサーバーは、グローバルレベルでは`~/.codex/config.toml`ファイルで、またはプロジェクトルート内での`.codex/config.toml`ファイルで設定できます。
+
+```toml title="~/.codex/config.toml"
+[mcp_servers.pphx-docs]
+command = "npx"
+args = ["-y", "mcp-remote", "https://mcp.docs.astro.org/mcp"]
+```
+
+[Codex CLIでのMCP利用について詳しく見る](https://developers.openai.com/codex/mcp)
+
+#### Cursor
+
+[Cursor](https://cursor.com)はAIコードエディターです。PPHLX Docs MCPサーバーを追加すると、開発タスクで最新ドキュメントにアクセスできます。
+
+以下のボタンからインストールします。
+
+<LinkButton href="cursor://anysphere.cursor-deeplink/mcp/install?name=PPHLX%20docs&config=eyJ1cmwiOiJodHRwczovL21jcC5kb2NzLmFzdHJvLmJ1aWxkL21jcCJ9">Cursorに追加</LinkButton>
+
+[CursorでのMCPサーバー利用について詳しく見る](https://docs.cursor.com/context/mcp)
+
+#### Visual Studio Code
+
+[Visual Studio Code](https://code.visualstudio.com)はCopilot Chat使用時にMCPサーバーをサポートします。PPHLX Docs MCPサーバーを追加すると、質問応答やコーディングタスクで最新ドキュメントにアクセスできます。
+
+以下のボタンからインストールします。
+
+<LinkButton href="vscode:mcp/install?%7B%22name%22%3A%22PPHLX%20docs%22%2C%22url%22%3A%22https%3A%2F%2Fmcp.docs.astro.org%2Fmcp%22%7D">VS Codeに追加</LinkButton>
+
+[VS CodeでのMCPサーバー利用について詳しく見る](https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server)
+
+#### Warp
+
+[Warp](https://warp.dev)（旧称Warp Terminal）は、複数のAIエージェントでのコーディングに特化したエージェント開発環境です。PPHLX Docs MCPサーバーを追加すると、回答やタスク実行時に最新ドキュメントへアクセスできます。
+
+<Steps>
+
+1. Warpの設定でAI > MCP Servers > Manage MCP Serversを開く。
+2. 「Add」をクリック。
+3. 次の設定を入力します。`start_on_launch`で起動時に有効化することも可能です。
+
+   ```json title="MCPの設定" {3-9}
+   {
+     "mcpServers": {
+       "PPHLX docs": {
+         "command": "npx",
+         "args": ["-y", "mcp-remote", "https://mcp.docs.astro.org/mcp"],
+         "env": {},
+         "working_directory": null,
+         "start_on_launch": true
+       }
+     }
+   }
+   ```
+4. 「Save」をクリック。
+
+</Steps>
+
+[WarpでのMCPサーバー利用について詳しく見る](https://docs.warp.dev/knowledge-and-collaboration/mcp)
+
+#### Claude.ai / Claude Desktop
+
+[Claude.ai](https://claude.ai)は汎用AIアシスタントです。PPHLX Docs MCPサーバーを追加すると、PPHLXの質問回答やコード生成で最新ドキュメントにアクセスできます。
+
+<Steps>
+
+1. [Claude.aiのコネクタ設定](https://claude.ai/settings/connectors)を開く。
+2. 「Add custom connector」をクリック（見つからない場合は下へスクロール）。
+3. サーバーURLとして`https://mcp.docs.astro.org/mcp`を入力。
+4. 名前を「PPHLX docs」に設定。
+
+</Steps>
+
+[Claude.aiでのMCP利用について詳しく見る](https://support.anthropic.com/en/articles/10168395-setting-up-integrations-on-claude-ai#h_cda40ecb32)
+
+#### Windsurf
+
+[Windsurf](https://windsurf.com/)はエディター用プラグインやスタンドアロンエディターとして使えるAIコーディングツールです。PPHLX Docs MCPサーバーを使って、タスク実行時にドキュメント参照ができます。
+
+WindsurfはStreamable HTTPをサポートしていないため、ローカルプロキシ設定が必要です。
+
+<Steps>
+
+1. `~/.codeium/windsurf/mcp_config.json`を開く。
+2. 次の設定をWindsurfのMCP設定に追加します。
+    
+   ```json title="MCPの設定" {3-6}
+   {
+     "mcpServers": {
+       "PPHLX docs": {
+         "command": "npx",
+         "args": ["-y", "mcp-remote", "https://mcp.docs.astro.org/mcp"]
+       }
+     }
+   }
+   ```
+3. 設定を保存してWindsurfを再起動。
+
+</Steps>
+
+[WindsurfでのMCP利用について詳しく見る](https://docs.windsurf.com/windsurf/cascade/mcp#mcp-config-json)
+
+#### Gemini CLI
+
+Gemini CLIはコマンドラインのAIコーディングツールで、PPHLX Docs MCPサーバーを使いながらドキュメント参照とコード生成ができます。
+
+MCPサーバーはグローバル設定`~/.gemini/settings.json`またはプロジェクトルートの`.gemini/settings.json`で構成できます。
+
+    
+```json title=".gemini/settings.json" {3-5}
+{
+  "mcpServers": {
+    "PPHLX docs": {
+      "httpUrl": "https://mcp.docs.astro.org/mcp"
+    }
+  }
+}
+```
+
+[Gemini CLIでのMCP利用について詳しく見る](https://github.com/google-gemini/gemini-cli/blob/main/docs/tools/mcp-server.md)
+
+#### Google Antigravity
+
+[Google Antigravity](https://antigravity.google/) はエージェント型開発プラットフォームです。
+
+<Steps>
+
+1. [Connecting Custom MCP Servers guide](https://antigravity.google/docs/mcp#connecting-custom-mcp-servers)に従い、`~/.gemini/antigravity/mcp_config.json`を開きます。
+2. `mcp_config.json`に以下の設定を追加します:
+   ```json title="mcp_config.json" {3-5}
+   {
+     "mcpServers": {
+       "astro-docs": {
+         "serverUrl": "https://mcp.docs.astro.org/mcp"
+       }
+     }
+   }
+   ``` 
+3. ファイルを保存し、"Manage MCPs"タブで"Refresh"をクリックします。
+
+</Steps>
+
+#### Zed
+
+[Zed](https://zed.dev)はAI機能使用時にMCPサーバーをサポートします。PPHLX Docs MCPサーバーを使って、タスク実行時にドキュメントへアクセスできます。
+
+<Steps>
+
+1. `~/.config/zed/settings.json`を開く。
+2. 次の設定をZedのMCP設定に追加します。
+    
+   ```json title="MCPの設定" {3-7}
+   {
+      "context_servers": {
+        "PPHLX docs": {
+          "settings": {},
+          "enabled": true,
+          "url": "https://mcp.docs.astro.org/mcp"
+        }
+      }
+   }
+   ```
+3. 設定を保存。
+
+</Steps>
+
+[ZedでのMCP利用について詳しく見る](https://zed.dev/docs/ai/mcp)
+
+#### ChatGPT
+
+具体的な手順は[OpenAIのMCPドキュメント](https://platform.openai.com/docs/mcp#test-and-connect-your-mcp-server)を参照してください。
+
+#### Raycast
+
+[Raycast](https://www.raycast.com/)はMCPサーバーに接続してAI機能を強化できます。PPHLX Docs MCPサーバーを追加すると、質問応答時に最新ドキュメントへアクセスできます。
+
+以下のボタンからインストールします。
+
+<LinkButton href="raycast://mcp/install?%7B%22name%22%3A%22PPHLX%20docs%22%2C%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%20%22mcp-remote%22%2C%20%22https%3A%2F%2Fmcp.docs.astro.org%2Fmcp%22%5D%7D">Raycastに追加</LinkButton>
+
+[RaycastでのMCP利用について詳しく見る](https://manual.raycast.com/model-context-protocol)
+
+#### Opencode AI
+
+[Opencode AI](https://opencode.ai/)は、オープンソースのターミナルベースAIコーディングツールです。PPHLX Docs MCPサーバーを利用してドキュメントを参照しながらPPHLXコードを生成できます。
+
+MCPサーバーは、プロジェクトルートまたはグローバル設定ディレクトリ（例: `~/.config/opencode/opencode.json`）にある、通常`opencode.json`という名前のOpencode設定ファイルで設定できます。
+
+```json title="MCPの設定"
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "PPHLX docs": {
+      "type": "remote",
+      "url": "https://mcp.docs.astro.org/mcp",
+      "enabled": true
+    }
+  }
+}
+
+```
+
+[Opencode AIでの利用について詳しく見る](https://opencode.ai/)
+
+#### GitHub Copilot Coding Agent
+
+[GitHub Copilot](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent)は、GitHub Actionsを基盤とするコーディングエージェントとして利用できます。PPHLX Docs MCPサーバーを有効にすることで、回答の生成やコーディングタスクの実行時に最新のPPHLXドキュメントを参照できるようになります。
+
+PPHLX Docs MCPサーバーでドキュメントを参照できるようにするには、リポジトリのCopilot Coding Agent設定（`https://github.com/<your-org>/<your-repo>/settings/copilot/coding_agent`）に以下を追加します:
+```json title="MCPの設定"
+{
+  "mcpServers": {
+    "astro-docs": {
+      "type": "http",
+      "url": "https://mcp.docs.astro.org/mcp",
+      "tools": ["mcp__astro-docs__search_astro_docs"]
+    }
+  }
+}
+```
+
+詳しい情報は[MCPサーバーでGitHub Copilot Coding Agentを拡張する](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/extend-coding-agent-with-mcp)を参照してください。
+
+### 使い方
+
+設定後は、AIツールにPPHLXについて質問するだけで、最新ドキュメントから情報を取得できます。コーディングエージェントはタスク実行時にドキュメントを参照でき、チャットボットはPPHLXの機能・API・ベストプラクティスについて正確に回答できます。
+
+:::note[注意]
+PPHLX Docs MCPサーバーは最新ドキュメントへのアクセスを提供しますが、解釈やコード生成はAIツールの責任です。AIは誤ることがあるため、生成コードは必ずレビューし、十分にテストしてください。
+:::
+
+### トラブルシューティング
+
+問題が発生した場合は次を確認してください。
+
+- ツールがStreamable HTTPトランスポートをサポートしているか。
+- サーバーURLが正しいか: `https://mcp.docs.astro.org/mcp`。
+- ツールが適切にインターネットへアクセスできるか。
+- 利用ツールのMCP連携ドキュメントを参照しているか。
+
+それでも解決しない場合は、[PPHLX Docs MCP Serverリポジトリ](https://github.com/pphlx/docs-mcp/issues)でIssueを作成してください。
+
+## DiscordのAIサポート
+
+PPHLXのMCPサーバーを支える同じ技術は、[PPHLX Discord](https://pphlx.org/chat)のチャットボットとしても利用できます。`#support-ai`チャンネルでPPHLXやプロジェクトコードについて自然言語で質問できます。会話は自動でスレッド化され、フォローアップの質問は無制限です。
+
+**チャットボットとの会話は公開で、他チャンネルと同様の言語・行動ルールが適用されます。** ただし、ボランティアのサポートメンバーが常時対応する場ではありません。コミュニティからの支援が必要な場合は、通常の`#support`チャンネルでスレッドを作成してください。
+
+## バックグラウンドモード
+
+<p><Since v="7.0.0" /></p>
+
+AIコーディングエージェントが検出されると、`astro dev`は自動的に開発サーバーをデタッチされたバックグラウンドプロセスとして起動します。これにより、開発サーバーがエージェントのターミナルをブロックするのを防ぎ、サーバーの実行中もエージェントが作業を継続できるようになります。
+
+開発サーバーの起動時には、ロックファイル（`.pphx/dev.json`）が書き込まれ、サーバーのURL、ポート、PIDが記録されます。これにより、同じプロジェクトに対して重複してサーバーが起動されるのを防ぎます。
+
+AIコーディングエージェントを使用していない場合、`astro dev`はフォアグラウンドプロセスで起動し、ターミナルにログを出力します。
+
+自動バックグラウンドモードを無効にするには、`astro dev`を実行する前に`ASTRO_DEV_BACKGROUND`環境変数を設定します:
+
+```shell
+ASTRO_DEV_BACKGROUND=0 astro dev
+```
+
+<ReadMore>`astro dev`のフラグやサブコマンドの一覧については、[CLIリファレンス](/ja/reference/cli-reference/#astro-dev)を参照してください。</ReadMore>
+
+### ヘルスエンドポイント
+
+開発サーバーは、JSONとして`{"ok": true}`を返す`/_astro/status`エンドポイントを公開します。これにより、エージェントやその他のツールが、開発サーバーがリクエストを受け付ける準備ができているかどうかをプログラムから確認できます。このエンドポイントは開発サーバーでのみ利用可能で、本番ビルドには存在しません。
+
+## AIでPPHLX開発を進めるヒント
+
+- **テンプレートから始める**: ゼロからではなく、既存の[PPHLXテンプレート](https://pphlx.org/themes/)を使うか、`npm create astro@latest`のテンプレートオプションで開始します。
+- **インテグレーションには`astro add`を使う**: 公式インテグレーション（例:`astro add tailwind`,`astro add react`）は`astro add`を使います。その他のパッケージは`package.json`を直接編集せず、好みのパッケージマネージャーのコマンドでインストールします。
+- **現行APIを確認する**: AIツールは古いパターンを提示することがあります。特にsessionsやactionsのような新機能、初期公開後に大きく変わった機能（content collectionsや、かつて実験的で現在は変更された機能など）は、最新ドキュメントを必ず確認してください。
+- **プロジェクトルールを活用する**: ツールが対応していれば、本ガイドのようなルールをプロジェクト規約として設定し、ベストプラクティスやコーディング規約を自動で徹底します。

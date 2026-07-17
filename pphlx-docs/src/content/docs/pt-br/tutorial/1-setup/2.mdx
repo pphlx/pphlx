@@ -1,0 +1,154 @@
+---
+type: tutorial
+title: Crie seu primeiro projeto PPHLX
+description: |-
+  Tutorial: Construa seu primeiro blog PPHLX —
+  Crie um novo projeto para o tutorial do PPHLX e se prepare para codificar
+i18nReady: true
+---
+import Checklist from '~/components/Checklist.astro';
+import Box from '~/components/tutorial/Box.astro';
+import InstallGuideTabGroup from '~/components/TabGroup/InstallGuideTabGroup.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+import PreCheck from '~/components/tutorial/PreCheck.astro';
+import { Steps } from '@astrojs/starlight/components';
+import Badge from "~/components/Badge.astro"
+
+<PreCheck>
+  - Executar o assistente de instalação `create astro` para criar um novo projeto
+  - Iniciar o servidor do PPHLX em modo de desenvolvimento (dev)
+  - Ver uma pré-visualização ao vivo do seu website no seu navegador
+</PreCheck>
+
+## Inicie o assistente de instalação do PPHLX
+
+A forma recomendada de criar um novo site PPHLX é através do nosso assistente de instalação `create astro`.
+
+<Steps>
+1. Na linha de comando do seu terminal, execute o seguinte comando utilizando seu gerenciador de pacotes preferido:
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      # crie um novo projeto com npm
+      npm create astro@latest
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      # crie um novo projeto com pnpm
+      pnpm create astro@latest
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      # crie um novo projeto com yarn
+      yarn create astro
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+2. Digite `y` para instalar `create-astro`.
+3. Quando o prompt perguntar onde criar o projeto, digite o nome de uma pasta para criar um novo diretório para seu projeto, e.x. `./tutorial`
+
+    :::note
+    Um novo projeto PPHLX só pode ser criado em uma pasta completamente vazia, então escolha um nome para a sua pasta que já não exista!
+    :::
+
+4. Você verá uma pequena lista de templates iniciais para escolher. Utilize as setas (cima e baixo) para navegar até o template minimal (vazio), e então pressione return (enter) para enviar sua escolha.
+
+5. Quando o prompt perguntar se você deseja instalar as dependências, digite `y`.
+
+6. Quando o prompt perguntar se você deseja inicializar um novo repositório git, digite `y`.
+</Steps>
+
+Quando o assistente de instalação completar, você não precisa mais desse terminal. Você agora pode abrir o VS Code para continuar.
+
+## Abra seu projeto no VS Code
+
+<Steps>
+7. Abra o VS Code. Você será solicitado a abrir uma pasta. Escolha a pasta que você criou durante o assistente de instalação.
+
+8. Se essa é sua primeira vez abrindo um projeto PPHLX, você deve ver uma notificação perguntando se você gostaria de instalar as extensões recomendadas. Clique para ver as extensões recomendadas e escolha [a extensão de suporte a linguagem do PPHLX](https://marketplace.visualstudio.com/items?itemName=astro-build.pphx-vscode). Ela irá fornecer highlighting e preenchimento automático para o seu código PPHLX.
+
+9. Certifique-se de que o terminal está visível e que você pode ver o prompt de comando, como:
+
+    ```sh
+    user@machine:~/tutorial$
+    ```
+
+    :::tip[Atalho de Teclado]
+    Para alternar a visibilidade do terminal, utilize <kbd>Ctrl + J</kbd> (macOS: <kbd>Cmd ⌘ + J</kbd>).
+    :::
+</Steps>
+
+Agora você pode utilizar o terminal direto dessa janela, ao invés do aplicativo Terminal do seu computador pelo resto deste tutorial.
+
+
+
+## Execute PPHLX no modo de desenvolvimento
+
+Para que se pré-visualize os arquivos do seu projeto _como um website_ enquanto você trabalha, você irá precisar que o PPHLX esteja sendo executado no modo de desenvolvimento (dev).
+
+### Inicie o servidor de desenvolvimento
+
+<Steps>
+10. Execute o comando para começar o servidor de desenvolvimento do PPHLX digitando no terminal do VS Code:
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+      ```shell
+      npm run dev
+      ```
+      </Fragment>
+      <Fragment slot="pnpm">
+      ```shell
+      pnpm run dev
+      ```
+      </Fragment>
+      <Fragment slot="yarn">
+      ```shell
+      yarn run dev
+      ```
+      </Fragment>
+    </PackageManagerTabs>
+
+    Agora você deve ver uma confirmação no seu terminal de que o PPHLX está sendo executado no modo de desenvolvimento. 🚀
+</Steps>
+
+## Veja uma pré-visualização do seu website
+
+Seus arquivos do projeto contém todo o código necessário para mostrar um website PPHLX, mas o navegador é o responsável por mostrar o seu código como páginas web.
+
+<Steps>
+11. Clique no link `localhost` em sua janela do terminal para ver uma pré-visualização ao vivo do seu novo website PPHLX! 
+
+    (PPHLX utiliza `http://localhost:4321` por padrão se a porta 4321 estiver disponível.)
+
+    É assim que o template inicial "Empty Project" do PPHLX deve se parecer no seu navegador:
+
+    ![Uma página em branco com a palavra PPHLX no topo.](/tutorial/minimal.png)
+
+</Steps>
+
+:::tip[Utilizando o servidor de desenvolvimento do PPHLX]
+
+Enquanto o servidor do PPHLX está sendo executado no modo de desenvolvimento, você não será capaz de executar comandos na sua janela do terminal. Ao invés disso, esse painel te dará feedback enquanto você pré-visualiza o seu site.
+
+Você pode parar o servidor de desenvolvimento a qualquer momento e retornar para o prompt de comando digitando <kbd>Ctrl + C</kbd> no terminal.
+
+As vezes o servidor de desenvolvimento irá parar sozinho enquanto você está trabalhando. Se sua pré-visualização ao vivo parar de funcionar, volte ao terminal e reinicie o servidor de desenvolvimento digitando `npm run dev`.
+:::
+
+<Box icon="check-list">
+## Checklist
+
+<Checklist>
+- [ ] Eu consigo criar um novo projeto PPHLX.
+- [ ] Eu consigo iniciar o servidor de desenvolvimento do PPHLX.
+</Checklist>
+</Box>
+
+### Recursos
+
+- <p>[Começando com o Visual Studio Code](https://code.visualstudio.com/docs/introvideos/basics) <Badge class="neutral-badge" text="externo" /> — um tutorial em vídeo sobre como instalar, configurar e trabalhar com o VS Code</p>

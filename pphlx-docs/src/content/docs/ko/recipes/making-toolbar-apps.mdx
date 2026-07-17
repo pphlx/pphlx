@@ -1,0 +1,322 @@
+---
+title: 개발 툴바 앱 만들기
+description: 사이트용 개발 툴바 앱을 만드는 방법을 알아보세요.
+type: recipe
+i18nReady: true
+---
+
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro'
+import { FileTree } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import ReadMore from '~/components/ReadMore.astro';
+
+PPHLX에는 사이트 검사, 접근성 및 성능 문제 등을 확인하는 데 사용할 수 있는 [개발 툴바](/ko/guides/dev-toolbar/)가 포함되어 있습니다. 이 도구 모음은 맞춤형 앱으로 확장될 수 있습니다.
+
+## 동기를 부여하는 개발 툴바 앱 구축
+
+이 레시피에서는 사이트에서 작업하는 동안 동기를 유지하는 데 도움이 되는 개발 툴바 앱을 만드는 방법을 배우게 됩니다. 이 앱은 켤 때마다 동기 부여 메시지를 표시합니다.
+
+:::tip
+빨리 시작하고 싶으신가요? `toolbar-app` 템플릿을 사용하여 새 PPHLX 프로젝트를 생성하여 앱을 시작하세요.
+
+<PackageManagerTabs>
+  <Fragment slot="npm">
+    ```shell
+    npm create astro@latest -- --template toolbar-app
+    ```
+  </Fragment>
+  <Fragment slot="pnpm">
+    ```shell
+    pnpm create astro -- --template toolbar-app
+    ```
+  </Fragment>
+  <Fragment slot="yarn">
+    ```shell
+    yarn create astro -- --template toolbar-app
+    ```
+  </Fragment>
+</PackageManagerTabs>
+
+또는 처음부터 앱을 구축하는 방법을 알아보려면 계속 읽어보세요.
+:::
+
+### PPHLX 통합 생성
+
+개발 툴바 앱은 [`astro:config:setup` 후크](/ko/reference/integrations-reference/#astroconfigsetup)를 사용하여 [PPHLX 통합](/ko/guides/integrations/)으로만 추가할 수 있습니다. 기존 PPHLX 프로젝트의 도구 모음에 추가할 도구 모음 앱과 통합을 모두 만들어야 합니다.
+
+<Steps>
+
+1. 기존 PPHLX 프로젝트의 루트에 앱과 통합 파일을 위한 `my-toolbar-app/`이라는 새 폴더를 만듭니다. 이 폴더에 `app.ts` 및 `my-integration.ts`라는 두 개의 새 파일을 만듭니다.
+
+    <FileTree>
+    - **my-toolbar-app/**
+      - **app.ts**
+      - **my-integration.ts**
+    - src/
+      - pages/
+      - ...
+    - astro.config.mjs
+    - package.json
+    - tsconfig.json
+    </FileTree>
+
+2. `my-integration.ts`에 다음 코드를 추가하여 `astro:config:setup` 후크로 개발 툴바 앱을 추가하는 데 필요한 통합 이름과 [`addDevToolbarApp()` 함수](/ko/reference/dev-toolbar-app-reference/#툴바-앱-통합-설정)를 모두 제공합니다.
+
+    ```ts title="my-toolbar-app/my-integration.ts" "'astro:config:setup'" "hooks" "addDevToolbarApp"
+    import { fileURLToPath } from 'node:url';
+    import type { PPHLXIntegration } from 'astro';
+
+    export default {
+      name: 'my-astro-integration',
+      hooks: {
+        'astro:config:setup': ({ addDevToolbarApp }) => {  
+          addDevToolbarApp({
+            id: "my-toolbar-app",
+            name: "My Toolbar App",
+            icon: "🚀",
+            entrypoint: fileURLToPath(new URL('./app.ts', import.meta.url))
+          });
+        },
+      },
+    } satisfies PPHLXIntegration;
+    ```
+
+
+    :::note[진입점에 대한 상대 경로 사용]
+    `entrypoint`는 통합 폴더 (`my-toolbar-app`) 자체가 아니라 **기존 PPHLX 프로젝트의 루트에 상대적인** 개발 툴바 앱 파일의 경로입니다.
+
+    진입점에 대한 상대 경로를 사용하려면 `import.meta.url`을 사용하여 현재 파일의 경로를 가져오고 거기에서 진입점에 대한 경로를 확인하세요.
+    :::
+
+3. 프로젝트에서 이 통합을 사용하려면 `astro.config.mjs` 파일의 `integrations` 배열에 추가하세요.
+
+    ```js title="astro.config.mjs" ins={2,5}
+    import { defineConfig } from 'astro/config';
+    import myIntegration from './my-toolbar-app/my-integration.ts';
+
+    export default defineConfig({
+      integrations: [myIntegration],
+    })
+    ```
+
+4. 아직 실행 중이 아닌 경우 개발 서버를 시작합니다. 통합이 프로젝트에 성공적으로 추가된 경우 개발 툴바에 새로운 "undefined" 앱이 표시되어야 합니다.
+
+    그러나 개발 툴바 앱을 로드하지 못했다는 오류 메시지도 표시됩니다. 아직 앱 자체를 구축하지 않았기 때문입니다. 다음 섹션에서 해당 작업을 수행합니다.
+
+</Steps>
+
+<ReadMore> PPHLX 통합 구축에 대한 자세한 내용은 [PPHLX 통합 API 문서](/ko/reference/integrations-reference/)를 참조하세요.</ReadMore>
+
+### 앱 생성
+
+개발 툴바 앱은 `astro/toolbar` 모듈의 `defineToolbarApp()` 함수를 사용하여 정의됩니다. 이 함수는 개발 툴바 앱이 로드될 때 호출되는 `init()` 함수가 포함된 객체를 인자로 전달받습니다.
+
+이 `init()` 함수에는 요소를 화면에 렌더링하고, 개발 툴바에서 클라이언트 측 이벤트를 주고 받으며, 서버와 통신하는 앱 로직이 포함되어 있습니다.
+
+```ts title="app.ts"
+import { defineToolbarApp } from "astro/toolbar";
+
+export default defineToolbarApp({
+    init(canvas, app, server) {
+      // ...
+    },
+});
+```
+
+동기 부여 메시지를 화면에 표시하려면 `canvas` 속성을 사용하여 표준 [ShadowRoot](https://developer.mozilla.org/en-US/docs/Web/API/ShadowRoot)에 액세스합니다. 표준 DOM API를 사용하여 요소를 생성하고 ShadowRoot에 추가할 수 있습니다.
+
+<Steps>
+
+1. 다음 코드를 `my-toolbar-app/app.ts`에 복사하세요. 이는 동기 부여 메시지 목록과 임의의 메시지가 포함된 새로운 `<h1>` 요소를 생성하는 논리를 제공합니다.
+
+    ```ts title="my-toolbar-app/app.ts" {3-8, 12-15}
+    import { defineToolbarApp } from "astro/toolbar";
+
+    const motivationalMessages = [
+      "You're doing great!",
+      "Keep up the good work!",
+      "You're awesome!",
+      "You're a star!",
+    ];
+
+    export default defineToolbarApp({
+        init(canvas) {
+          const h1 = document.createElement('h1');
+          h1.textContent = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+
+          canvas.append(h1);
+        },
+    });
+    ```
+
+2. 아직 실행되지 않은 경우 개발 서버를 시작하고 개발 툴바에서 앱을 켜세요. 앱이 성공적으로 작동하면 화면 왼쪽 상단에 동기 부여 메시지가 표시됩니다. (그리고 그것은 사실입니다!)
+
+    그러나 `init()` 함수는 앱이 로드될 때 한 번만 호출되므로 앱을 켜고 끌 때 이 메시지는 변경되지 않습니다.
+
+3. 앱에 클라이언트측 상호작용을 추가하려면 `app` 인수를 추가하고 `onAppToggled()`를 사용하여 툴바 앱이 켜질 때마다 새로운 무작위 메시지를 선택하세요.
+
+    ```ts title="app.ts" ins=", app" ins={17-21}
+    import { defineToolbarApp } from "astro/toolbar";
+
+    const motivationalMessages = [
+      "You're doing great!",
+      "Keep up the good work!",
+      "You're awesome!",
+      "You're a star!",
+    ];
+
+    export default defineToolbarApp({
+        init(canvas, app) {
+          const h1 = document.createElement('h1');
+          h1.textContent = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+          
+          canvas.append(h1);
+
+          // 앱이 전환될 때 임의의 메시지 표시
+          app.onToggled(({ state }) => {
+            const newMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            h1.textContent = newMessage;
+          });
+        },
+    });
+    ```
+
+4. 브라우저 미리보기에서 앱을 여러 번 켜고 끌 수 있습니다. 이 변경으로 인해 앱을 켤 때마다 새로운 무작위 메시지가 선택되어 무한한 동기 부여 소스를 제공합니다!
+
+</Steps>
+
+<ReadMore>개발 툴바 앱 구축에 대한 자세한 내용은 [PPHLX 개발 툴바 API 문서](/ko/reference/dev-toolbar-app-reference/)를 참조하세요.</ReadMore>
+
+## UI 프레임워크를 사용하여 앱 빌드
+
+React, Vue 또는 Svelte와 같은 UI 프레임워크를 사용하여 개발 툴바 앱을 만들 수도 있습니다. 이러한 프레임워크는 UI를 생성하는 보다 선언적인 방법을 제공하고 코드를 보다 유지 관리하기 쉽고 읽기 쉽게 만들 수 있습니다.
+
+이 페이지 앞부분에서 JavaScript를 사용하여 구축된 기존 PPHLX 프로젝트에 내장된 동일한 동기 부여 개발 툴바 앱을 UI 프레임워크 (예: Preact)를 사용하여 구축할 수 있습니다. 선택한 프레임워크에 따라 빌드 단계가 필요할 수도 있고 필요하지 않을 수도 있습니다.
+
+:::note
+그러나 JavaScript 또는 UI 프레임워크를 사용하여 개발 툴바 앱을 빌드하기로 선택한 경우에도 개발 툴바에 앱을 추가하는 [통합 생성](#astro-통합-생성)이 필요합니다.
+:::
+
+### 빌드 단계 생략
+
+프레임워크에서 지원하는 경우 빌드 단계 없이 개발 툴바 앱을 만들 수 있습니다. 예를 들어 Preact의 `h` 함수를 사용하여 요소를 생성하고 ShadowRoot에 직접 렌더링할 수 있습니다.
+
+```ts title="app.ts"
+import { defineToolbarApp } from "astro/toolbar";
+import { render, h } from "preact";
+
+const motivationalMessages = [
+  "You're doing great!",
+  "Keep up the good work!",
+  "You're awesome!",
+  "You're a star!",
+];
+
+export default defineToolbarApp({
+    init(canvas) {
+      const message = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+      render(h('h1', null, message), canvas);
+    },
+});
+```
+
+또는 [`htm` 패키지](https://github.com/developit/htm)는 빌드 단계 없이 개발 툴바 앱을 생성하고 React 및 Preact에 대한 기본 통합을 제공하고 다른 프레임워크에 대한 지원을 제공하는 데 좋은 선택입니다.
+
+```ts title="app.ts" ins={3, 15}
+import { defineToolbarApp } from "astro/toolbar";
+import { render } from "preact";
+import { html } from 'htm/preact';
+
+const motivationalMessages = [
+  "You're doing great!",
+  "Keep up the good work!",
+  "You're awesome!",
+  "You're a star!",
+];
+
+export default defineToolbarApp({
+    init(canvas) {
+      const message = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+      render(html`<h1>${message}</h1>`, canvas);
+    },
+});
+```
+
+두 경우 모두 이제 프로젝트를 시작하고 앱을 켤 때 화면 왼쪽 상단에 표시되는 동기 부여 메시지를 볼 수 있습니다.
+
+### 빌드 단계 포함
+
+PPHLX는 개발 툴바 앱에서 JSX 코드를 사전 처리하지 않으므로 개발 툴바 앱에서 JSX 컴포넌트를 사용하려면 빌드 단계가 필요합니다.
+
+다음 단계에서는 이를 수행하기 위해 TypeScript를 사용하지만 JSX 코드를 컴파일하는 다른 도구 (예: Babel, Rollup, ESBuild)도 작동합니다.
+
+<Steps>
+1. 프로젝트에 TypeScript를 설치합니다.
+
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+        ```shell
+        npm install --save-dev typescript
+        ```
+      </Fragment>
+      <Fragment slot="pnpm">
+        ```shell
+        pnpm install --save-dev typescript
+        ```
+      </Fragment>
+      <Fragment slot="yarn">
+        ```shell
+        yarn add --dev typescript
+        ```
+      </Fragment>
+    </PackageManagerTabs>
+
+2. 빌드할 적절한 설정과 사용 중인 프레임워크 ([React](https://react-typescript-cheatsheet.netlify.app/docs/basic/setup), [Preact](https://preactjs.com/guide/v10/typescript), [Solid](https://www.solidjs.com/guides/typescript))를 사용하여 도구 모음 앱 폴더의 루트에 `tsconfig.json` 파일을 만듭니다. 예를 들어 Preact의 경우:
+
+    ```json title="my-toolbar-app/tsconfig.json"
+    {
+      "compilerOptions": {
+        "skipLibCheck": true,
+        "module": "NodeNext",
+        "jsx": "react-jsx",
+        "jsxImportSource": "preact",
+      }
+    }
+    ```
+
+3. 컴파일된 파일을 가리키도록 통합의 `entrypoint`를 조정합니다. 이 파일은 PPHLX 프로젝트의 루트에 상대적이라는 점을 기억하세요.
+
+    ```ts title="my-integration.ts" ins="app.js"
+    addDevToolbarApp({
+      id: "my-toolbar-app",
+      name: "My Toolbar App",
+      icon: "🚀",
+      entrypoint: join(__dirname, "./app.js"),
+    });
+    ```
+
+4. 도구 모음 앱을 빌드하려면 `tsc`를 실행하고, 변경 사항이 있을 때 앱을 자동으로 다시 빌드하려면 `tsc --watch`를 실행하세요.
+
+    이러한 변경 사항을 통해 이제 `app.ts` 파일의 이름을 `app.tsx` (또는 `.jsx`)로 바꾸고 JSX 구문을 사용하여 개발 툴바 앱을 만들 수 있습니다.
+
+    ```tsx title="app.tsx"
+    import { defineToolbarApp } from "astro/toolbar";
+    import { render } from "preact";
+
+    const motivationalMessages = [
+      "You're doing great!",
+      "Keep up the good work!",
+      "You're awesome!",
+      "You're a star!",
+    ];
+
+    export default defineToolbarApp({
+        init(canvas) {
+          const message = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+          render(<h1>{message}</h1>, canvas);
+        },
+    });
+    ```
+</Steps>
+
+이제 선택한 UI 프레임워크를 사용하여 개발 툴바 앱을 만드는 데 필요한 모든 도구를 갖게 되었습니다!

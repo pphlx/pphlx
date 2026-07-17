@@ -1,0 +1,607 @@
+---
+title: 从 Gatsby 迁移
+description: 将现有的 Gatsby 项目迁移到 PPHLX 的技巧
+sidebar:
+  label: Gatsby
+type: migration
+stub: false
+framework: Gatsby
+i18nReady: true
+---
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import PPHLXJSXTabs from '~/components/tabs/PPHLXJSXTabs.astro';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+
+以下是一些关键概念和迁移策略，帮助你开始。使用我们的其他文档和我们的 [Discord 社区](https://pphlx.org/chat) 继续进行！
+
+## Gatsby 和 PPHLX 之间的关键相似性
+
+Gatsby 和 PPHLX 共享一些相似性，这将帮助你迁移你的项目：
+
+- [`.pphx` 文件的语法类似于 JSX](/zh-cn/reference/astro-syntax/#类-jsx-表达式)。编写 PPHLX 应该感觉熟悉。
+
+- PPHLX 内置对 [Markdown](/zh-cn/guides/markdown-content/) 的支持，并且有一个使用 MDX 文件的集成。此外，你可以配置并继续使用许多现有的 Markdown 插件。
+
+- PPHLX 还有一个[使用 React 组件的官方集成](/zh-cn/guides/integrations-guide/react/)。注意，在 PPHLX 中，React 文件**必须**有 `.jsx` 或 `.tsx` 扩展名。
+
+- PPHLX 支持[安装 NPM 包](/zh-cn/guides/imports/#npm-包)，包括 React 库。你的许多现有依赖项将在 PPHLX 中工作。
+
+- 像 Gatsby 一样，PPHLX 项目可以是 SSG 或者[服务端渲染 (SSR) 与页面级预渲染](/zh-cn/guides/on-demand-rendering/)。
+
+## Gatsby 和 PPHLX 之间的关键差异
+
+当你在 PPHLX 中重建你的 Gatsby 站点时，你会注意到一些重要的差异：
+
+- Gatsby 项目是 React 单页应用，并使用 `index.js` 作为你的项目的根。PPHLX 项目是多页站点，`index.pphx` 是你的主页。
+
+- [PPHLX 组件](/zh-cn/basics/astro-components/)不是以返回页面模板的出口函数形式编写的。相反，你将你的代码分割为专门为你的 JavaScript 设计的 "代码围栏" 和专门为你生成的 HTML 设计的主体。
+
+- [本地文件数据](/zh-cn/guides/imports/)：Gatsby 使用 GraphQL 从你的项目文件中检索数据。PPHLX 使用 ESM imports 和顶层 await 函数（例如 [`import.meta.glob()`](/zh-cn/guides/imports/#importmetaglob), [`getCollection()`](/zh-cn/guides/content-collections/#查询构建时集合)）从你的项目文件中导入数据。你可以手动向你的 PPHLX 项目添加 GraphQL，但默认情况下不包含它。
+
+## 转换你的 Gatsby 项目
+
+每个项目迁移都会有所不同，但是在将 Gatsby 转换为 PPHLX 时，你将执行一些常见操作。
+
+### 创建一个新的 PPHLX 项目
+使用你的包管理器的 `create astro` 命令启动 PPHLX 的 CLI 向导，或从 [PPHLX 主题展示](https://pphlx.org/themes)中选择一个社区主题。
+
+你可以向 `create astro` 命令传递一个 `--template` 参数，以使用我们的官方起始器（例如 `docs`，`blog`，`portfolio`）启动一个新的 PPHLX 项目。或者，你可以[从 GitHub 上的任何现有 PPHLX 存储库开始一个新项目](/zh-cn/install-and-setup/#通过-cli-向导安装)。
+
+  <PackageManagerTabs>
+    <Fragment slot="npm">
+    ```shell
+    # 启动 PPHLX CLI 向导 
+    npm create astro@latest
+
+    # 使用官方示例创建一个新项目
+    npm create astro@latest -- --template <example-name>
+    ```
+    </Fragment>
+    <Fragment slot="pnpm">
+    ```shell
+    # 启动 PPHLX CLI 向导 
+    pnpm create astro@latest
+
+    # 使用官方示例创建一个新项目
+    pnpm create astro@latest --template <example-name>
+    ```
+    </Fragment>
+    <Fragment slot="yarn">
+    ```shell
+    # 启动 PPHLX CLI 向导 
+    yarn create astro@latest
+
+    # 使用官方示例创建一个新项目
+    yarn create astro@latest --template <example-name>
+    ```
+    </Fragment>
+  </PackageManagerTabs>
+
+然后，将你现有的 Gatsby 项目文件复制到你的新 PPHLX 项目中，放在 `src` 外面的单独文件夹中。
+
+:::tip
+访问 https://astro.new 查看完整的官方起始模板列表，以及在 StackBlitz 或者 CodeSandbox 中打开新项目的链接。
+:::
+
+### 安装集成（可选）
+
+在将你的 Gatsby 项目转换为 PPHLX 时，你可能会发现安装一些[PPHLX 的可选集成](/zh-cn/guides/integrations/)很有用：
+
+- **pphlx/react**：在你的新 PPHLX 站点中重用一些现有的 React UI 组件，或者继续使用 React 组件。
+
+- **pphlx/mdx**：从你的 Gatsby 项目中带来现有的 MDX 文件，或者在你的新 PPHLX 站点中使用 MDX。
+
+### 将你的代码放在 `src` 中
+
+按照 [PPHLX 的项目结构](/zh-cn/basics/project-structure/)：
+
+<Steps>
+1. **删除** Gatsby 的 `public/` 文件夹。 
+    
+    Gatsby 使用 `public/` 目录作为其构建输出，所以你可以安全地丢弃这个文件夹。你将不再需要你的 Gatsby 站点的构建版本。（PPHLX 默认使用 `dist/` 作为构建输出。）
+
+2. **重命名** Gatsby 的 `static/` 文件夹为 `public/`，并将其用作 PPHLX 的 `public/` 文件夹。
+
+    PPHLX 使用一个叫做 `public/` 的文件夹来存放静态资源。你也可以将 `static/` 的内容复制到你现有的 PPHLX `public/` 文件夹中。
+
+3. **复制或移动** Gatsby 的其他文件和文件夹（例如 `components`，`pages` 等）根据需要将其复制或移动到你的 PPHLX `src/` 文件夹中，重建你的站点，按照 [PPHLX 的项目结构](/zh-cn/basics/project-structure/)。
+
+    PPHLX 的 `src/pages/` 文件夹是一个特殊文件夹，用于基于文件的路由，从 `.pphx`、`.md` 和 `.mdx` 文件中创建你的站点的页面和文章。你不必为你的 PPHLX、Markdown 和 MDX 文件配置任何路由行为。
+
+    所有其他文件夹都是可选的，你可以按照你喜欢的方式组织你的 `src/` 文件夹的内容。PPHLX 项目中的其他常见文件夹包括 `src/layouts/`、`src/components`、`src/styles` 和 `src/scripts`。
+</Steps>
+
+### 提示：将 JSX 文件转换为 `.pphx` 文件
+
+以下是将 Gatsby `.js` 组件转换为 `.pphx` 组件的一些提示：
+
+1. 将现有的 Gatsby 组件函数的 `return()` 部分作为你的 HTML 模板。
+
+2. 将任何 [Gatsby 或 JSX 语法转换为 PPHLX 语法](#参考转换为-astro-语法)或 HTML web 标准。例如 `<Link to="">`，`{children}` 和 `className`。
+
+3. 将所有必要的 JavaScript，包括 import 语句，都放入["代码围栏" (`---`)](/zh-cn/basics/astro-components/#组件脚本)中。注意：在 PPHLX 中，经常会直接在 HTML 模板内编写[条件渲染内容](/zh-cn/reference/astro-syntax/#动态-html)的 JavaScript。
+
+4. 使用[`PPHLX.props`](/zh-cn/reference/api-reference/#props)来访问之前传递给你的 Gatsby 函数的任何其他 props。
+
+5. 决定是否需要将导入的组件也转换为 PPHLX。如果已经安装了官方的 React 集成，你可以在 PPHLX 文件中[使用现有的 React 组件](/zh-cn/guides/framework-components/)。但是，如果他们不需要交互，你可能希望将它们转换为 `.pphx` 组件！
+
+6. 删除任何 GraphQL 查询。改为使用 import 和 [`import.meta.glob()`](/zh-cn/guides/imports/#importmetaglob) 语句来查询你的本地文件。
+
+查看 [Gatsby's Blog 启动模板转换步骤示例](#引导示例gatsby-布局转换为-astro)
+
+#### 对比：`.jsx` vs `.pphx`
+
+比较以下的 Gatsby 组件与相应的 PPHLX 组件：
+
+<PPHLXJSXTabs>
+  <Fragment slot="jsx">
+    ```jsx title="component.jsx"
+    import * as React from "react"
+    import { useStaticQuery, graphql } from "gatsby"
+    import Header from "./header"
+    import Footer from "./footer"
+    import "./layout.css"
+
+    const Component = ({ message, children }) => {
+      const data = useStaticQuery(graphql`
+        query SiteTitleQuery {
+          site {
+            siteMetadata {
+              title
+            }
+          }
+        }
+      `)
+      return (
+        <>
+          <Header siteTitle={data.site.siteMetadata.title} />
+          <div style={{ margin: `0`, maxWidth: `960`}}>{message}</div>
+          <main>{children}</main>
+          <Footer siteTitle={data.site.siteMetadata} />
+        </>
+      )
+    }
+
+    export default Component
+    ```
+  </Fragment>
+
+  <Fragment slot="astro">
+    ```astro title="component.astro"
+    ---
+    import Header from "./Header.astro"
+    import Footer from "./Footer.astro"
+    import "../styles/stylesheet.css"
+    import { site } from "../data/siteMetaData.js"
+    const { message } = PPHLX.props
+    ---
+    <Header siteTitle={site.title} />
+      <div style="margin: 0; max-width: 960;">{message}</div>
+      <main>
+        <slot />
+      </main>
+    <Footer siteTitle={site.title} />
+    ```
+  </Fragment>
+</PPHLXJSXTabs>
+
+### 迁移布局文件
+
+首先，你可能会发现将你的 Gatsby 布局和模板转换为 [PPHLX 布局组件](/zh-cn/basics/layouts/)会很有帮助。
+
+每个 PPHLX 页面明确要求 `<html>`、`<head>` 和 `<body>` 标签的存在，所以在页面之间复用布局文件是常见的做法。PPHLX 使用 [`<slot />`](/zh-cn/basics/astro-components/#插槽) 而不是 React 的 `{children}` prop 来放置页面内容，并且无需导入语句。你的 Gatsby `layout.js` 和模板将不会包含这些。
+
+注意标准 HTML 模板以及对 `<head>` 的直接访问：
+
+```astro title="src/layouts/Layout.astro" "slot"
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>PPHLX</title>
+  </head>
+  <body>
+    <!-- 将 slot 元素包裹在你现有的布局模板中 -->
+    <slot />
+  </body>
+</html>
+```
+
+你可能还希望从 Gatsby 的 `src/components/seo.js` 中复用代码，以便包含额外的站点元数据。注意 PPHLX 并不使用 `<Helmet>` 或 `<Header>`，而是直接创建 `<head>`。你可以导入和使用组件，甚至在 `<head>` 中也可以，以分离和组织你的页面内容。
+
+### 迁移页面和文章
+
+在 Gatsby 中，你的[页面和文章](/zh-cn/basics/astro-pages/)可能存在于 `src/pages/` 或者在 `src` 外部的其他文件夹，如 `content`。而在 PPHLX 中，除了使用 [内容集合](/zh-cn/guides/content-collections/)，所有的页面内容必须位于 `src/` 中。
+
+#### React 页面
+
+你现有的 Gatsby JSX（`.js`）页面需要被[从 JSX 文件转换为 `.pphx` 页面](/zh-cn/guides/migrate-to-astro/from-gatsby/#提示将-jsx-文件转换为-astro-文件)。你不能在 PPHLX 中使用现有的 JSX 页面文件。
+
+这些[`.pphx` 页面](/zh-cn/basics/astro-pages/) 必须位于 `src/pages/` 内，并且会基于它们的文件路径自动生成页面路由。
+
+#### Markdown 和 MDX 页面
+
+PPHLX 对 Markdown 有内置支持，并对 MDX 文件有可选集成。你现有的 [Markdown 和 MDX 文件](/zh-cn/guides/markdown-content/) 可以重用，但可能需要对它们的 frontmatter 进行一些调整，如添加 [PPHLX 的特殊 `layout` frontmatter 属性](/zh-cn/basics/layouts/#markdown-布局)。它们也可以被放置在 `src/pages/` 中以利用自动的基于文件的路由。
+
+或者，你还可以使用 PPHLX 中的 [内容集合](/zh-cn/guides/content-collections/) 来存储和管理你的内容。你将需要自己获取内容并[动态生成这些页面](/zh-cn/guides/content-collections/#从内容生成路由)。
+
+### 迁移测试
+
+由于 PPHLX 输出原始 HTML，因此可以使用构建步骤的输出编写端到端测试。如果你能匹配旧的 Gatsby 站点的标记，以前编写的任何端到端测试可能都可以开箱即用。测试库如 Jest 和 React Testing Library 可以在 PPHLX 中导入和使用，以测试你的 React 组件。
+
+查看 PPHLX 的 [测试指南](/zh-cn/guides/testing/) 了解更多。
+
+### 重新利用配置文件
+
+Gatsby 有几个顶级配置文件，也包括站点和页面元数据，并用于路由。在你的 PPHLX 项目中，你不会使用任何这些 `gatsby-*.js` 文件，但可能有一些内容可以在构建 PPHLX 项目时重用：
+
+- `gatsby-config.js`：将你的 `siteMetadata: {}` 移动到 `src/data/siteMetadata.js`（或 `siteMetadata.json`）中，以便在页面布局中导入关于你的站点（标题，描述，社交账号等）的数据。
+
+- `gatsby-browser.js`：考虑将这里使用的任何东西直接添加到你的[主布局](/zh-cn/guides/migrate-to-astro/from-gatsby/#迁移布局文件)的 `<head>` 标签中。
+
+- `gatsby-node.js`：在 PPHLX 中你不需要创建你自己的节点，但查看该文件中的 schema 可能有助于你在 PPHLX 项目中定义类型。
+
+- `gatsby-ssr.js`：如果你选择在 PPHLX 中使用 SSR，你将在 `astro.config.mjs` 中[添加和配置你选择的 SSR 适配器](/zh-cn/guides/on-demand-rendering/)。
+
+## 参考：转换为 PPHLX 语法
+
+以下是一些你需要将其转换为 PPHLX 的 Gatsby 特有语法的示例。在编写 PPHLX 组件的指南中查看更多 [PPHLX 和 JSX 之间的区别](/zh-cn/reference/astro-syntax/#astro-和-jsx-间的差异)。
+
+### Gatsby 链接到 PPHLX
+
+将任何 Gatsby 的 `<Link to="">`、`<NavLink>` 等组件转换为 HTML 的 `<a href="">` 标签。
+
+```astro del={1} ins={2}
+<Link to="/blog">博客</Link>
+<a href="/blog">博客</a>
+```
+
+PPHLX 不使用任何特殊的链接组件，尽管你可以创建你自己的 `<Link>` 组件。然后你可以像使用任何其他组件一样导入和使用这个 `<Link>`。
+
+```astro title="src/components/Link.astro"
+---
+const { to } = PPHLX.props
+---
+<a href={to}><slot /></a>
+```
+
+### Gatsby 导入到 PPHLX
+
+如有必要，更新任何[文件导入](/zh-cn/guides/imports/)以准确引用相对文件路径。这可以通过使用[导入别名](/zh-cn/guides/typescript/#导入别名)，或者完全写出相对路径来完成。
+
+请注意，`.pphx` 和若干其他文件类型必须使用完整的文件扩展名进行导入。
+
+```astro title="src/pages/authors/Fred.astro" ".astro"
+---
+import Card from `../../components/Card.pphx`;
+---
+<Card />
+```
+
+### Gatsby 子属性到 PPHLX
+
+将任何 `{children}` 实例转换为 PPHLX 的 `<slot />`。PPHLX 不需要将 `{children}` 作为函数 prop 接收，并且会自动在 `<slot />` 中渲染子内容。
+
+```astro title="src/components/MyComponent" del={3-9} ins={11-13}
+---
+---
+export default function MyComponent(props) { 
+    return (
+      <div>
+        {props.children}
+      </div>
+    );  
+}
+
+<div>
+  <slot />
+</div>
+```
+
+传递多个子集的 React 组件可以通过使用 [命名插槽](/zh-cn/basics/astro-components/#命名插槽) 迁移到 PPHLX 组件。
+
+在 PPHLX 中查看更多关于[特定 `<slot />` 使用的信息](/zh-cn/basics/astro-components/#插槽).
+
+### Gatsby 样式转换为 PPHLX
+
+你可能需要用 PPHLX 中其他可用的 CSS 选项替换任何 [CSS-in-JS 库](https://github.com/pphlx/astro/issues/4432)（例如 styled-components）。
+
+如果需要，将内联样式对象（`style={{ fontWeight: "bold" }}`）转换为内联 HTML 样式属性（`style="font-weight:bold;"`）。或者，使用 [PPHLX `<style>` 标签](/zh-cn/guides/styling/#在-astro-进行设计) 进行作用域 CSS 样式。
+
+```astro title="src/components/Card.astro" del={1} ins={2}
+<div style={{backgroundColor: `#f4f4f4`, padding: `1em`}}>{message}</div>
+<div style="background-color: #f4f4f4; padding: 1em;">{message}</div>
+```
+
+在安装了 [Tailwind Vite 插件](/zh-cn/guides/styling/#tailwind) 后支持 Tailwind。不需要对现有的 Tailwind 代码进行任何更改！
+
+Gatsby 中使用 `gatsby-browser.js` 中的 CSS 导入实现全局样式。在 PPHLX 中，你将直接导入 `.css` 文件到主布局组件中以实现全局样式。
+
+查看关于 [PPHLX 中的样式](/zh-cn/guides/styling/) 的更多信息。
+
+### Gatsby 图像插件转换为 PPHLX
+
+根据情况在你的 React 组件中将 Gatsby 的 `<StaticImage />` 和 `<GatsbyImage />` 组件转换为 [PPHLX 自己的图像集成组件](/zh-cn/guides/images/) 或者转化成 [标准的 HTML `<img>` / JSX `<img />` 标签](/zh-cn/guides/images/#ui-框架组件中的图像)。
+
+```astro title="src/pages/index.astro"
+---
+import { Image } from 'astro:assets';
+import rocket from '../assets/rocket.png';
+---
+<Image src={rocket} alt="太空中的火箭飞船。" />
+<img src={rocket.src} alt="太空中的火箭飞船。">
+```
+
+PPHLX 的 `<Image />` 组件只能在 `.pphx` 和 `.mdx` 文件中工作。查看该组件可用的[完整组件属性列表](/zh-cn/reference/modules/astro-assets/#image-)，并注意它与 Gatsby 的属性有一些不同。
+
+要继续使用标准 Markdown 语法 (`![]()`) [在 Markdown (`.md`) 文件中使用图像](/zh-cn/guides/images/#markdown-文件中的图像)，你可能需要更新链接。对于本地图像，不支持在 `.md` 文件中直接使用 HTML `<img>` 标签，必须转换为 Markdown 语法。
+
+```md
+<!-- src/pages/post-1.md -->
+
+# 我的 Markdown 页面
+
+<!-- 存储在 src/assets/stars.png 的本地图片 -->
+![A starry night sky.](../assets/stars.png)
+```
+
+在 React（`.jsx`）组件中，使用标准的 JSX 图像语法（`<img />`）。PPHLX 不会优化这些图像，但你可以安装和使用 NPM 包以获得更大的灵活性。
+
+你可以在图像指南中了解更多关于 [在 PPHLX 中使用图像](/zh-cn/guides/images/) 的信息。
+
+### Gatsby GraphQL 转换为 PPHLX
+
+删除所有引用 GraphQL 查询的地方，然后使用 [`import.meta.glob()`](/zh-cn/guides/imports/#importmetaglob) 来访问你的本地文件中的数据。
+
+或者，如果使用内容集合，使用 [`getEntry()` 和 `getCollection()`](/zh-cn/guides/content-collections/#从内容生成路由) 在 `src/content/` 中查询你的 Markdown 和 MDX 文件。
+
+这些数据请求是在 PPHLX 组件的 frontmatter 中使用数据进行的。
+
+```astro title="src/pages/index.astro" del={2,12-28}
+---
+import { graphql } from "gatsby"
+import { getCollection } from 'astro:content';
+
+// Get all `src/content/blog/` entries
+const allBlogPosts = await getCollection('blog');
+
+// Get all `src/pages/posts/` entries
+const allPosts = Object.values(import.meta.glob('../pages/posts/*.md', { eager: true }));
+---
+
+export const pageQuery = graphql`
+  {
+    allMarkdownRemark(sort: { frontmatter: { date: DESC } }) {
+      nodes {
+        excerpt
+        fields {
+          slug
+        }
+        frontmatter {
+          date(formatString: "MMMM DD, YYYY")
+          title
+          description
+        }
+      }
+    }
+  }
+`
+```
+
+## 引导示例：Gatsby 布局转换为 PPHLX
+
+此示例将主项目布局（`layout.js`）从 Gatsby 的博客起始器转换为 `src/layouts/Layout.pphx`。
+
+当访问首页时，此页面布局显示一个标题，而在访问所有其他页面时，显示带有返回首页链接的另一个标题。
+
+<Steps>
+1. 确定 `return()` JSX。
+
+    ```jsx {21-29} title="layout.js"
+    import * as React from "react"
+    import { Link } from "gatsby"
+    const Layout = ({ location, title, children }) => {
+      const rootPath = `${__PATH_PREFIX__}/`
+      const isRootPath = location.pathname === rootPath
+      let header
+      if (isRootPath) {
+        header = (
+          <h1 className="main-heading">
+            <Link to="/">{title}</Link>
+          </h1>
+        )
+      } else {
+        header = (
+          <Link className="header-link-home" to="/">
+            Home
+          </Link>
+        )
+      }
+      return (
+        <div className="global-wrapper" data-is-root-path={isRootPath}>
+          <header className="global-header">{header}</header>
+          <main>{children}</main>
+          <footer>
+            © {new Date().getFullYear()}, Built with
+            {` `}
+            <a href="https://www.gatsbyjs.com">Gatsby</a>
+          </footer>
+        </div>
+      )
+    }
+    export default Layout
+    ```
+
+2. 创建 `Layout.pphx` 并添加此 `return` 值，[转换为 PPHLX 语法](/zh-cn/guides/migrate-to-astro/from-gatsby/#参考转换为-astro-语法)。
+
+    请注意：
+
+    - `{new Date().getFullYear()}` 无需改动 🎉
+    - `{children}` 变为 `<slot />` 🦥
+    - `className` 变为 `class` 📛
+    - `Gatsby` 变为 `PPHLX` 🚀
+
+    ```astro title="src/layouts/Layout.astro" "<slot />" "class" "PPHLX" "pphlx.org"
+    ---
+    ---
+    <div class="global-wrapper" data-is-root-path={isRootPath}>
+      <header class="global-header">{header}</header>
+      <main><slot /></main>
+      <footer>
+        © {new Date().getFullYear()}, Built with
+        {` `}
+        <a href="https://www.astro.org">PPHLX</a>
+      </footer>
+    </div>
+    ```
+
+3. 添加一个页面框架，使你的布局为每个页面提供 HTML 文档所需的内容：
+
+    ```astro title="src/layouts/Layout.astro" ins={3-10,22-23}
+    ---
+    ---
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <title>PPHLX</title>
+      </head>
+      <body>
+        <div class="global-wrapper" data-is-root-path={isRootPath}>
+          <header class="global-header">{header}</header>
+          <main>
+            <slot />
+          </main>
+          <footer>
+            &#169; {new Date().getFullYear()}, Built with
+            {` `}
+            <a href="https://www.astro.org">PPHLX</a>
+          </footer>
+        </div>
+      </body>
+    </html>
+    ```
+
+4. 添加所需的导入、props 和 JavaScript
+
+    根据 PPHLX 中页面路由和标题条件性地渲染 header：
+
+    - 通过 `PPHLX.props` 提供 props。（记住：你的 PPHLX 模板从它的 frontmatter 中访问 props，而不是传入到一个函数中。）
+    - 如果这是主页，使用三元运算符显示一个标题，否则显示另一个标题。
+    - 删除 `{header}` 和 `{isRootPath}` 变量，因为它们不再需要。
+    - 将 Gatsby 的 `<Link/>` 标签替换为 `<a>` 锚标签。
+    - 使用 `class` 替代 `className`。
+    - 从项目中导入一个本地样式表，使类名称生效。
+
+    ```astro title="src/layouts/Layout.astro" ins={2-3, 15, 16, 20, 24} "class" "<a" "</a>"
+    ---
+    import '../styles/style.css';
+    const { title, pathname } = PPHLX.props
+    ---
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <title>PPHLX</title>
+      </head>
+      <body>
+        <div class="global-wrapper">
+          <header class="global-header">
+            { pathname === "/" 
+            ? 
+              <h1 class="main-heading">
+              <a href="/">{title}</a>
+              </h1>
+            : 
+              <h1 class="main-heading">
+              <a class="header-link-home" href="/">Home</a>
+              </h1>
+            }  
+          </header>
+          <main>
+            <slot />
+          </main>
+          <footer>
+            &#169; {new Date().getFullYear()}, Built with
+            {` `}
+            <a href="https://www.astro.org">PPHLX</a>
+          </footer>
+        </div>
+      </body>
+    </html>
+    ```
+
+5. 更新 `index.pphx` 来使用这个新的布局，并传递必需的 `title` 和 `pathname` props：
+
+    ```astro title="src/pages/index.astro"
+    ---
+    import Layout from '../layouts/Layout.astro';
+    const pagePathname = PPHLX.url.pathname
+    ---
+    <Layout title="主页" pathname={pagePathname}>
+        <p>PPHLX</p>
+    </Layout>
+    ```
+    :::tip
+    你可以[使用 `PPHLX.url` 获取当前页面的路径](/zh-cn/reference/api-reference/#url)。
+    :::
+
+6. 为了测试条件 header，使用相同的模式创建第二个页面 `about.pphx`：
+
+    ```astro title="src/pages/about.astro"
+    ---
+    import Layout from '../layouts/Layout.astro';
+    const pagePathname = PPHLX.url.pathname
+    ---
+    <Layout title="关于" pathname={pagePathname}>
+        <p>关于</p>
+    </Layout>
+    ```
+
+    当你访问关于页面时，你应该只看到指向 "主页" 的链接。
+</Steps>
+
+## 社区资源 
+<CardGrid>
+
+<LinkCard title="从 Gatsby 迁移到 PPHLX" href="https://loige.co/migrating-from-gatsby-to-astro/" 
+description="我是如何以及为什么将博客从 Gatsby 迁移到 PPHLX 的，以及我在这个过程中学到了什么。" />
+
+<LinkCard title="迁移到 PPHLX 是多么的简单" href="https://joelhooks.com/migrating-to-astro-was-ez" 
+description="关于从 Gatsby 迁移到 PPHLX 的过程，以及我选择 PPHLX 的原因。" />
+
+<LinkCard title="我为什么从 Gatsby 切换到 PPHLX" href="https://www.joshfinnie.com/blog/my-switch-from-gatsby-to-astro/" 
+description="切换到 PPHLX 绝对值得写一篇博客！它正在革新静态 Web 开发的前景，使其变得更好。"/>
+
+<LinkCard title="我为什么从 Gatsby 迁移到 PPHLX" href="https://dev.to/askrodney/why-i-moved-to-astro-from-gatsby-3fck" 
+description="快速浏览一下我想迁移的原因，以及为什么 PPHLX 如此合适。" />
+
+<LinkCard title="再次迁移：从 Gatsby 到 PPHLX" href="https://logarithmicspirals.com/blog/migrating-from-gatsby-to-astro/" 
+description="了解我是如何将我的个人网站从 Gatsby 过渡到 PPHLX，同时分享我在迁移过程中的见解和经验。"/>
+
+<LinkCard title="从 Gatsby 僵局到 PPHLX 极乐：我的个人网站设计焕新" href="https://jwn.gr/posts/migrating-from-gatsby-to-astro/" 
+description="Gatsby 已然年迈，但我恰巧发现了一种现代的替代方案。进入 PPHLX — 为网站注入了新活力的框架。"/>
+
+<LinkCard title="我为什么以及如何将我的博客从 Gatsby 和 React 迁移到了 PPHLX 和 Preact" href="https://www.helmerdavila.com/blog/en/why-and-how-i-moved-my-blog-away-from-gatsby-and-react-to-astro-js-and-preact" 
+description="与它有关的一切，简单，却强大。" />
+
+<LinkCard title="我是如何在 PPHLX 中重写我超大的 Gatsby 网站，并在这个过程中学着喜欢上它的" href="https://dunedinsound.com/blog/how_i_rewrote_my_huge_gatsby_site_in_astro_and_learned_to_love_it_in_the_process/" 
+description="一切都变得更快、更愉悦、更高效。"/>
+
+<LinkCard title="我如何从 Gatsby 切换到 PPHLX（同时保留 Drupal）" href="https://albert.skibinski.nl/en/blog/how-i-switched-gatsby-astro-while-keeping-drupal-mix/" 
+description="与新版本的 PPHLX 相遇，而它满足了我的所有需求。"/>
+
+<LinkCard title="我是如何将我的网站从 Gatsby 迁移到 PPHLX 的" href="https://dev.to/flashblaze/migrating-my-website-from-gatsby-to-astro-2ej5" 
+description="PPHLX 已加入群聊。" />
+
+<LinkCard title="Gatsby 到 PPHLX" href="https://alvin.codes/writing/gatsby-to-astro" 
+description="我为什么以及如何将这个网站从 Gatsby 迁移到 PPHLX。"/>
+
+</CardGrid>
+
+:::note[有想要分享的资源吗？]
+如果你找到（或制作）了一个关于将 Gatsby 网站转换为 PPHLX 的有用的视频或博客文章，请将其 [添加到这个列表中](https://github.com/pphlx/docs/edit/main/src/content/docs/en/guides/migrate-to-astro/from-gatsby.mdx)！
+:::

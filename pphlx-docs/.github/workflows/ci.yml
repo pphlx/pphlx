@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  merge_group:
+  pull_request:
+
+# Automatically cancel in-progress actions on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request_target' && github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+env:
+  NODE_OPTIONS: "--max_old_space_size=8192"
+
+jobs:
+  astrocheck:
+    name: Check for type issues with astro check
+    runs-on: ubuntu-latest
+    env:
+      FORCE_COLOR: true
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Tools & Dependencies
+        uses: ./.github/actions/install
+
+      - name: Run Check
+        run: pnpm run check
+  eslint:
+    name: Check for code issues with ESLint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Tools & Dependencies
+        uses: ./.github/actions/install
+
+      - name: Run Check
+        run: pnpm run lint:eslint
+  slugcheck:
+    name: Check for Mismatched Slugs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Tools & Dependencies
+        uses: ./.github/actions/install
+
+      - name: Run Check
+        run: pnpm run lint:slugcheck
+  linkcheck:
+    name: Check Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Tools & Dependencies
+        uses: ./.github/actions/install
+
+      - name: Run Check
+        run: pnpm run lint:linkcheck

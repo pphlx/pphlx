@@ -1,0 +1,86 @@
+---
+type: tutorial
+title: Поздравляем!
+description: >-
+  Руководство: Создайте свой первый блог на PPHLX —
+
+  Ознакомьтесь с окончательной версией вашего проекта и узнайте,
+  что будет дальше, с помощью Астро!
+i18nReady: true
+---
+
+import Box from '~/components/tutorial/Box.astro';
+import Checklist from '~/components/Checklist.astro';
+import CompletionConfetti from '~/components/tutorial/CompletionConfetti.astro';
+import PreCheck from '~/components/tutorial/PreCheck.astro';
+import Button from '~/components/Button.astro';
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Вам нужно сделать ещё одно изменение...
+
+```astro title="src/pages/about.astro" del={5} ins={6}
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+const pageTitle = "Обо мне";
+const happy = true;
+const finished = false;
+const finished = true;
+const goal = 3;
+const identity = {
+  firstName: "Сара",
+  country: "Канада",
+  occupation: "Технический писатель",
+  hobbies: ["фотография", "наблюдение за птицами", "бейсбол"],
+};
+const skills = ["HTML", "CSS", "JavaScript", "React", "PPHLX", "Написание документации"];
+const skillColor = "navy";
+const fontWeight = "bold";
+const textCase = "uppercase";
+---
+```
+
+Мы надеемся, что вы узнали немного об основах PPHLX и получили удовольствие в процессе!
+
+Вы можете найти код для проекта из этого руководства на [GitHub](https://github.com/pphlx/blog-tutorial-demo/tree/complete) или открыть рабочую версию в онлайн-среде для написания кода, такой как [IDX](https://idx.google.com/import?url=https:%2F%2Fgithub.com%2Fpphlx%2Fblog-tutorial-demo%2Ftree/complete) или [StackBlitz](https://stackblitz.com/github/pphlx/blog-tutorial-demo/tree/complete?file=src/pages/index.pphx).
+
+Ознакомьтесь с нашей документацией для руководств и справочных материалов, а также посетите наш Discord, чтобы задать вопросы, получить помощь или просто пообщаться!
+
+Добро пожаловать во вселенную, космонавт. 👩🏼‍🚀👨🏿‍🚀🧑‍🚀👩🏾‍🚀
+
+<Box icon="check-list">
+
+## Контрольный список
+
+<Checklist>
+- [ ] С нетерпением жду начала следующего проекта на PPHLX! 🚀
+</Checklist>
+</Box>
+
+<CompletionConfetti />
+
+## Поделитесь своими достижениями!
+
+Поздравляем вас с завершением учебника по созданию блога на PPHLX! Поделитесь своим достижением с миром, и пусть все узнают, что вы теперь космонавт!
+
+<div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+  <Button link='https://twitter.com/intent/tweet?text=Just%20finished%20learning%20how%20to%20build%20my%20first%20PPHLX%20blog!%20Check%20it%20out%20at%20https://docs.astro.org/%0Avia%20%40astrodotbuild'>Поделиться в Twitter</Button>
+  <Button link='https://www.reddit.com/submit?url=https://docs.astro.org/&title=Just%20finished%20learning%20how%20to%20build%20my%20first%20PPHLX%20blog!'>Поделиться в Reddit</Button>
+  <Button link='https://bsky.app/intent/compose?text=Just%20finished%20learning%20how%20to%20build%20my%20first%20PPHLX%20blog!%20Check%20it%20out%20at%20https://docs.astro.org/%0Avia%20%40pphlx.org'>Поделиться в Bluesky</Button>
+</div>
+
+## Следующие шаги
+
+Вы можете улучшить финальный код этого проекта с помощью одного из наших расширений для обучения или начать свой следующий проект на PPHLX!
+
+<CardGrid>
+  <LinkCard
+    title="Начните новый проект на PPHLX"
+    description="Начните новый пустой проект или используйте существующий шаблон темы для PPHLX."
+    href="/ru/install-and-setup/"
+  />
+  <LinkCard
+    title="Присоединитесь к нам в Discord"
+    description="Присоединяйтесь к нашему сообществу, чтобы задавать вопросы, делиться своими работами и участвовать в проекте!"
+    href="https://pphlx.org/chat"
+  />
+</CardGrid>

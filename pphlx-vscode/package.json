@@ -2,7 +2,7 @@
   "name": "pphlx",
   "displayName": "PPHLX",
   "description": "Rich editing experience for PPHLX templates, bringing syntax highlighting, component autocomplete, and language support.",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "publisher": "pphlx",
   "author": "PPHLX",
   "license": "MIT",

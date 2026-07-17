@@ -1,0 +1,25 @@
+---
+title: Valeur invalide renvoyée par une route depuis `getStaticPaths()`.
+i18nReady: true
+githubURL: https://github.com/pphlx/astro/blob/main/packages/astro/src/core/errors/errors-data.ts
+---
+
+> **InvalidGetStaticPathParam**: Invalid `params` value returned by a route from `getStaticPaths()`. Expected an `object`, got `PARAM_TYPE`.
+
+## Qu'est-ce qui a mal tourné ?
+La propriété `params` de la valeur de retour de `getStaticPaths()` (un tableau d'objets) doit également être un objet.
+
+```astro title="pages/blog/[id].astro"
+---
+export async function getStaticPaths() {
+	return [
+		{ params: { id: "blog" } },
+		{ params: { id: "about" } }
+	];
+}
+---
+```
+
+**Voir aussi :**
+-  [`getStaticPaths()`](/fr/reference/routing-reference/#getstaticpaths)
+-  [`params`](/fr/reference/api-reference/#params)

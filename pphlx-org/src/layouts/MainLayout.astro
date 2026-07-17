@@ -103,7 +103,7 @@ const { bgClass = 'bg-black', ...head } = Astro.props;
 		background-size: contain;
 		height: 15px;
 		width: 15px;
-		border: none; /* No border needed as SVG handles centering and sizing */
+		border: 2px solid #2c2c2c;
 	}
 
 	/* Show only single buttons at start and end of scrollbar */
@@ -113,30 +113,30 @@ const { bgClass = 'bg-black', ...head } = Astro.props;
 
 	/* Up Arrow (Rounded Triangle - 60% size centered) */
 	:global(::-webkit-scrollbar-button:vertical:decrement) {
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f' stroke='%239f9f9f' stroke-width='14' stroke-linejoin='round'><polygon points='50,20 20,80 80,80'/></svg>");
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f'><path d='M 50 15 A 10 10 0 0 1 59 20 L 89 71 A 10 10 0 0 1 80 85 L 20 85 A 10 10 0 0 1 11 71 L 41 20 A 10 10 0 0 1 50 15 Z'/></svg>");
 	}
 	:global(::-webkit-scrollbar-button:vertical:decrement:hover) {
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1' stroke='%23d1d1d1' stroke-width='14' stroke-linejoin='round'><polygon points='50,20 20,80 80,80'/></svg>");
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1'><path d='M 50 15 A 10 10 0 0 1 59 20 L 89 71 A 10 10 0 0 1 80 85 L 20 85 A 10 10 0 0 1 11 71 L 41 20 A 10 10 0 0 1 50 15 Z'/></svg>");
 	}
 	/* Down Arrow (Rounded Triangle - 60% size centered) */
 	:global(::-webkit-scrollbar-button:vertical:increment) {
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f' stroke='%239f9f9f' stroke-width='14' stroke-linejoin='round'><polygon points='50,80 20,20 80,20'/></svg>");
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f'><path d='M 50 85 A 10 10 0 0 1 41 80 L 11 29 A 10 10 0 0 1 20 15 L 80 15 A 10 10 0 0 1 89 29 L 59 80 A 10 10 0 0 1 50 85 Z'/></svg>");
 	}
 	:global(::-webkit-scrollbar-button:vertical:increment:hover) {
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1' stroke='%23d1d1d1' stroke-width='14' stroke-linejoin='round'><polygon points='50,80 20,20 80,20'/></svg>");
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1'><path d='M 50 85 A 10 10 0 0 1 41 80 L 11 29 A 10 10 0 0 1 20 15 L 80 15 A 10 10 0 0 1 89 29 L 59 80 A 10 10 0 0 1 50 85 Z'/></svg>");
 	}
 	/* Left Arrow (Rounded Triangle - 60% size centered) */
 	:global(::-webkit-scrollbar-button:horizontal:decrement) {
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f' stroke='%239f9f9f' stroke-width='14' stroke-linejoin='round'><polygon points='20,50 80,20 80,80'/></svg>");
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f'><path d='M 15 50 A 10 10 0 0 1 20 41 L 71 11 A 10 10 0 0 1 85 20 L 85 80 A 10 10 0 0 1 71 89 L 20 59 A 10 10 0 0 1 15 50 Z'/></svg>");
 	}
 	:global(::-webkit-scrollbar-button:horizontal:decrement:hover) {
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1' stroke='%23d1d1d1' stroke-width='14' stroke-linejoin='round'><polygon points='20,50 80,20 80,80'/></svg>");
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1'><path d='M 15 50 A 10 10 0 0 1 20 41 L 71 11 A 10 10 0 0 1 85 20 L 85 80 A 10 10 0 0 1 71 89 L 20 59 A 10 10 0 0 1 15 50 Z'/></svg>");
 	}
 	/* Right Arrow (Rounded Triangle - 60% size centered) */
 	:global(::-webkit-scrollbar-button:horizontal:increment) {
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f' stroke='%239f9f9f' stroke-width='14' stroke-linejoin='round'><polygon points='80,50 20,20 20,80'/></svg>");
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%239f9f9f'><path d='M 85 50 A 10 10 0 0 1 80 59 L 29 89 A 10 10 0 0 1 15 80 L 15 20 A 10 10 0 0 1 29 11 L 80 41 A 10 10 0 0 1 85 50 Z'/></svg>");
 	}
 	:global(::-webkit-scrollbar-button:horizontal:increment:hover) {
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1' stroke='%23d1d1d1' stroke-width='14' stroke-linejoin='round'><polygon points='80,50 20,20 20,80'/></svg>");
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23d1d1d1'><path d='M 85 50 A 10 10 0 0 1 80 59 L 29 89 A 10 10 0 0 1 15 80 L 15 20 A 10 10 0 0 1 29 11 L 80 41 A 10 10 0 0 1 85 50 Z'/></svg>");
 	}
 </style>

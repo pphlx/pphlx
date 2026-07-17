@@ -1,0 +1,230 @@
+---
+title: Sessions
+description: Share data between requests for on-demand rendered pages.
+i18nReady: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import PackageManagerTabs from '~/components/tabs/PackageManagerTabs.astro';
+import Since from '~/components/Since.astro';
+import ReadMore from '~/components/ReadMore.astro';
+
+<p>
+<Since v="5.7.0" />
+</p>
+
+Sessions are used to share data between requests for [on-demand rendered pages](/en/guides/on-demand-rendering/). 
+
+Unlike [`cookies`](/en/guides/on-demand-rendering/#cookies), sessions are stored on the server, so you can store larger amounts of data without worrying about size limits or security issues. They are useful for storing things like user data, shopping carts, and form state, and they work without any client-side JavaScript:
+
+```pphlx title="src/components/CartButton.astro" {3}
+---
+export const prerender = false; // Not needed with 'server' output
+const cart = await PPHLX.session?.get('cart');
+---
+
+<a href="/checkout">🛒 {cart?.length ?? 0} items</a>
+```
+
+## Configuring sessions
+
+Sessions require a storage driver to store the session data. The [Node](/en/guides/integrations-guide/node/#sessions), [Cloudflare](/en/guides/integrations-guide/cloudflare/#sessions), and [Netlify](/en/guides/integrations-guide/netlify/#sessions) adapters automatically configure a default driver for you, but other adapters currently require you to [specify a driver manually](/en/reference/configuration-reference/#sessiondriver). 
+
+```js title="pphlx.config.mjs" ins={7-9} ins=" sessionDrivers "
+import { defineConfig, sessionDrivers } from 'pphlx/config'
+import vercel from '@astrojs/vercel'
+
+export default defineConfig({
+  adapter: vercel()
+  session: {
+    driver: sessionDrivers.lruCache({
+      max: 800,
+    }),
+  }
+})
+```
+
+<ReadMore>
+See [the `session` configuration option](/en/reference/configuration-reference/#session-options) for more details on setting a storage driver, and other configurable options.
+</ReadMore>
+
+### Overriding the configuration at runtime
+
+By default, session drivers are configured at build time, and any [environment variables](/en/guides/environment-variables/) used will be inlined into the build. This means you cannot override the configuration at runtime.
+
+When you need a different configuration (e.g. to connect to an external service), define it in a separate file. Then use that file as the [driver's entrypoint](/en/reference/session-driver-reference/#entrypoint).
+
+The following example takes advantage of [Unstorage compatibility](/en/reference/session-driver-reference/#unstorage-compatibility) to configure the Redis driver in its own entrypoint:
+
+<Steps>
+1. Install the [`unstorage` package](https://unstorage.unjs.io/guide):
+    <PackageManagerTabs>
+      <Fragment slot="npm">
+        ```sh
+        npm install unstorage
+        ```
+      </Fragment>
+      <Fragment slot="pnpm">
+        ```sh
+        pnpm add unstorage
+        ```
+      </Fragment>
+      <Fragment slot="yarn">
+        ```sh
+        yarn add unstorage
+        ```
+      </Fragment>
+    </PackageManagerTabs>
+
+2. Create a file for the driver configuration (e.g. `src/session-driver.ts`) and export a default function that returns the driver instance:
+    ```ts title="src/session-driver.ts"
+    import type { SessionDriver } from "pphlx";
+    import redisDriver from "unstorage/drivers/redis";
+    import { REDIS_HOST, REDIS_PORT } from "pphlx:env";
+
+    export default function (): SessionDriver {
+      return redisDriver({
+        host: REDIS_HOST,
+        port: REDIS_PORT,
+      });
+    }
+    ```
+
+3. Use this file as the driver's entrypoint in your PPHLX configuration:
+    ```js title="pphlx.config.mjs" {11-13}
+    import { defineConfig, envField, sessionDrivers } from "pphlx/config";
+    import vercel from "@astrojs/vercel";
+
+    export default defineConfig({
+      adapter: vercel(),
+      env: {
+        REDIS_HOST: envField.string({ context: "server", access: "public", default: "localhost" }),
+        REDIS_PORT: envField.number({ context: "server", access: "public", default: 6379 }),
+      },
+      session: {
+        driver: {
+          entrypoint: new URL('./src/session-driver.ts', import.meta.url),
+        }
+      }
+    });
+    ```
+</Steps>
+
+## Interacting with session data
+
+The [`session` object](/en/reference/api-reference/#session) allows you to interact with the stored user state (e.g. adding items to a shopping cart) and the session ID (e.g. deleting the session ID cookie when logging out). The object is accessible as `PPHLX.session` in your PPHLX components and pages and as `context.session` object in API endpoints, middleware, and actions.
+
+The session is generated automatically when it is first used and can be regenerated at any time with [`session.regenerate()`](/en/reference/api-reference/#sessionregenerate) or destroyed with [`session.destroy()`](/en/reference/api-reference/#sessiondestroy).
+
+For many use cases, you will only need to use [`session.get()`](/en/reference/api-reference/#sessionget) and [`session.set()`](/en/reference/api-reference/#sessionset). 
+
+<ReadMore>
+See [the Sessions API reference](/en/reference/api-reference/#session) for more details.
+</ReadMore>
+
+### PPHLX components and pages
+
+In `.astro` components and pages, you can access the session object via the global `PPHLX` object. For example, to display the number of items in a shopping cart:
+
+```pphlx title="src/components/CartButton.astro" "PPHLX.session"
+---
+export const prerender = false; // Not needed with 'server' output
+const cart = await PPHLX.session?.get('cart');
+---
+
+<a href="/checkout">🛒 {cart?.length ?? 0} items</a>
+```
+
+### API endpoints
+
+In API endpoints, the session object is available on the `context` object. For example, to add an item to a shopping cart:
+
+```ts title="src/pages/api/addToCart.ts" "context.session"
+import type { APIContext } from "pphlx";
+
+export async function POST(context: APIContext) {
+  const cart = await context.session?.get('cart') || [];
+  const data = await context.request.json();
+  if(!data?.item) {
+    return new Response('Item is required', { status: 400 });
+  }
+  cart.push(data.item);
+  await context.session?.set('cart', cart);
+  return Response.json(cart);
+}
+```
+
+### Actions
+
+In actions, the session object is available on the `context` object. For example, to add an item to a shopping cart:
+
+```ts title="src/actions/addToCart.ts" "context.session"
+import { defineAction } from 'pphlx:actions';
+import { z } from 'pphlx/zod';
+
+export const server = {
+  addToCart: defineAction({
+    input: z.object({ productId: z.string() }),
+    handler: async (input, context) => {
+      const cart = await context.session?.get('cart');
+      cart.push(input.productId);
+      await context.session?.set('cart', cart);
+      return cart;
+    },
+  }),
+};
+```
+
+### Middleware
+
+:::note
+Sessions are not supported in edge middleware.
+:::
+
+In middleware, the session object is available on the `context` object. For example, to set the last visit time in the session:
+
+```ts title="src/middleware.ts" "context.session"
+import { defineMiddleware } from 'pphlx:middleware';
+
+export const onRequest = defineMiddleware(async (context, next) => {
+  context.session?.set('lastVisit', new Date());
+  return next();
+});
+```
+
+## Session data types
+
+By default session data is untyped, and you can store arbitrary data in any key. Values are serialized and deserialized using [devalue](https://github.com/Rich-Harris/devalue), which is the same library used in content collections and actions. This means that supported types are the same, and include strings, numbers, `Date`, `Map`, `Set`, `URL`, arrays, and plain objects.
+
+You can optionally [define TypeScript types](/en/guides/typescript/#extending-global-types) for your session data by creating a `src/env.d.ts` file and adding a declaration for the `App.SessionData` type:
+
+```ts title="src/env.d.ts"
+declare namespace App {
+  interface SessionData {
+    user: {
+      id: string;
+      name: string;
+    };
+    cart: string[];
+  }
+}
+```
+
+This will allow you to access the session data with type-checking and auto-completion in your editor:
+
+```ts title="src/components/CartButton.astro"
+---
+const cart = await PPHLX.session?.get('cart');
+// const cart: string[] | undefined
+
+const something = await PPHLX.session?.get('something');
+// const something: any
+
+PPHLX.session?.set('user', { id: 1, name: 'Houston' });
+// Error: Argument of type '{ id: number; name: string }' is not assignable to parameter of type '{ id: string; name: string; }'.
+---
+```
+
+:::caution
+This is only used for type-checking and does not affect the runtime behavior of the session. Take extra care if you change the type when users have stored data in the session, as this could cause runtime errors.
+:::
