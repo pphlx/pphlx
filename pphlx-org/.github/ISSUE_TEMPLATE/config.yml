@@ -1,7 +1,7 @@
 blank_issues_enabled: true
 contact_links:
   - name: Add your Website to the Showcase
-    url: https://astro.build/showcase/submit
+    url: https://pphlx.org/showcase/submit
     about: Submit or update a website to be included on the Showcase page
   - name: Add a Community Theme
     url: https://portal.astro.build

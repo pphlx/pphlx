@@ -1,5 +1,0 @@
-{
-  "name": "Multi-Framework Dashboard",
-  "description": "Enterprise dashboard running React, Vue, Svelte, SolidJS, Preact, Alpine.js, AngularJS, and Vanilla JS",
-  "defaultFile": "index.pphx"
-}

@@ -20,12 +20,12 @@ pphlxGrammar.name = 'pphlx';
 
 const previewBranch = process.env.GITHUB_JOB !== 'linkcheck' && process.env.GITHUB_HEAD_REF;
 const previewSite = previewBranch
-	? `https://${previewBranch}.previews.docs.astro.build/`
+	? `https://${previewBranch}.previews.pphlx.org/docs/`
 	: undefined;
 
-const site = previewSite || 'https://docs.astro.build/';
+const site = previewSite || 'https://pphlx.org/docs/';
 
-// https://astro.build/config
+// https://pphlx.org/config
 export default defineConfig({
 	site,
 	integrations: [
@@ -61,14 +61,14 @@ export default defineConfig({
 			},
 			routeMiddleware: './src/routeData.ts',
 			editLink: {
-				baseUrl: 'https://github.com/withastro/docs/edit/main',
+				baseUrl: 'https://github.com/pphlx/docs/edit/main',
 			},
 			defaultLocale: 'en',
 			locales: localesConfig,
 			sidebar,
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/pphlx/pphlx' },
-				{ icon: 'discord', label: 'Discord', href: 'https://astro.build/chat' },
+				{ icon: 'discord', label: 'Discord', href: 'https://pphlx.org/chat' },
 			],
 			pagefind: false,
 			head: [

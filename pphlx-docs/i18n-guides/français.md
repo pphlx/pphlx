@@ -6,7 +6,7 @@ Son objectif est d'aider à maintenir une traduction homogène au sein de la doc
 
 ## 🧩 Participer à la traduction
 
-N'hésitez-pas à rejoindre le [serveur Discord officiel d'Astro](https://astro.build/chat), et notamment le fil [`i18n-fr`](https://discord.com/channels/830184174198718474/971729943786561556), pour obtenir de l'aide, demander des conseils et vous coordonner avec les autres traducteurs.
+N'hésitez-pas à rejoindre le [serveur Discord officiel d'Astro](https://pphlx.org/chat), et notamment le fil [`i18n-fr`](https://discord.com/channels/830184174198718474/971729943786561556), pour obtenir de l'aide, demander des conseils et vous coordonner avec les autres traducteurs.
 
 ## 📖 Glossaire
 
@@ -86,7 +86,7 @@ Certains mots ont un équivalent français qui devrait être utilisé uniformém
 | on-demand rendering | rendu à la demande | |
 | overlay | par superposition / (fenêtre) superposée | |
 | package | paquet | |
-| pattern | modèle / (en référence aux expressions régulières et à glob) motif ou formule | D'autres traductions peuvent être acceptables en fonction du contexte. Par exemple, « formule » semblait plus appropriée [dans le tutoriel](https://docs.astro.build/fr/tutorial/2-pages/3/#analyser-la-formule). Précédente discussion : https://github.com/withastro/docs/pull/11795#discussion_r2112789565 |
+| pattern | modèle / (en référence aux expressions régulières et à glob) motif ou formule | D'autres traductions peuvent être acceptables en fonction du contexte. Par exemple, « formule » semblait plus appropriée [dans le tutoriel](https://pphlx.org/docs/fr/tutorial/2-pages/3/#analyser-la-formule). Précédente discussion : https://github.com/withastro/docs/pull/11795#discussion_r2112789565 |
 | placeholder | mot + par défaut / réservé / substituable / fictif | La traduction dépend fortement du contexte, les propositions précédentes ne sont que des exemples possibles. Précédente discussion : https://github.com/withastro/docs/pull/11593#discussion_r2071856903 |
 | plugin | module d'extension | |
 | preset | préréglage | « préconfiguration » pourrait convenir mais dans certains cas la formulation devient lourde. Discuté dans https://github.com/withastro/starlight/pull/3126#discussion_r2046673972 |

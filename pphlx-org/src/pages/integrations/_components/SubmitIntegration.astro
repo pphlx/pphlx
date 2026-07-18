@@ -1,0 +1,20 @@
+---
+import CatalogSubmitCallout, {
+	type Props as CalloutProps,
+} from '~/components/CatalogSubmitCallout.astro';
+
+export type Props = Omit<CalloutProps, 'slot' | 'title' | 'cta'>;
+
+const { ...attrs } = Astro.props;
+---
+
+<CatalogSubmitCallout
+	title="Submit a module"
+	cta={{
+		href: 'https://pphlx.org/docs/',
+		text: 'Submit module',
+	}}
+	{...attrs}
+>
+	Anyone can submit a module or extension to PPHLX. If you have questions about building your own bridge module or custom driver, join our community on <a class="link link-underline" href="/chat">Discord</a>!
+</CatalogSubmitCallout>

@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -20,15 +21,23 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+// OutputConfig holds compilation output options
+type OutputConfig struct {
+	Target string `json:"target"`
+	Goos   string `json:"goos"`
+	Goarch string `json:"goarch"`
+}
+
 // Config holds project configuration
 type Config struct {
-	SrcDir  string `json:"srcDir"`
-	OutDir  string `json:"outDir"`
-	CssOut  string `json:"cssOut"`
-	JsOut   string `json:"jsOut"`
-	Site    string `json:"site"`
-	Sitemap bool   `json:"sitemap"`
-	Default string `json:"default"`
+	SrcDir  string       `json:"srcDir"`
+	OutDir  string       `json:"outDir"`
+	CssOut  string       `json:"cssOut"`
+	JsOut   string       `json:"jsOut"`
+	Site    string       `json:"site"`
+	Sitemap bool         `json:"sitemap"`
+	Default string       `json:"default"`
+	Output  OutputConfig `json:"output"`
 }
 
 // Component represents a parsed .pphx or JS/React component
@@ -59,6 +68,9 @@ var (
 
 // VirtualFiles stores project files map when running in WebAssembly
 var VirtualFiles map[string]string
+
+var activeConfig Config
+var activeMode string
 
 func readProjectFile(filePath string) ([]byte, error) {
 	if VirtualFiles != nil {
@@ -93,6 +105,8 @@ func projectFileExists(filePath string) bool {
 
 // compileAll executes the main compilation loop for all templates
 func compileAll(config Config, projectDir string) {
+	activeConfig = config
+	targetLower := strings.ToLower(config.Output.Target)
 	fmt.Printf("[%s] Rebuilding templates...\n", time.Now().Format("15:04:05"))
 	
 	srcDir := filepath.Join(projectDir, config.SrcDir)
@@ -151,8 +165,16 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 
 		// Process files
 		if strings.HasSuffix(info.Name(), ".pphx") {
-			// Compile .pphx to .php
-			phpOutPath := strings.TrimSuffix(outPath, ".pphx") + ".php"
+			ext := ".php"
+			switch targetLower {
+			case "ssg":
+				ext = ".html"
+			case "blade":
+				ext = ".blade.php"
+			case "twig":
+				ext = ".html.twig"
+			}
+			phpOutPath := strings.TrimSuffix(outPath, ".pphx") + ext
 			
 			pageContent, err := ioutil.ReadFile(path)
 			if err != nil {
@@ -247,8 +269,25 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 				}
 			}
 
+			pageBytes := []byte(strings.TrimLeft(compiledPage, " \t\r\n"))
+			if targetLower == "ssg" {
+				// Evaluate PHP to static HTML
+				tempFile := phpOutPath + ".tmp.php"
+				err = ioutil.WriteFile(tempFile, pageBytes, 0644)
+				if err == nil {
+					cmd := exec.Command("php", tempFile)
+					outBytes, cmdErr := cmd.Output()
+					os.Remove(tempFile)
+					if cmdErr == nil {
+						pageBytes = outBytes
+					} else {
+						fmt.Printf("[Warning] Failed to run PHP compiler for SSG on %s: %v. Outputting raw template.\n", phpOutPath, cmdErr)
+					}
+				}
+			}
+
 			os.MkdirAll(filepath.Dir(phpOutPath), 0755)
-			err = ioutil.WriteFile(phpOutPath, []byte(strings.TrimLeft(compiledPage, " \t\r\n")), 0644)
+			err = ioutil.WriteFile(phpOutPath, pageBytes, 0644)
 			if err != nil {
 				return err
 			}
@@ -430,6 +469,82 @@ self.addEventListener('fetch', (event) => {
 		sitemapPath := filepath.Join(outDir, "sitemap.xml")
 		ioutil.WriteFile(sitemapPath, []byte(sitemapBuilder.String()), 0644)
 		fmt.Println("Generated sitemap.xml natively.")
+	}
+
+	if targetLower == "standalone" && activeMode == "build" {
+		fmt.Println("Compiling Standalone Go Binary...")
+		standaloneFile := filepath.Join(projectDir, "standalone_main.go")
+		
+		goos := config.Output.Goos
+		if goos == "" {
+			goos = runtime.GOOS
+		}
+		binaryName := "app"
+		if goos == "windows" {
+			binaryName = "app.exe"
+		}
+		binaryPath := filepath.Join(outDir, binaryName)
+
+		standaloneSource := fmt.Sprintf(`package main
+
+import (
+	"embed"
+	"fmt"
+	"io/fs"
+	"net/http"
+	"os"
+)
+
+//go:embed %s/*
+var embedFS embed.FS
+
+func main() {
+	subFS, err := fs.Sub(embedFS, "%s")
+	if err != nil {
+		fmt.Printf("Error accessing embedded folder: %%v\n", err)
+		os.Exit(1)
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Printf("PPHLX Standalone Go server starting on http://localhost:%%s\n", port)
+	http.Handle("/", http.FileServer(http.FS(subFS)))
+	err = http.ListenAndServe(":"+port, nil)
+	if err != nil {
+		fmt.Printf("Server error: %%v\n", err)
+	}
+}
+`, config.OutDir, config.OutDir)
+
+		err = ioutil.WriteFile(standaloneFile, []byte(standaloneSource), 0644)
+		if err == nil {
+			cmd := exec.Command("go", "build", "-o", binaryPath, standaloneFile)
+			cmd.Dir = projectDir
+			
+			// Inject GOOS and GOARCH environment variables if configured
+			if config.Output.Goos != "" || config.Output.Goarch != "" {
+				cmd.Env = os.Environ()
+				if config.Output.Goos != "" {
+					cmd.Env = append(cmd.Env, "GOOS="+config.Output.Goos)
+				}
+				if config.Output.Goarch != "" {
+					cmd.Env = append(cmd.Env, "GOARCH="+config.Output.Goarch)
+				}
+			}
+
+			output, cmdErr := cmd.CombinedOutput()
+			os.Remove(standaloneFile)
+			if cmdErr != nil {
+				fmt.Printf("[Error] Failed to compile Standalone Go Binary: %v\nOutput: %s\n", cmdErr, string(output))
+			} else {
+				fmt.Printf("✓ Standalone Go Binary compiled successfully: %s (Target OS: %s, Arch: %s)\n", binaryPath, goos, config.Output.Goarch)
+			}
+		} else {
+			fmt.Printf("[Error] Failed to write standalone build file: %v\n", err)
+		}
 	}
 
 	fmt.Printf("[%s] Build complete successfully!\n", time.Now().Format("15:04:05"))
@@ -754,6 +869,62 @@ func expandComponent(content string, compName string, comp Component) string {
 	selfClosingRegex := regexp.MustCompile(fmt.Sprintf(`(?s)<%s%s?/>`, compName, attrPattern))
 	// Pattern for components with children: <Card title="xx">body</Card>
 	blockRegex := regexp.MustCompile(fmt.Sprintf(`(?s)<%s%s?>(.*?)</%s>`, compName, attrPattern, compName))
+
+	target := strings.ToLower(activeConfig.Output.Target)
+	if target == "blade" {
+		bladeName := strings.ToLower(compName)
+		content = blockRegex.ReplaceAllStringFunc(content, func(match string) string {
+			submatches := blockRegex.FindStringSubmatch(match)
+			attrs := ""
+			if len(submatches) > 1 {
+				attrs = submatches[1]
+			}
+			slot := ""
+			if len(submatches) > 2 {
+				slot = submatches[2]
+			}
+			return fmt.Sprintf("<x-%s%s>%s</x-%s>", bladeName, attrs, slot, bladeName)
+		})
+		content = selfClosingRegex.ReplaceAllStringFunc(content, func(match string) string {
+			submatches := selfClosingRegex.FindStringSubmatch(match)
+			attrs := ""
+			if len(submatches) > 1 {
+				attrs = submatches[1]
+			}
+			return fmt.Sprintf("<x-%s%s />", bladeName, attrs)
+		})
+		return content
+	}
+
+	if target == "twig" {
+		twigName := strings.ToLower(compName)
+		content = blockRegex.ReplaceAllStringFunc(content, func(match string) string {
+			submatches := blockRegex.FindStringSubmatch(match)
+			attrs := ""
+			if len(submatches) > 1 {
+				attrs = submatches[1]
+			}
+			slot := ""
+			if len(submatches) > 2 {
+				slot = submatches[2]
+			}
+			twigAttrs := attributesToTwig(attrs)
+			if slot != "" {
+				return fmt.Sprintf("{%% set slot %%}%s{%% endset %%}\n{%% include 'components/%s.html.twig' with { %s } %%}", slot, twigName, twigAttrs)
+			}
+			return fmt.Sprintf("{%% include 'components/%s.html.twig' with { %s } %%}", twigName, twigAttrs)
+		})
+		content = selfClosingRegex.ReplaceAllStringFunc(content, func(match string) string {
+			submatches := selfClosingRegex.FindStringSubmatch(match)
+			attrs := ""
+			if len(submatches) > 1 {
+				attrs = submatches[1]
+			}
+			twigAttrs := attributesToTwig(attrs)
+			return fmt.Sprintf("{%% include 'components/%s.html.twig' with { %s } %%}", twigName, twigAttrs)
+		})
+		return content
+	}
 
 	// Resolve block tags first
 	content = blockRegex.ReplaceAllStringFunc(content, func(match string) string {
@@ -1566,4 +1737,26 @@ func installMCPServer() error {
 	}
 
 	return nil
+}
+
+func attributesToTwig(attrs string) string {
+	matches := attrRegex.FindAllStringSubmatch(attrs, -1)
+	var pairs []string
+	for _, match := range matches {
+		name := match[1]
+		val := ""
+		if match[2] != "" {
+			val = fmt.Sprintf("'%s'", match[2])
+		} else if match[3] != "" {
+			val = fmt.Sprintf("'%s'", match[3])
+		} else if match[4] != "" {
+			val = match[4]
+		} else if match[5] != "" {
+			val = match[5]
+		}
+		if val != "" {
+			pairs = append(pairs, fmt.Sprintf("%s: %s", name, val))
+		}
+	}
+	return strings.Join(pairs, ", ")
 }

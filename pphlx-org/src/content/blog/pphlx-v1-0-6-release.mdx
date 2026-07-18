@@ -1,0 +1,80 @@
+---
+title: "PPHLX v1.0.6: Multi-Target Outputs, CLI Overrides, and Performance Boosts"
+authors:
+  - pphlx-team
+description: |
+  We're thrilled to release PPHLX v1.0.6! This version introduces compiling to Standalone Go Binaries, Static Site Generator target options, Laravel Blade/Twig template exports, and significant dev server speedups.
+publishDate: "July 19, 2026"
+permalink: "https://pphlx.org/blog/pphlx-v1-0-6-release"
+lang: "en"
+homepageLink:
+  title: "PPHLX v1.0.6"
+  subtitle: "Available now!"
+---
+
+We are excited to share **PPHLX v1.0.6**, bringing highly-requested deployment flexibility, on-the-fly compilation overrides, and substantial improvements to local development workflows.
+
+PPHLX was designed to bridge the gap between modern, component-driven client-side frameworks (React, Vue, Svelte, Preact, and SolidJS) and standard PHP backends. In v1.0.6, we are taking this adaptability further by allowing you to target completely different deployment architectures from a single codebase.
+
+---
+
+## What's New in v1.0.6
+
+### 🚀 Multi-Target Compilation Drivers
+You can now compile your PPHLX components to multiple target environments by defining the `"output"` configuration in your `pphlx.config.json`:
+
+1. **Standard PHP (`php`)**: The default engine compiles layout islands directly into hydrated PHP scripts.
+2. **Standalone Go Binary (`standalone`)**: Compiles your entire application—assets, routes, and compiled templates—into a single self-contained Go executable (`app` or `app.exe`). This eliminates the PHP interpreter requirement entirely for hosting!
+3. **Static Site Generator (`ssg`)**: Generates fully static HTML, JS, and CSS pages, resolving embedded PHP code blocks at build time using your local PHP interpreter.
+4. **Laravel Blade & Twig (`blade` / `twig`)**: Automatically translates `.pphx` layouts into framework-native component definitions (like `<x-card>` for Blade and `{% include %}` for Twig).
+
+---
+
+### ⚡ On-The-Fly CLI Overrides
+Need to build a static preview of your project without modifying your configuration file? You can now pass the target override flag directly from the terminal during your build process:
+
+```bash
+# Compile to a Standalone Go binary
+pphlx build --target standalone
+
+# Compile to Static HTML (SSG)
+pphlx build --target ssg
+```
+
+---
+
+### 📦 Platform Cross-Compilation
+When targeting standalone Go binaries, you can now cross-compile for other operating systems and architectures directly from your development machine. Simply configure the `"goos"` and `"goarch"` options in your `pphlx.config.json` configuration block:
+
+```json
+{
+  "srcDir": "src",
+  "outDir": "dist",
+  "output": {
+    "target": "standalone",
+    "goos": "linux",
+    "goarch": "amd64"
+  }
+}
+```
+
+This compiles a production-ready Linux binary directly from a Windows or macOS development environment.
+
+---
+
+### 🏎️ High-Performance Local Dev Server DX
+* **Go Compiler Bypass**: In development mode (`pphlx dev` or `npm run dev`), the watcher bypasses compiling the heavy Go binary on every file save, keeping template rebuilds and client-side refreshes under **300ms**.
+* **Brand Port `6321`**: The local server now launches on port `6321` by default, automatically checking and incrementing the port if it's already in use.
+* **Refined Console Styling**: Enjoy a premium, Astro-inspired dev console layout featuring green status badges, gray borders, and clean local/network routing logs.
+
+---
+
+## Upgrade Today
+
+Update your projects to the latest compiler CLI using NPM:
+
+```bash
+npm install pphlx@latest
+```
+
+For more details on setting up multi-target compilations, check out the updated [PPHLX Documentation](https://pphlx.org/docs).

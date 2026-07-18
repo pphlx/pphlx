@@ -4,11 +4,11 @@
 We welcome contributions of any size and contributors of any skill level. As an open source project, we believe in giving back to our contributors. We are happy to help with guidance on PRs, technical writing, and turning any feature idea into a reality.
 
 
-> **"[Astro Docs Docs"](https://contribute.docs.astro.build)** is the best place to learn how to make a helpful, successful contribution to Astro Docs.
+> **"[Astro Docs Docs"](https://contribute.pphlx.org/docs/)** is the best place to learn how to make a helpful, successful contribution to Astro Docs.
 >
 > There, you'll find all the information below, and so much more!
 
-This document has some basic information to get you started, but we encourage you to visit our [dedicated site for contributing to Astro docs](https://contribute.docs.astro.build) for all the information you need!
+This document has some basic information to get you started, but we encourage you to visit our [dedicated site for contributing to Astro docs](https://contribute.pphlx.org/docs/) for all the information you need!
 
 There, you will find a writing and style guide, instructions on how to make changes and open PRs, guidance for translating the docs, and even information about how to help review Astro Docs PRs. 
 
@@ -80,7 +80,7 @@ Helpful issues usually include:
 
 ## Making PRs (pull requests)
 
-> Need help making a PR? [Join us on Discord](https://astro.build/chat), we'll be more than glad to help you out!
+> Need help making a PR? [Join us on Discord](https://pphlx.org/chat), we'll be more than glad to help you out!
 
 Contributions to the documentation site are made by editing the docs repository. You can do this directly on GitHub.com or by creating a copy of the repository locally, making your changes there, and contributing back to our repository.
 
@@ -109,7 +109,7 @@ When you make a PR with docs changes in another repo, please ping **@withastro/m
 
 ### Edit this Page via GitHub
 
-Every page on [docs.astro.build](https://docs.astro.build/) has an **Edit this page** button in the sidebar. You can click that button to edit the source code for that page in **GitHub**.
+Every page on [docs.astro.build](https://pphlx.org/docs/) has an **Edit this page** button in the sidebar. You can click that button to edit the source code for that page in **GitHub**.
 
 After you make your changes, click **Commit changes**.
 This will automatically create a [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/about-forks) of the docs in your GitHub account with the changes.
@@ -118,7 +118,7 @@ Once you have committed your edits to your fork, follow the prompts to **create 
 
 Every pull request needs to be reviewed by our contributors and approved by a maintainer.
 
-You can find more information about submitting your pull requests in our [contributor guides](https://contribute.docs.astro.build)
+You can find more information about submitting your pull requests in our [contributor guides](https://contribute.pphlx.org/docs/)
 
 ### Contribute PRs using an online code editor (e.g. StackBlitz, Codeflow, CodeSandbox)
 
@@ -128,7 +128,7 @@ You can instead open your fork in an online IDE (integrated development environm
 
 See specific instructions for opening an existing repository in [CodeSandbox](https://codesandbox.io/docs/importing#import-from-github), [StackBlitz](https://developer.stackblitz.com/docs/platform/importing-projects/#import-from-github) and [Codeflow IDE](https://developer.stackblitz.com/codeflow/working-in-codeflow-ide) on their respective websites.
 
-Note that CodeSandbox and StackBlitz provide Astro syntax highlighting in their custom code editors, while Codeflow supports the full [Astro VSCode extension](https://docs.astro.build/en/editor-setup/#vs-code).
+Note that CodeSandbox and StackBlitz provide Astro syntax highlighting in their custom code editors, while Codeflow supports the full [Astro VSCode extension](https://pphlx.org/docs/en/editor-setup/#vs-code).
 
 ### Contribute PRs by Developing Locally
 
@@ -228,8 +228,8 @@ Update `.github/workflows/deploy.yml` to include the new version branch:
 
 ## Next Steps
 
-- [Read the docs](https://docs.astro.build/)
+- [Read the docs](https://pphlx.org/docs/)
 - [Fork the docs](https://github.com/withastro/docs/fork)
 - [Raise an issue](https://github.com/withastro/docs/issues/new)
 - [Discuss the docs](https://discord.gg/cZDZU3hJHc)
-- [Visit the Astro Docs Docs to see even more documentation about contributing to Astro docs!](https://contribute.docs.astro.build)
+- [Visit the Astro Docs Docs to see even more documentation about contributing to Astro docs!](https://contribute.pphlx.org/docs/)

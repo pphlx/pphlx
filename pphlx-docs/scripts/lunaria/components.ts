@@ -58,16 +58,16 @@ export const Meta = html`
 		content="Translation progress tracker for the Astro Docs site. See how much has been translated in your language and get involved!"
 	/>
 	<meta property="last-build" content="${new Date(Date.now()).toString()}" />
-	<link rel="canonical" href="https://i18n.docs.astro.build/" />
+	<link rel="canonical" href="https://i18n.pphlx.org/docs" />
 	<meta property="og:title" content="Astro Docs Translation Status" />
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://i18n.docs.astro.build/" />
+	<meta property="og:url" content="https://i18n.pphlx.org/docs" />
 	<meta
 		property="og:description"
 		content="Translation progress tracker for the Astro Docs site. See how much has been translated in your language and get involved!"
 	/>
-	<link rel="icon" href="https://docs.astro.build/favicon.ico" type="image/x-icon" />
-	<link rel="icon" href="https://docs.astro.build/favicon.svg" type="image/svg+xml" />
+	<link rel="icon" href="https://pphlx.org/docs/favicon.ico" type="image/x-icon" />
+	<link rel="icon" href="https://pphlx.org/docs/favicon.svg" type="image/svg+xml" />
 `;
 
 export const Body = (
@@ -353,13 +353,13 @@ export const ProgressBar = (
 export const TitleParagraph = html`
 	<p>
 		If you're interested in helping us translate
-		<a href="https://docs.astro.build/">docs.astro.build</a> into one of the languages listed below,
+		<a href="https://pphlx.org/docs/">docs.astro.build</a> into one of the languages listed below,
 		you've come to the right place! This auto-updating page always lists all the content that could
 		use your help right now.
 	</p>
 	<p>
 		Before starting, please read our
-		<a href="https://contribute.docs.astro.build/guides/i18n/">i18n Guide</a>
+		<a href="https://contribute.pphlx.org/docs//guides/i18n/">i18n Guide</a>
 		to learn about our translation process and how you can get involved.
 	</p>
 `;

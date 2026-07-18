@@ -33,7 +33,7 @@ Download the `.vsix` file for the release that you want to install from the [Git
 
 The extension can also be installed with the following command line:
 ```bash
-code --install-extension /path/to/pphlx-1.0.4.vsix
+code --install-extension /path/to/pphlx-1.0.6.vsix
 ```
 
 ---

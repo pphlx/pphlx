@@ -19,7 +19,7 @@ const integrations = z
 		),
 	})
 	.parse(
-		await fetch(`https://astro.build/api/v1/integrations?since=${date}&limit=300`).then((res) =>
+		await fetch(`https://pphlx.org/api/v1/integrations?since=${date}&limit=300`).then((res) =>
 			res.json(),
 		),
 	);

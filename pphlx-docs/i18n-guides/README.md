@@ -7,8 +7,8 @@ They can be useful for sharing glossaries of agreed translations, stylistic deci
 
 General information about the translation process can by found in our contributing guides:
 
-- [How to translate Astro’s docs](https://contribute.docs.astro.build/guides/i18n/)
-- [How to review translation PRs](https://contribute.docs.astro.build/reviewers/reviewing-translations/)
+- [How to translate Astro’s docs](https://contribute.pphlx.org/docs//guides/i18n/)
+- [How to review translation PRs](https://contribute.pphlx.org/docs//reviewers/reviewing-translations/)
 
 ## Languages
 

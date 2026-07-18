@@ -1,0 +1,59 @@
+---
+import { Image } from 'astro:assets';
+import type { HTMLTag } from 'astro/types';
+import Card from '~/components/Card.astro';
+import CardBody from '~/components/CardBody.astro';
+import CardFooter from '~/components/CardFooter.astro';
+import type { ThemeAndAuthor } from '../_types/index.ts';
+import Avatar from './Avatar.astro';
+import Badge from './Badge.astro';
+
+export type Props = {
+	as?: HTMLTag;
+	theme: ThemeAndAuthor;
+};
+
+const { as: Tag = 'h3', theme } = Astro.props;
+
+const image = theme.Theme.image;
+---
+
+<Card isLink labelledby={theme.Theme.slug}>
+	<!-- {!!theme.data.badge && <CardBadge>{theme.data.badge}</CardBadge>} -->
+	<a class="flex h-full flex-col" href={`/themes/details/${theme.Theme.slug}/`} data-astro-prefetch>
+		<Image
+			src={image}
+			width={600}
+			height={338}
+			alt=""
+			class="aspect-video w-full object-cover"
+			loading="lazy"
+			decoding="async"
+		/>
+		<CardBody>
+			<div>
+				<Tag class:list={['heading-5 mb-2 text-white']} id={theme.Theme.slug}>
+					{theme.Theme.title}
+				</Tag>
+				<p class="line-clamp-3">{theme.Theme.description}</p>
+			</div>
+			<CardFooter
+				class="grid grid-cols-[1fr,auto] items-center justify-between gap-2 overflow-hidden border-t border-astro-gray-400 pt-6"
+			>
+				<Avatar theme={theme} />
+
+				<Badge theme={theme.Theme.paid ? 'primary' : 'secondary'} class="z-10">
+					{theme.Theme.paid ? 'Paid' : 'Free'}
+				</Badge>
+			</CardFooter>
+		</CardBody>
+	</a>
+</Card>
+
+<style>
+	.official::after {
+		@apply ml-1 inline-block h-5 w-5 translate-y-[2px] bg-contain bg-no-repeat;
+		content: '';
+		background-image: url(/assets/official.svg);
+	}
+</style>

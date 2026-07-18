@@ -6,16 +6,11 @@ import authors from './data/authors/authors.json';
 export const IntegrationCategories = new Map([
 	['recent', 'Recently Added'],
 	['official', 'Official'],
-	['frameworks', 'Frameworks'],
-	['loaders', 'Content Loaders'],
-	['adapters', 'Adapters'],
-	['css+ui', 'CSS + UI'],
-	['performance+seo', 'Performance + SEO'],
-	['analytics', 'Analytics'],
-	['accessibility', 'Accessibility'],
-	['media', 'Images + Media'],
-	['toolbar', 'Dev Toolbar'],
-	['utilities', 'Utilities'],
+	['bridges', 'Custom Bridges / OS APIs'],
+	['databases', 'Database Connectors'],
+	['security', 'Auth & Security'],
+	['css+ui', 'CSS + UI Components'],
+	['utilities', 'Utilities & Helpers'],
 	['uncategorized', 'Uncategorized'],
 ] as const);
 
@@ -117,6 +112,7 @@ export const collections = {
 			downloadFactor: z.number().min(0).default(1),
 			badge: z.string().optional(),
 			created: z.string(),
+			hidden: z.boolean().default(false).optional(),
 		}),
 	}),
 	pages: defineCollection({

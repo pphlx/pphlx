@@ -24,7 +24,7 @@ const pphxLanguage = {
 /* https://docs.netlify.com/configure-builds/environment-variables/#read-only-variables */
 const NETLIFY_PREVIEW_SITE = process.env.CONTEXT !== 'production' && process.env.DEPLOY_PRIME_URL;
 
-// https://astro.build/config
+// https://pphlx.org/config
 export default defineConfig({
 	site: NETLIFY_PREVIEW_SITE || 'https://pphlx.org',
 	prefetch: true,

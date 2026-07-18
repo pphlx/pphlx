@@ -1,0 +1,10 @@
+<html>
+<head>
+  <title>PPHLX Composer Test</title>
+</head>
+<body>
+  <h1>Hello from PPHLX Composer Integration!</h1>
+  <p>This page was compiled using our updated WebAssembly builder inside the Composer package.</p>
+  <?php echo "<p>PHP Code works too!</p>"; ?>
+</body>
+</html>

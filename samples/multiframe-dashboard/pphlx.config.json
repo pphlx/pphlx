@@ -2,5 +2,10 @@
   "srcDir": "src",
   "outDir": "dist",
   "cssOut": "dist/assets/css/app.css",
-  "jsOut": "dist/assets/js/app.js"
+  "jsOut": "dist/assets/js/app.js",
+  "output": {
+    "target": "standalone",
+    "goos": "linux",
+    "goarch": "amd64"
+  }
 }

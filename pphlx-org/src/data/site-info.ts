@@ -68,7 +68,7 @@ const siteInfo: SiteInfo = {
 			icon: 'social/mastodon',
 			label: 'Mastodon',
 			text: 'Follow PPHLX on Mastodon',
-			href: 'https://m.webtoo.ls/@pphlx',
+			href: 'https://mastodon.social/@pphlx',
 		},
 		{
 			platform: 'reddit',

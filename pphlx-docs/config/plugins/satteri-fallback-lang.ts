@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { defineMdastPlugin } from 'satteri';
 
 const pageSourceDir = path.resolve('./src/content/docs');
-const baseUrl = 'https://docs.astro.build/';
+const baseUrl = 'https://pphlx.org/docs/';
 
 export function fallbackLangPlugin() {
 	return defineMdastPlugin({

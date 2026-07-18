@@ -20,12 +20,12 @@
 /governance/            https://github.com/withastro/.github/blob/main/GOVERNANCE.md#readme
 
 # Documentation shortcuts
-/docs/                  https://docs.astro.build/
-/llms.txt               https://docs.astro.build/llms.txt
-/config/                https://docs.astro.build/reference/configuration-reference/
-/deprecated/resolve/    https://docs.astro.build/en/guides/upgrade-to/v1/#deprecated-astroresolve
-/db/config/             https://docs.astro.build/en/guides/astro-db/#define-your-database
-/db/seed/               https://docs.astro.build/en/guides/astro-db/#seed-your-database
+/docs/                  https://pphlx.org/docs/
+/llms.txt               https://pphlx.org/docs/llms.txt
+/config/                https://pphlx.org/docs/reference/configuration-reference/
+/deprecated/resolve/    https://pphlx.org/docs/en/guides/upgrade-to/v1/#deprecated-astroresolve
+/db/config/             https://pphlx.org/docs/en/guides/astro-db/#define-your-database
+/db/seed/               https://pphlx.org/docs/en/guides/astro-db/#seed-your-database
 
 # One-off shortcuts
 /newsletter/            /newsletter/signup/
@@ -38,4 +38,4 @@
 /resources/image-templates/   https://www.figma.com/community/file/1182357255394426899
 
 # DB
-/db/                    https://docs.astro.build/en/guides/astro-db/
+/db/                    https://pphlx.org/docs/en/guides/astro-db/

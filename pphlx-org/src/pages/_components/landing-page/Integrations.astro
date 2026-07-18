@@ -253,7 +253,8 @@ import InterfaceExample from './integrations-tabs/InterfaceExample.astro';
 		// Auto-center active tab within its horizontal scroll container
 		const container = nextTab.parentElement;
 		if (container) {
-			const scrollLeft = nextTab.offsetLeft - (container.clientWidth / 2) + (nextTab.clientWidth / 2);
+			const targetOffset = tabs[3] ? tabs[3].offsetLeft : 0;
+			const scrollLeft = Math.max(0, nextTab.offsetLeft - targetOffset);
 			container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
 		}
 

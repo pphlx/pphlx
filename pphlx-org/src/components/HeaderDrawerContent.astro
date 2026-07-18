@@ -10,9 +10,8 @@ const nav: Nav = [
 		items: [
 			{ href: '/themes/', label: 'Themes', icon: 'palette', prefetch: true },
 			{ href: '/integrations/', label: 'Integrations', icon: 'layers', prefetch: true },
-			{ href: '/showcase/', label: 'Site showcase', icon: 'browser-windows', prefetch: true },
 			{
-				href: 'https://docs.astro.build/en/tutorial/0-introduction/',
+				href: '/docs/en/tutorial/0-introduction/',
 				label: 'Tutorials',
 				icon: 'open-book',
 			},
@@ -112,7 +111,7 @@ type Nav = Array<Link | Group>;
 
 	<div class="flex flex-wrap justify-between gap-12 gap-y-6">
 		<SocialLinks links={siteInfo.socialLinks} />
-		<a href="https://docs.astro.build/" class="button button-primary flex-grow sm:max-w-sm">
+		<a href="https://pphlx.org/docs/" class="button button-primary flex-grow sm:max-w-sm">
 			Read the docs
 		</a>
 	</div>

@@ -12,6 +12,9 @@ export async function getFilteredIntegrations(options: IntegrationOptions = {}) 
 	const { categories: selectedCategories = [], toolbar = false, search } = options;
 	const searchRegex = search && new RegExp(search, 'i');
 	function integrationsFilter(integration: CollectionEntry<'integrations'>) {
+		if (integration.data.hidden) {
+			return false;
+		}
 		// Overlay doesn't support categories or search (for now)
 		if (toolbar) {
 			return integration.data.toolbar !== undefined;

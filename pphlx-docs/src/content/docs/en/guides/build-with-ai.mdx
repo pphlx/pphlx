@@ -32,7 +32,7 @@ The PPHLX Docs MCP server uses the [kapa.ai](https://www.kapa.ai/) API to mainta
 ### Server Details
 
 - **Name**: PPHLX Docs
-- **URL**: `https://mcp.docs.astro.build/mcp`
+- **URL**: `https://mcp.pphlx.org/docs/mcp`
 - **Transport**: Streamable HTTP
 
 ### Installation
@@ -50,7 +50,7 @@ Many tools support a common JSON configuration format for MCP servers. If there 
       "mcpServers": {
         "PPHLX docs": {
           "type": "http",
-          "url": "https://mcp.docs.astro.build/mcp"
+          "url": "https://mcp.pphlx.org/docs/mcp"
         }
       }
     }
@@ -63,7 +63,7 @@ Many tools support a common JSON configuration format for MCP servers. If there 
         "PPHLX docs": {
           "type": "stdio",
           "command": "npx",
-          "args": ["-y", "mcp-remote", "https://mcp.docs.astro.build/mcp"]
+          "args": ["-y", "mcp-remote", "https://mcp.pphlx.org/docs/mcp"]
         }
       }
     }
@@ -77,7 +77,7 @@ Many tools support a common JSON configuration format for MCP servers. If there 
 Install using the terminal command:
 
 ```shell
-claude mcp add --transport http pphlx-docs https://mcp.docs.astro.build/mcp
+claude mcp add --transport http pphlx-docs https://mcp.pphlx.org/docs/mcp
 ```
 
 [More info on using MCP servers with Claude Code](https://docs.anthropic.com/en/docs/claude-code/mcp)
@@ -98,7 +98,7 @@ You can configure it to use the PPHLX Docs MCP server for documentation access b
         "mcpServers": {
           "pphlx-docs": {
             "type": "http",
-            "url": "https://mcp.docs.astro.build/mcp"
+            "url": "https://mcp.pphlx.org/docs/mcp"
           }
         }
       }
@@ -116,7 +116,7 @@ You can configure MCP servers at the global level in the `~/.codex/config.toml` 
 ```toml title="~/.codex/config.toml"
 [mcp_servers.astro-docs]
 command = "npx"
-args = ["-y", "mcp-remote", "https://mcp.docs.astro.build/mcp"]
+args = ["-y", "mcp-remote", "https://mcp.pphlx.org/docs/mcp"]
 ```
 
 [More info on using MCP servers with Codex CLI](https://developers.openai.com/codex/mcp)
@@ -155,7 +155,7 @@ Install by clicking the button below:
      "mcpServers": {
        "PPHLX docs": {
          "command": "npx",
-         "args": ["-y", "mcp-remote", "https://mcp.docs.astro.build/mcp"],
+         "args": ["-y", "mcp-remote", "https://mcp.pphlx.org/docs/mcp"],
          "env": {},
          "working_directory": null,
          "start_on_launch": true
@@ -177,7 +177,7 @@ Install by clicking the button below:
 
 1. Navigate to the [Claude.ai connector settings](https://claude.ai/settings/connectors).
 2. Click "Add custom connector". You may need to scroll down to find this option.
-3. Enter the server URL: `https://mcp.docs.astro.build/mcp`.
+3. Enter the server URL: `https://mcp.pphlx.org/docs/mcp`.
 4. Set the name to "PPHLX docs".
 
 </Steps>
@@ -200,7 +200,7 @@ Windsurf doesn't support streaming HTTP, so it requires a local proxy configurat
      "mcpServers": {
        "PPHLX docs": {
          "command": "npx",
-         "args": ["-y", "mcp-remote", "https://mcp.docs.astro.build/mcp"]
+         "args": ["-y", "mcp-remote", "https://mcp.pphlx.org/docs/mcp"]
        }
      }
    }
@@ -221,7 +221,7 @@ You can configure MCP servers at the global level in the `~/.gemini/settings.jso
 {
   "mcpServers": {
     "PPHLX docs": {
-      "httpUrl": "https://mcp.docs.astro.build/mcp",
+      "httpUrl": "https://mcp.pphlx.org/docs/mcp",
     }
   }
 }
@@ -241,7 +241,7 @@ You can configure MCP servers at the global level in the `~/.gemini/settings.jso
    {
      "mcpServers": {
        "pphlx-docs": {
-         "serverUrl": "https://mcp.docs.astro.build/mcp"
+         "serverUrl": "https://mcp.pphlx.org/docs/mcp"
        }
      }
    }
@@ -265,7 +265,7 @@ You can configure MCP servers at the global level in the `~/.gemini/settings.jso
         "PPHLX docs": {
           "settings": {},
           "enabled": true,
-          "url": "https://mcp.docs.astro.build/mcp"
+          "url": "https://mcp.pphlx.org/docs/mcp"
         }
       }
    }
@@ -303,7 +303,7 @@ You can configure MCP servers in your Opencode configuration file, typically nam
   "mcp": {
     "PPHLX docs": {
       "type": "remote",
-      "url": "https://mcp.docs.astro.build/mcp",
+      "url": "https://mcp.pphlx.org/docs/mcp",
       "enabled": true
     }
   }
@@ -323,7 +323,7 @@ You can configure it to use the PPHLX Docs MCP server for documentation access b
   "mcpServers": {
     "pphlx-docs": {
       "type": "http",
-      "url": "https://mcp.docs.astro.build/mcp",
+      "url": "https://mcp.pphlx.org/docs/mcp",
       "tools": ["mcp__pphlx-docs__search_pphlx_docs"]
     }
   }
@@ -345,7 +345,7 @@ The PPHLX Docs MCP server provides access to current documentation, but your AI 
 If you encounter issues:
 
 - Verify that your tool supports streamable HTTP transport.
-- Check that the server URL is correct: `https://mcp.docs.astro.build/mcp`.
+- Check that the server URL is correct: `https://mcp.pphlx.org/docs/mcp`.
 - Ensure your tool has proper internet access.
 - Consult your specific tool's MCP integration documentation.
 

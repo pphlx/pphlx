@@ -6,7 +6,7 @@
 - Describe the change you are proposing, and why.
 - Only make changes to **one language**.
 - Use  `<Since v="x.x.x" />` when adding features for a specific version of Astro.
-- Follow additional guidance at https://contribute.docs.astro.build/ for faster reviews.
+- Follow additional guidance at https://contribute.pphlx.org/docs// for faster reviews.
 -->
 
 #### References
@@ -19,5 +19,5 @@
 - Related to ...
 <!-- If this PR needs to be merged for a specific Astro release, add the version below. -->
 - For Astro version `x.x.x`
-<!-- First-time contributor to Astro Docs? Add your Discord username below so we can welcome you on the Astro Discord (https://astro.build/chat)! -->
+<!-- First-time contributor to Astro Docs? Add your Discord username below so we can welcome you on the Astro Discord (https://pphlx.org/chat)! -->
 - Discord username: ...

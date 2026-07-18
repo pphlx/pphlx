@@ -1,0 +1,55 @@
+---
+import { Icon } from 'astro-icon/components';
+import MainLayout from '~/layouts/MainLayout.astro';
+
+const seo = {
+	title: 'Submit a Theme',
+	description: 'Share your PPHLX templates, plugins, and full-stack dashboards with the community.',
+};
+---
+
+<MainLayout {...seo}>
+	<div class="relative pb-24 overflow-hidden bg-grid">
+		<div class="absolute inset-0 bg-grid mask-linear-gradient-to-b bleed-full opacity-35"></div>
+		
+		<div class="relative grid-container py-20 sm:py-24 md:py-32 xl:py-40">
+			<div class="max-w-screen-md mx-auto flex flex-col items-center text-center gap-6 sm:gap-8">
+				<div class="inline-flex p-3 rounded-full bg-astro-blue/10 border border-astro-blue/30 text-astro-blue">
+					<Icon name="palette" size="32" />
+				</div>
+				<h1 class="heading-2 sm:heading-1 text-white">Share Your Creation</h1>
+				<p class="text-xl sm:text-2xl font-light text-astro-gray-200 text-balance">
+					Submit your custom themes, monolithic dashboards, or full-stack templates to the PPHLX catalog.
+				</p>
+			</div>
+		</div>
+
+		<div class="relative max-w-screen-lg mx-auto px-4 sm:px-8 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 z-10">
+			<div class="flex flex-col gap-4 p-6 rounded-2xl border border-astro-gray-600 bg-astro-dark-900/60 backdrop-blur-md">
+				<div class="text-astro-green">
+					<Icon name="social/github" size="28" />
+				</div>
+				<h2 class="text-xl font-bold text-white">Submit via GitHub Pull Request</h2>
+				<p class="text-astro-gray-200 font-light leading-relaxed">
+					Our theme catalog is powered by a community-driven repository registry. Open a pull request to add your theme repository to our curated listings.
+				</p>
+				<a href="https://github.com/pphlx/pphlx" class="mt-auto button button-sm button-white self-start">
+					Open Pull Request
+				</a>
+			</div>
+
+			<div class="flex flex-col gap-4 p-6 rounded-2xl border border-astro-gray-600 bg-astro-dark-900/60 backdrop-blur-md">
+				<div class="text-astro-blue">
+					<Icon name="social/discord" size="28" />
+				</div>
+				<h2 class="text-xl font-bold text-white">Ask in the Community</h2>
+				<p class="text-astro-gray-200 font-light leading-relaxed">
+					Need help packaging your template or want to showcase a prototype? Connect with other monolith developers on our official community server.
+				</p>
+				<a href="/chat/" class="mt-auto button button-sm button-primary self-start">
+					Join Discord
+				</a>
+			</div>
+		</div>
+	</div>
+</MainLayout>

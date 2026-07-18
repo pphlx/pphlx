@@ -1,14 +1,14 @@
-# [astro.build](https://astro.build)
+# [astro.build](https://pphlx.org)
 
-The source code for [astro.build](https://astro.build), built with [Astro](https://github.com/pphlx/pphlx).
+The source code for [astro.build](https://pphlx.org), built with [Astro](https://github.com/pphlx/pphlx).
 
 ## Updating Themes
 
-The [themes catalog](https://astro.build/themes/) is now powered by the [Astro Developer Portal](https://portal.astro.build), where you can log in, submit and update your own themes. The themes catalog automatically updates every day with the latest data from the portal.
+The [themes catalog](https://pphlx.org/themes/) is now powered by the [Astro Developer Portal](https://portal.astro.build), where you can log in, submit and update your own themes. The themes catalog automatically updates every day with the latest data from the portal.
 
 ## Updating the Showcase
 
-The [showcase](https://astro.build/showcase) doesn't depend on any data from GitHub or NPM. All showcase data is pulled from the [content collection](/src/content/showcase/). Optimized images should be saved to the collection's [directory](/src/content/showcase/) in a `.webp` file, have the dimensions of 1600 × 900 pixels, and named after the site’s domain, e.g. `example.com.webp`.
+The [showcase](https://pphlx.org/showcase) doesn't depend on any data from GitHub or NPM. All showcase data is pulled from the [content collection](/src/content/showcase/). Optimized images should be saved to the collection's [directory](/src/content/showcase/) in a `.webp` file, have the dimensions of 1600 × 900 pixels, and named after the site’s domain, e.g. `example.com.webp`.
 
 A weekly [GitHub workflow](/.github/workflows/weekly.yaml) pulls URLs posted in [a dedicated GitHub discussion](https://github.com/withastro/roadmap/discussions/521) and opens a PR to add data and screenshots for these sites to the repo. You can also run this script locally and commit the results manually:
 
@@ -18,7 +18,7 @@ pnpm update:showcase
 
 ## Updating Integrations
 
-The [integrations catalog](https://astro.build/integrations) also used a content collection to track known Astro integrations.
+The [integrations catalog](https://pphlx.org/integrations) also used a content collection to track known Astro integrations.
 
 Integration data is updated weekly by a [GitHub Action](/.github/workflows/weekly.yaml). This action searches NPM and updates existing integrations, adds newly published integrations, and removes deprecated packages. A [JSON config file](/scripts/integrations.json) is used to allow for manual overrides of data published in NPM, most often this is used for adding icons and tweaking description text.
 

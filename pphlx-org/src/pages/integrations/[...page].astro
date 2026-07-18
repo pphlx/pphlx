@@ -1,0 +1,162 @@
+---
+import CardGrid from '~/components/CardGrid.astro';
+import CardGridGroup from '~/components/CardGridGroup.astro';
+import Pagination from '~/components/Pagination.astro';
+import SearchFilter, { type FilterGroup } from '~/components/SearchFilter.astro';
+import SidebarLayout from '~/components/SidebarLayout.astro';
+import SidebarPanel from '~/components/SidebarPanel.astro';
+import { IntegrationCategories } from '~/content.config.js';
+import { getFilteredIntegrations } from '~/helpers/integrations.ts';
+import { paginate } from '~/helpers/paginate.js';
+import type { MapKeys } from '~/helpers/types.ts';
+import MainLayout from '~/layouts/MainLayout.astro';
+import IntegrationCard from './_components/IntegrationCard.astro';
+import SubmitIntegration from './_components/SubmitIntegration.astro';
+
+export const prerender = false;
+
+// with '[...page]' rest routes we'll get undefined for the first page, default that to 1
+// otherwise, try to parse the page number from the URL
+const currentPage =
+	typeof Astro.params.page === 'undefined' ? 1 : Number.parseInt(Astro.params.page, 10);
+
+// invalid page number!
+if (!currentPage || Number.isNaN(currentPage)) {
+	return Astro.redirect('/404');
+}
+
+// search term from the search/filter panel
+const search = Astro.url.searchParams.get('search');
+
+// get a list of category filters applied to the request
+const selectedCategories = Astro.url.searchParams.getAll('categories[]');
+
+// massage category data for the Filter components
+const categoryFilter: FilterGroup = {
+	title: 'Categories',
+	options: [...IntegrationCategories].map(([id, label]) => ({
+		id,
+		name: 'categories[]',
+		value: id,
+		label,
+		selected: selectedCategories.includes(id),
+	})),
+};
+
+const allIntegrations = await getFilteredIntegrations({
+	search,
+	categories: selectedCategories as unknown as MapKeys<typeof IntegrationCategories>,
+});
+
+// take all matching integrations and create a paginated list of results
+const paginatedResults = paginate({
+	data: allIntegrations,
+	pageSize: 18,
+	currentPage,
+	route: '/integrations/[...page]',
+	searchParams: Astro.url.searchParams,
+});
+
+const { page, allPages } = paginatedResults;
+
+// make sure the requested page number is valid, if not redirect to the first page of results
+if (allPages.length && !page) {
+	return Astro.redirect(allPages[0]);
+}
+
+const integrations = page.data;
+
+const showRecentlyAdded =
+	currentPage === 1 && !Array.from(Astro.url.searchParams).some(([_, value]) => !!value);
+const recentlyAdded = showRecentlyAdded
+	? allIntegrations.filter((entry) => entry.data.badge === 'new')
+	: [];
+const recentlyAddedSearch = new URLSearchParams(Astro.url.search);
+recentlyAddedSearch.append('categories[]', 'recent');
+const recentlyAddedHref = `${Astro.url.pathname}?${recentlyAddedSearch.toString()}`;
+---
+
+<MainLayout
+	title="Modules & Extensions"
+	image={{ src: '/og/integrations.jpg', alt: 'Discover PPHLX modules and extensions' }}
+>
+	<div class="bg-grid relative">
+		<div class="grid-container">
+			<h1
+				class="heading-3 mx-auto w-full max-w-screen-xl pt-24 text-center text-balance sm:heading-2 lg:heading-1 md:pt-32 lg:pt-40"
+			>
+				Kick it into lightspeed with modules & extensions
+			</h1>
+		</div>
+	</div>
+
+	<SidebarLayout>
+		<Fragment slot="sidebar">
+			<SidebarPanel>
+				<SearchFilter
+					indexRoute="/integrations/"
+					groups={[categoryFilter]}
+					search={search}
+					searchPlaceholder="Search for a module"
+				/>
+			</SidebarPanel>
+			<SubmitIntegration class="hidden lg:block" />
+		</Fragment>
+
+		{
+			integrations.length > 0 ? (
+				<div class="flex flex-col items-center gap-8 pb-10 pt-8 sm:px-4 sm:pb-12 md:gap-10 md:pb-16 lg:gap-12 lg:px-8 lg:pb-20 lg:pt-10 xl:px-10">
+					<h2 class="sr-only">Modules & Extensions</h2>
+
+					{showRecentlyAdded && recentlyAdded.length > 0 && (
+						<CardGridGroup
+							title="Recently added"
+							cta={
+								recentlyAdded.length > 3
+									? { href: recentlyAddedHref, text: 'View all new modules' }
+									: undefined
+							}
+						>
+							<CardGrid class="w-full max-w-screen-xl sm:grid-cols-2 xl:grid-cols-3">
+								{recentlyAdded.slice(0, 3).map((integration) => (
+									<IntegrationCard integration={integration} />
+								))}
+							</CardGrid>
+						</CardGridGroup>
+					)}
+
+					<CardGridGroup
+						title={
+							showRecentlyAdded && recentlyAdded.length > 0
+								? 'Popular modules'
+								: search
+									? `Results for "${search}"`
+									: undefined
+						}
+					>
+						<CardGrid class="w-full max-w-screen-xl sm:grid-cols-2 xl:grid-cols-3">
+							{integrations.map((integration) => (
+								<IntegrationCard integration={integration} />
+							))}
+						</CardGrid>
+					</CardGridGroup>
+
+					{allPages.length > 1 && (
+						<Pagination restRoute page={page} allPages={allPages} class="mx-auto" />
+					)}
+				</div>
+			) : (
+				<div class="flex flex-col items-center gap-12 py-8 text-center sm:px-4 md:px-8 lg:px-10 lg:pt-10">
+					<p>
+						<strong>0</strong> results found for modules matching <strong>"{search}"</strong>
+					</p>
+					<a href="/integrations/" data-astro-prefetch class="button button-primary">
+						Clear filters
+					</a>
+				</div>
+			)
+		}
+
+		<SubmitIntegration class="lg:hidden" />
+	</SidebarLayout>
+</MainLayout>

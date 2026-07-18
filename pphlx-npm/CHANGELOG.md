@@ -5,6 +5,17 @@ All notable changes to the PPHLX Node.js compiler CLI will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-07-18
+
+### Added
+- **Multi-Target Outputs**: Compile PPHLX projects to Standard PHP (`php`), Standalone Go Binary (`standalone`), Static Site Generator (`ssg`), and Blade/Twig views.
+- **CLI Target Overrides**: Expose `--target` (`-t`) flag to change build formats on the fly.
+- **Cross-Compilation**: Configure `"goos"` and `"goarch"` in `pphlx.config.json` to compile standalone binaries for target servers (like `linux/amd64`) directly from Windows.
+- **Brand Default Port `6321`**: Custom dev server port with auto-retry collision scanning.
+- **Console Interface**: Astro-style terminal colors and startup logs.
+
+---
+
 ## [1.0.5-1] - 2026-07-17
 
 ### Changed

@@ -1,0 +1,15 @@
+{
+  "name": "pphlx/composer-testing",
+  "description": "Local test project for PPHLX Composer integration",
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../../pphlx-composer"
+    }
+  ],
+  "require": {
+    "pphlx/pphlx": "*"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

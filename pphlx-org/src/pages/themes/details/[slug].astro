@@ -1,0 +1,114 @@
+---
+import { Image } from 'astro:assets';
+import { Icon } from 'astro-icon/components';
+import CardGrid from '~/components/CardGrid.astro';
+import CardGridGroup from '~/components/CardGridGroup.astro';
+import ImageGallery from '~/components/ImageGallery.astro';
+import { sanitizeThemeDescription } from '~/helpers/themes.ts';
+import MainLayout from '~/layouts/MainLayout.astro';
+import { allThemes } from '../_data/themes.ts';
+import ThemeCard from '../_components/ThemeCard.astro';
+import ThemeCTAs from '../_components/ThemeCTAs.astro';
+import ThemeStats from '../_components/ThemeStats.astro';
+import type { ThemeAndAuthor } from '../_types/index.ts';
+
+export const prerender = false;
+
+const slug = Astro.params.slug as string;
+
+const theme = allThemes.find((t) => t.Theme.slug === slug);
+
+if (!theme) return Astro.redirect('/404');
+
+const relatedThemes: Array<ThemeAndAuthor> = allThemes
+	.filter((t) => t.Theme.slug !== slug && !t.Theme.hidden)
+	.slice(0, 3);
+---
+
+<MainLayout
+	title={theme.Theme.title}
+	description={theme.Theme.description}
+	image={{ src: theme.Theme.image, alt: theme.Theme.title }}
+>
+	<div class="gap-y-0 grid-container">
+		{
+			theme.Theme.images.length > 0 ? (
+				<ImageGallery
+					images={[theme.Theme.image, ...theme.Theme.images]}
+					class="mx-auto border-astro-gray-500 xl:border-x xl:border-b w-full bleed-full"
+					style="max-width: var(--container-width, 1280px)"
+				/>
+			) : (
+				<Image
+					src={theme.Theme.image}
+					height={900}
+					width={1600}
+					alt=""
+					class="mx-auto border-astro-gray-500 xl:border-x xl:border-b w-full object-cover object-top aspect-video"
+					loading="eager"
+				/>
+			)
+		}
+		<div class="flex md:flex-row flex-col border-astro-gray-500 xl:border-x">
+			<section class="flex flex-col gap-6 md:gap-8 lg:gap-10 md:p-8 lg:px-20 py-6 lg:py-10 w-full">
+				<a
+					href="/themes/1/"
+					data-astro-prefetch
+					class="flex items-center self-start gap-2 text-astro-gray-200 text-sm"
+				>
+					<Icon name="left-arrow" class="s-6" aria-hidden="true" />
+					<span class="pr-2">Back to themes</span>
+				</a>
+				<div>
+					<h1 class="mb-4 heading-3 sm:heading-2">{theme.Theme.title}</h1>
+					<p class="text-astro-gray-200 text-lg lg:text-xl">{theme.Theme.description}</p>
+					<ThemeCTAs theme={theme} class="md:hidden py-6" />
+					<hr class="md:hidden border-astro-gray-500" />
+					<ThemeStats theme={theme} class="md:hidden py-4" />
+				</div>
+				<hr class="hidden md:block border-astro-gray-500" />
+				<article class="prose" set:html={sanitizeThemeDescription(theme.Theme.body)} />
+			</section>
+
+			<aside
+				class="hidden md:block border-astro-gray-500 md:border-l divide-y divide-astro-gray-500 w-full md:max-w-md"
+			>
+				<ThemeCTAs theme={theme} class="p-6 lg:p-8 xl:p-10" />
+				<hr class="border-astro-gray-500" />
+				<ThemeStats theme={theme} class="p-6 lg:p-8 xl:p-10" />
+			</aside>
+		</div>
+		{
+			relatedThemes.length > 0 && (
+				<div class="relative border-astro-gray-500 border-t related bleed-full">
+					<div class="gap-y-10 grid-container pt-20 pb-0">
+						<CardGridGroup
+							title="Other themes to consider"
+							cta={{ href: '/themes/', text: 'View more themes' }}
+						>
+							<CardGrid class="md:grid-cols-2 lg:grid-cols-3">
+								{relatedThemes.map((theme) => (
+									<ThemeCard theme={theme} />
+								))}
+							</CardGrid>
+						</CardGridGroup>
+					</div>
+				</div>
+			)
+		}
+	</div>
+
+	<style>
+		.grid-container :global(picture) {
+			@apply mx-auto w-full;
+			grid-column: 1 / -1;
+			max-width: var(--container-width, 1280px);
+		}
+
+		.related::before {
+			@apply absolute bg-grid w-full aspect-square;
+			content: '';
+			mask-image: linear-gradient(to bottom, white, transparent);
+		}
+	</style>
+</MainLayout>

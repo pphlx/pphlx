@@ -20,7 +20,7 @@ body:
     attributes:
       label: "📋 Page(s) affected (or suggested, for new content)"
       description: Please provide the URL of the page(s) affected.
-      placeholder: https://docs.astro.build/en/getting-started/
+      placeholder: https://pphlx.org/docs/en/getting-started/
     validations:
         required: true
   - type: textarea

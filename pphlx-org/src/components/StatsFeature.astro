@@ -9,38 +9,38 @@ const stats = [
 		amount: `📦 ${formatter.format(data.downloads)}`,
 		text: 'monthly downloads',
 		source: 'NPM downloads',
-		url: 'https://www.npmjs.com/package/astro',
+		url: 'https://www.npmjs.com/package/pphlx',
 	},
 	{
 		amount: `🌐 ${formatter.format(data.followers.twitter + data.followers.mastodon + data.followers.bluesky)}`,
 		text: 'social media followers',
-		source: `<a href="https://bsky.app/profile/astro.build" class="link">Bluesky</a> /
-			<a href="https://m.webtoo.ls/@astro/" class="link">Mastodon</a> /
-			<a href="https://twitter.com/astrodotbuild" class="link">X</a>`,
+		source: `<a href="https://bsky.app/profile/pphlx.org" class="link">Bluesky</a> /
+			<a href="https://mastodon.social/@pphlx" class="link">Mastodon</a> /
+			<a href="https://twitter.com/pphlxlabs" class="link">X</a>`,
 	},
 	{
 		amount: `⭐ ${formatter.format(data.stars)}`,
 		text: 'GitHub Stars',
-		source: 'withastro/astro',
+		source: 'pphlx/pphlx',
 		url: 'https://github.com/pphlx/pphlx',
 	},
 	{
-		amount: '🏆 #1',
-		text: 'in developer retention',
-		source: 'State of JS 2023–2025',
-		url: 'https://2025.stateofjs.com/en-US/libraries/meta-frameworks/',
+		amount: '📦 0 KB',
+		text: 'JS runtime footprint by default',
+		source: 'compared to standard SPA/SSR frameworks',
+		url: 'https://pphlx.org/docs',
 	},
 	{
-		amount: '💜 #1',
-		text: 'in developer interest',
-		source: 'State of JS 2022–2025',
-		url: 'https://2025.stateofjs.com/en-US/libraries/meta-frameworks/',
+		amount: '🧩 5+',
+		text: 'UI frameworks integrated natively',
+		source: 'React, Vue, Svelte, Preact, and SolidJS',
+		url: 'https://pphlx.org/docs',
 	},
 	{
-		amount: '📈 #2',
-		text: 'in usage',
-		source: 'State of JS 2024–2025',
-		url: 'https://2025.stateofjs.com/en-US/libraries/meta-frameworks/',
+		amount: '⚡ < 1ms',
+		text: 'hydration and template compilation',
+		source: 'powered by our high-performance Go engine',
+		url: 'https://pphlx.org/docs',
 	},
 ];
 ---
