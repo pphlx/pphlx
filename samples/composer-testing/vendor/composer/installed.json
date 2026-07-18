@@ -1,0 +1,53 @@
+{
+    "packages": [
+        {
+            "name": "pphlx/pphlx",
+            "version": "dev-main",
+            "version_normalized": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../../pphlx-composer",
+                "reference": "fa88281ea462b2d6402f3abbf2ed94a6180788a9"
+            },
+            "require": {
+                "php": ">=7.4"
+            },
+            "bin": [
+                "bin/pphlx"
+            ],
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "PPHLX\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PPHLX",
+                    "homepage": "https://pphlx.org"
+                }
+            ],
+            "description": "High-performance Monolithic Web Compiler and PHP Hydration Runtime",
+            "keywords": [
+                "compiler",
+                "hydration",
+                "islands",
+                "php",
+                "react",
+                "svelte",
+                "vue",
+                "webassembly"
+            ],
+            "transport-options": {
+                "relative": true
+            },
+            "install-path": "../pphlx/pphlx"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}

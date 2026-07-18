@@ -1,6 +1,6 @@
 {
   "name": "pphlx",
-  "version": "1.0.5-1",
+  "version": "1.0.6",
   "description": "High-performance Monolithic Web Compiler and PHP Hydration CLI",
   "main": "bin/pphlx.js",
   "bin": {
@@ -21,5 +21,9 @@
     "hydration"
   ],
   "author": "PPHLX",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pphlx/npm.git"
+  }
 }

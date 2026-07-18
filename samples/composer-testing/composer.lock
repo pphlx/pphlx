@@ -1,0 +1,63 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "2af142700f57647db3ff53002b51c16b",
+    "packages": [
+        {
+            "name": "pphlx/pphlx",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../../pphlx-composer",
+                "reference": "fa88281ea462b2d6402f3abbf2ed94a6180788a9"
+            },
+            "require": {
+                "php": ">=7.4"
+            },
+            "bin": [
+                "bin/pphlx"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PPHLX\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PPHLX",
+                    "homepage": "https://pphlx.org"
+                }
+            ],
+            "description": "High-performance Monolithic Web Compiler and PHP Hydration Runtime",
+            "keywords": [
+                "compiler",
+                "hydration",
+                "islands",
+                "php",
+                "react",
+                "svelte",
+                "vue",
+                "webassembly"
+            ],
+            "transport-options": {
+                "relative": true
+            }
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "dev",
+    "stability-flags": {},
+    "prefer-stable": true,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
+}

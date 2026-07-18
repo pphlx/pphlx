@@ -115,50 +115,50 @@ $vanillaStartBg = "#1e293b"; ?>
 
             <!-- 3. React Interactive Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-feedbackcard-1784272609501052800" class="pphlx-island" data-component="FeedbackCard" data-framework="react" data-hydrate="load"></div>
+                <div id="pphlx-feedbackcard-1784398308901255300" class="pphlx-island" data-component="FeedbackCard" data-framework="react" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-feedbackcard-1784272609501052800"] = {"title": "<?php echo $reactTitle; ?>"};
+  window.pphlxProps["pphlx-feedbackcard-1784398308901255300"] = {"title": "<?php echo $reactTitle; ?>"};
 </script>
 
             </div>
 
             <!-- 4. Vue 3 Converter SFC Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-tempconverter-1784272609503097000" class="pphlx-island" data-component="TempConverter" data-framework="vue" data-hydrate="load"></div>
+                <div id="pphlx-tempconverter-1784398308914419000" class="pphlx-island" data-component="TempConverter" data-framework="vue" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-tempconverter-1784272609503097000"] = {"label": "<?php echo $vueLabel; ?>","initialValue": "<?php echo $vueDefaultTemp; ?>"};
+  window.pphlxProps["pphlx-tempconverter-1784398308914419000"] = {"label": "<?php echo $vueLabel; ?>","initialValue": "<?php echo $vueDefaultTemp; ?>"};
 </script>
 
             </div>
 
             <!-- 5. Svelte 4 Interest Calculator Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-interestcalculator-1784272609491523000" class="pphlx-island" data-component="InterestCalculator" data-framework="svelte" data-hydrate="load"></div>
+                <div id="pphlx-interestcalculator-1784398308902921900" class="pphlx-island" data-component="InterestCalculator" data-framework="svelte" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-interestcalculator-1784272609491523000"] = {"rate": "<?php echo $svelteRate; ?>","years": "<?php echo $svelteYears; ?>","label": "<?php echo $svelteLabel; ?>","principal": "<?php echo $sveltePrincipal; ?>"};
+  window.pphlxProps["pphlx-interestcalculator-1784398308902921900"] = {"label": "<?php echo $svelteLabel; ?>","principal": "<?php echo $sveltePrincipal; ?>","rate": "<?php echo $svelteRate; ?>","years": "<?php echo $svelteYears; ?>"};
 </script>
 
             </div>
 
             <!-- 6. SolidJS High-Fidelity Timer Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-solidstopwatch-1784272609504607500" class="pphlx-island" data-component="SolidStopwatch" data-framework="solid" data-hydrate="load"></div>
+                <div id="pphlx-solidstopwatch-1784398308915980100" class="pphlx-island" data-component="SolidStopwatch" data-framework="solid" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-solidstopwatch-1784272609504607500"] = {"label": "<?php echo $solidLabel; ?>"};
+  window.pphlxProps["pphlx-solidstopwatch-1784398308915980100"] = {"label": "<?php echo $solidLabel; ?>"};
 </script>
 
             </div>
 
             <!-- 7. Preact Class Component Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-preactcart-1784272609493608400" class="pphlx-island" data-component="PreactCart" data-framework="preact" data-hydrate="load"></div>
+                <div id="pphlx-preactcart-1784398308904998600" class="pphlx-island" data-component="PreactCart" data-framework="preact" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-preactcart-1784272609493608400"] = {"price": "<?php echo $preactPrice; ?>"};
+  window.pphlxProps["pphlx-preactcart-1784398308904998600"] = {"price": "<?php echo $preactPrice; ?>"};
 </script>
 
             </div>
@@ -202,30 +202,30 @@ $vanillaStartBg = "#1e293b"; ?>
 
             <!-- 11. React Three Fiber (R3F) Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-r3flogo-1784272609495169900" class="pphlx-island" data-component="R3FLogo" data-framework="react" data-hydrate="load"></div>
+                <div id="pphlx-r3flogo-1784398308906561100" class="pphlx-island" data-component="R3FLogo" data-framework="react" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-r3flogo-1784272609495169900"] = {};
+  window.pphlxProps["pphlx-r3flogo-1784398308906561100"] = {};
 </script>
 
             </div>
 
             <!-- 12. Svelte Threlte 3D Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-threltelogo-1784272609507612100" class="pphlx-island" data-component="ThrelteLogo" data-framework="svelte" data-hydrate="load"></div>
+                <div id="pphlx-threltelogo-1784398308897627100" class="pphlx-island" data-component="ThrelteLogo" data-framework="svelte" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-threltelogo-1784272609507612100"] = {};
+  window.pphlxProps["pphlx-threltelogo-1784398308897627100"] = {};
 </script>
 
             </div>
 
             <!-- 13. Vue TresJS 3D Card -->
             <div class="masonry-item" draggable="true">
-                <div id="pphlx-tresjslogo-1784272609509630600" class="pphlx-island" data-component="TresJSLogo" data-framework="vue" data-hydrate="load"></div>
+                <div id="pphlx-tresjslogo-1784398308899176800" class="pphlx-island" data-component="TresJSLogo" data-framework="vue" data-hydrate="load"></div>
 <script>
   window.pphlxProps = window.pphlxProps || {};
-  window.pphlxProps["pphlx-tresjslogo-1784272609509630600"] = {};
+  window.pphlxProps["pphlx-tresjslogo-1784398308899176800"] = {};
 </script>
 
             </div>

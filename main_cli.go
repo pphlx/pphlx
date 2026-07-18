@@ -64,11 +64,11 @@ func main() {
 	fmt.Println("PPHLX Compiler Starting...")
 
 	// Default command is "build", check if user passed "dev" or "watch"
-	mode := "build"
+	activeMode = "build"
 	if len(os.Args) > 1 {
 		cmd := strings.ToLower(os.Args[1])
 		if cmd == "dev" || cmd == "watch" {
-			mode = "dev"
+			activeMode = "dev"
 		}
 	}
 
@@ -135,12 +135,38 @@ func main() {
 		}
 	}
 
+	// Override config target with CLI flag if provided
+	cliTarget := ""
+	for i := 1; i < len(os.Args)-1; i++ {
+		arg := strings.ToLower(os.Args[i])
+		if arg == "--target" || arg == "-t" {
+			cliTarget = os.Args[i+1]
+			break
+		}
+	}
+	for _, arg := range os.Args {
+		if strings.HasPrefix(strings.ToLower(arg), "--target=") {
+			parts := strings.SplitN(arg, "=", 2)
+			if len(parts) == 2 {
+				cliTarget = parts[1]
+			}
+		}
+	}
+
+	if cliTarget != "" {
+		config.Output.Target = strings.ToLower(cliTarget)
+	}
+
+	if config.Output.Target == "" {
+		config.Output.Target = "php"
+	}
+
 	projectDir := filepath.Dir(configPath)
 
 	// Run initial compilation
 	compileAll(config, projectDir)
 
-	if mode == "dev" {
+	if activeMode == "dev" {
 		startWatcher(config, projectDir)
 	}
 }

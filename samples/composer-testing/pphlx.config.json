@@ -1,0 +1,7 @@
+{
+  "srcDir": "src",
+  "outDir": "dist",
+  "output": {
+    "target": "ssg"
+  }
+}

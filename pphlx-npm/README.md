@@ -88,6 +88,46 @@ Then simply use the corresponding `npm run <command>`:
 
 ---
 
+## Multi-Target Compilation
+
+PPHLX supports compiling your application to multiple target formats. By default, it compiles to standard `.php` files. You can configure this inside `pphlx.config.json` or override it on the fly using CLI flags.
+
+### Configuration (`pphlx.config.json`)
+
+To configure a default target, add the `"output"` block:
+
+```json
+{
+  "srcDir": "src",
+  "outDir": "dist",
+  "output": {
+    "target": "standalone",
+    "goos": "linux",
+    "goarch": "amd64"
+  }
+}
+```
+
+*   `target`: `"php"` (default), `"standalone"` (single compiled Go binary), `"ssg"` (static HTML/JS/CSS), or `"blade"`/`"twig"` (framework-native template views).
+*   `goos` / `goarch`: (Optional) Target cross-compilation OS (e.g. `linux`, `darwin`, `windows`) and architecture (e.g. `amd64`, `arm64`) when compiling a standalone binary.
+
+### CLI Overrides
+
+Pass the `--target` (or `-t`) flag to temporarily customize the output target during a build:
+
+```bash
+# Compile to a Standalone Go Binary
+npx pphlx build --target standalone
+
+# Compile to Static HTML (SSG)
+npx pphlx build --target ssg
+
+# Compile to Laravel Blade templates
+npx pphlx build --target blade
+```
+
+---
+
 ## Project Links
 
 - **Website**: [pphlx.org](https://pphlx.org)
