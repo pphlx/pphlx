@@ -1,6 +1,6 @@
 {
   "name": "pphlx",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "High-performance Monolithic Web Compiler and PHP Hydration CLI",
   "main": "bin/pphlx.js",
   "bin": {

@@ -81,6 +81,56 @@ export default defineConfig({
 
 ---
 
+## Multi-Target Compilation
+
+PPHLX is a multi-target application engine. By default, it compiles `.pphx` files to standard, production-ready `.php` files. You can configure alternative compilation targets inside `pphlx.config.json` or override them on the fly using CLI flags.
+
+### Supported Targets
+1.  **`"php"`** *(Default)*: Compiles templates into dynamic `.php` files for standard web servers.
+2.  **`"standalone"`**: Packages all compiled files and static assets into a single, headless executable Go binary with an embedded routing server (`app` or `app.exe`).
+3.  **`"desktop"`**: Compiles the codebase into an installable native desktop application using a GPU-accelerated WebView (utilizing pure-Go `webview2` on Windows for zero-CGO builds, and `webview_go` on macOS/Linux).
+4.  **`"android"`**: Natively scaffolds a complete Gradle Android Studio project structure inside `dist/android/` with WebView clients and preloaded static assets.
+5.  **`"ios"`**: Natively scaffolds a Swift-based Xcode project structure inside `dist/ios/` with WKWebView controllers and preloaded static assets.
+6.  **`"ssg"`**: Compiles the codebase to static, raw `.html` (evaluating PHP blocks to static content at build time).
+7.  **`"blade"` / `"twig"`**: Translates templates to Laravel-native Blade or Symfony-native Twig views.
+
+---
+
+## Desktop Native App Engine
+
+When targeting `"desktop"`, PPHLX injects the `pphlx.desktop` API directly into your Javascript runtime, allowing your web layout files (React, Svelte, Vue, or raw HTML) to interface with the operating system:
+
+### 1. Core Native Drivers
+*   `pphlx.desktop.openFileDialog()`: Opens the native OS file picker and returns the selected filepath.
+*   `pphlx.desktop.saveFileDialog()`: Opens the native OS save file dialog.
+*   `pphlx.desktop.showNotification(title, message)`: Triggers a native system alert/toast notification.
+*   `pphlx.desktop.window.close()`: Gracefully terminates the desktop app process.
+
+### 2. Custom Go Bridge Extensions
+For custom hardware integration (e.g. barcode scanners, card readers) or low-level performance code, developers can write local Go files inside `src/desktop/` (e.g. `src/desktop/bridge.go`):
+
+```go
+package main
+
+import "fmt"
+
+type CustomBridge struct{}
+
+func init() {
+    // Register this bridge extension during app boot
+    RegisterExtension(func(w DesktopWindow) {
+        bridge := &CustomBridge{}
+        w.Bind("CustomBridge", bridge) // Binds window.CustomBridge in JS
+    })
+}
+
+func (b *CustomBridge) CustomHardwareAction(port string) string {
+    return fmt.Sprintf("Interfaced with port: %s", port)
+}
+```
+
+---
+
 ## CLI Usage
 
 PPHLX runs locally on your development machine as a single native binary:

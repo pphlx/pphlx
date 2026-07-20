@@ -121,7 +121,7 @@ func compileAll(config Config, projectDir string) {
 	var globalCSS strings.Builder
 	var globalJS strings.Builder
 
-	// Prepend require and process shims at the very beginning of the global JS bundle
+	// Prepend require, process shims and pphlx.desktop API helper at the very beginning of the global JS bundle
 	globalJS.WriteString(`
 // Require shim for browser CDN compatibility
 window.require = window.require || function(mod) {
@@ -132,6 +132,55 @@ window.require = window.require || function(mod) {
 
 // Process environment shim for Vue/Svelte compatibility
 window.process = window.process || { env: { NODE_ENV: 'production' } };
+
+// PPHLX Desktop App API Bridge
+window.pphlx = window.pphlx || {};
+window.pphlx.desktop = {
+  openFileDialog: async function(options) {
+    if (window.pphlxDesktopOpenFile) {
+      return await window.pphlxDesktopOpenFile();
+    }
+    console.warn("pphlx.desktop.openFileDialog is only available in native desktop target.");
+    return null;
+  },
+  saveFileDialog: async function(options) {
+    if (window.pphlxDesktopSaveFile) {
+      return await window.pphlxDesktopSaveFile();
+    }
+    console.warn("pphlx.desktop.saveFileDialog is only available in native desktop target.");
+    return null;
+  },
+  showNotification: function(title, message) {
+    if (window.pphlxDesktopShowNotification) {
+      window.pphlxDesktopShowNotification(title, message);
+    } else {
+      alert(title + ": " + message);
+    }
+  },
+  window: {
+    minimize: function() {
+      if (window.pphlxDesktopMinimize) {
+        window.pphlxDesktopMinimize();
+      } else {
+        console.warn("window.minimize is only available in native desktop target.");
+      }
+    },
+    maximize: function() {
+      if (window.pphlxDesktopMaximize) {
+        window.pphlxDesktopMaximize();
+      } else {
+        console.warn("window.maximize is only available in native desktop target.");
+      }
+    },
+    close: function() {
+      if (window.pphlxDesktopClose) {
+        window.pphlxDesktopClose();
+      } else {
+        window.close();
+      }
+    }
+  }
+};
 `)
 
 	hasPartytown := false
@@ -167,7 +216,7 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 		if strings.HasSuffix(info.Name(), ".pphx") {
 			ext := ".php"
 			switch targetLower {
-			case "ssg":
+			case "ssg", "android", "ios":
 				ext = ".html"
 			case "blade":
 				ext = ".blade.php"
@@ -270,7 +319,7 @@ window.process = window.process || { env: { NODE_ENV: 'production' } };
 			}
 
 			pageBytes := []byte(strings.TrimLeft(compiledPage, " \t\r\n"))
-			if targetLower == "ssg" {
+			if targetLower == "ssg" || targetLower == "android" || targetLower == "ios" {
 				// Evaluate PHP to static HTML
 				tempFile := phpOutPath + ".tmp.php"
 				err = ioutil.WriteFile(tempFile, pageBytes, 0644)
@@ -545,6 +594,470 @@ func main() {
 		} else {
 			fmt.Printf("[Error] Failed to write standalone build file: %v\n", err)
 		}
+	}
+
+	if targetLower == "desktop" && activeMode == "build" {
+		fmt.Println("Compiling Desktop Native Application...")
+		desktopFile := filepath.Join(projectDir, "desktop_main.go")
+		
+		goos := config.Output.Goos
+		if goos == "" {
+			goos = runtime.GOOS
+		}
+		binaryName := "app"
+		if goos == "windows" {
+			binaryName = "app.exe"
+		}
+		binaryPath := filepath.Join(outDir, binaryName)
+
+		var desktopSource string
+		if goos == "windows" {
+			desktopSource = fmt.Sprintf(`package main
+
+import (
+	"embed"
+	"fmt"
+	"io/fs"
+	"net"
+	"net/http"
+	"os"
+	"os/exec"
+	"strings"
+	"github.com/jchv/go-webview2"
+)
+
+//go:embed %s/*
+var embedFS embed.FS
+
+type DesktopWindow interface {
+	Bind(name string, f interface{}) error
+}
+
+var extensionRegistrators []func(DesktopWindow)
+
+func RegisterExtension(reg func(DesktopWindow)) {
+	extensionRegistrators = append(extensionRegistrators, reg)
+}
+
+func main() {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		fmt.Printf("Error starting server: %%v\n", err)
+		os.Exit(1)
+	}
+	defer listener.Close()
+	port := listener.Addr().(*net.TCPAddr).Port
+
+	subFS, err := fs.Sub(embedFS, "%s")
+	if err != nil {
+		os.Exit(1)
+	}
+
+	go http.Serve(listener, http.FileServer(http.FS(subFS)))
+
+	w := webview2.NewWithOptions(webview2.WebViewOptions{
+		Debug:     false,
+		WindowOptions: webview2.WindowOptions{
+			Title:  "PPHLX Desktop Application",
+			Width:  1024,
+			Height: 768,
+		},
+	})
+	if w == nil {
+		os.Exit(1)
+	}
+	defer w.Destroy()
+
+	// Bind Core Standard Drivers
+	w.Bind("pphlxDesktopOpenFile", func() string {
+		cmd := exec.Command("powershell", "-NoProfile", "-Command", "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.OpenFileDialog; if ($d.ShowDialog() -eq 'OK') { $d.FileName }")
+		out, err := cmd.Output()
+		if err != nil {
+			return ""
+		}
+		return strings.TrimSpace(string(out))
+	})
+
+	w.Bind("pphlxDesktopSaveFile", func() string {
+		cmd := exec.Command("powershell", "-NoProfile", "-Command", "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.SaveFileDialog; if ($d.ShowDialog() -eq 'OK') { $d.FileName }")
+		out, err := cmd.Output()
+		if err != nil {
+			return ""
+		}
+		return strings.TrimSpace(string(out))
+	})
+
+	w.Bind("pphlxDesktopShowNotification", func(title, message string) {
+		escapedTitle := strings.ReplaceAll(title, "'", "''")
+		escapedMsg := strings.ReplaceAll(message, "'", "''")
+		cmd := exec.Command("powershell", "-NoProfile", "-Command", fmt.Sprintf("Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('%s', '%s')", escapedMsg, escapedTitle))
+		cmd.Run()
+	})
+
+	w.Bind("pphlxDesktopClose", func() {
+		w.Terminate()
+	})
+
+	// Run all custom developer-defined extensions
+	for _, reg := range extensionRegistrators {
+		reg(w)
+	}
+
+	w.Navigate(fmt.Sprintf("http://127.0.0.1:%%d", port))
+	w.Run()
+}
+`, config.OutDir, config.OutDir)
+		} else {
+			desktopSource = fmt.Sprintf(`package main
+
+import (
+	"embed"
+	"fmt"
+	"io/fs"
+	"net"
+	"net/http"
+	"os"
+	"os/exec"
+	"runtime"
+	"strings"
+	"github.com/webview/webview_go"
+)
+
+//go:embed %s/*
+var embedFS embed.FS
+
+type DesktopWindow interface {
+	Bind(name string, f interface{}) error
+}
+
+var extensionRegistrators []func(DesktopWindow)
+
+func RegisterExtension(reg func(DesktopWindow)) {
+	extensionRegistrators = append(extensionRegistrators, reg)
+}
+
+func main() {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		fmt.Printf("Error starting server: %%v\n", err)
+		os.Exit(1)
+	}
+	defer listener.Close()
+	port := listener.Addr().(*net.TCPAddr).Port
+
+	subFS, err := fs.Sub(embedFS, "%s")
+	if err != nil {
+		os.Exit(1)
+	}
+
+	go http.Serve(listener, http.FileServer(http.FS(subFS)))
+
+	w := webview.New(false)
+	defer w.Destroy()
+	w.SetTitle("PPHLX Desktop Application")
+	w.SetSize(1024, 768, webview.HintNone)
+
+	// Bind Core Standard Drivers
+	w.Bind("pphlxDesktopOpenFile", func() string {
+		var cmd *exec.Cmd
+		switch runtime.GOOS {
+		case "windows":
+			cmd = exec.Command("powershell", "-NoProfile", "-Command", "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.OpenFileDialog; if ($d.ShowDialog() -eq 'OK') { $d.FileName }")
+		case "darwin":
+			cmd = exec.Command("osascript", "-e", "POSIX path of (choose file)")
+		default:
+			cmd = exec.Command("zenity", "--file-selection")
+		}
+		out, err := cmd.Output()
+		if err != nil {
+			return ""
+		}
+		return strings.TrimSpace(string(out))
+	})
+
+	w.Bind("pphlxDesktopSaveFile", func() string {
+		var cmd *exec.Cmd
+		switch runtime.GOOS {
+		case "windows":
+			cmd = exec.Command("powershell", "-NoProfile", "-Command", "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.SaveFileDialog; if ($d.ShowDialog() -eq 'OK') { $d.FileName }")
+		case "darwin":
+			cmd = exec.Command("osascript", "-e", "POSIX path of (choose file name)")
+		default:
+			cmd = exec.Command("zenity", "--file-selection", "--save")
+		}
+		out, err := cmd.Output()
+		if err != nil {
+			return ""
+		}
+		return strings.TrimSpace(string(out))
+	})
+
+	w.Bind("pphlxDesktopShowNotification", func(title, message string) {
+		var cmd *exec.Cmd
+		switch runtime.GOOS {
+		case "windows":
+			escapedTitle := strings.ReplaceAll(title, "'", "''")
+			escapedMsg := strings.ReplaceAll(message, "'", "''")
+			cmd = exec.Command("powershell", "-NoProfile", "-Command", fmt.Sprintf("Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('%s', '%s')", escapedMsg, escapedTitle))
+		case "darwin":
+			cmd = exec.Command("osascript", "-e", fmt.Sprintf("display notification \"%s\" with title \"%s\"", message, title))
+		default:
+			cmd = exec.Command("notify-send", title, message)
+		}
+		cmd.Run()
+	})
+
+	w.Bind("pphlxDesktopClose", func() {
+		w.Terminate()
+	})
+
+	// Run all custom developer-defined extensions
+	for _, reg := range extensionRegistrators {
+		reg(w)
+	}
+
+	w.Navigate(fmt.Sprintf("http://127.0.0.1:%%d", port))
+	w.Run()
+}
+`, config.OutDir, config.OutDir)
+		}
+
+		// Check for custom bridge files in src/desktop/
+		var copiedBridges []string
+		desktopSrcDir := filepath.Join(projectDir, config.SrcDir, "desktop")
+		if _, err := os.Stat(desktopSrcDir); err == nil {
+			files, _ := ioutil.ReadDir(desktopSrcDir)
+			for _, file := range files {
+				if strings.HasSuffix(file.Name(), ".go") {
+					srcFilePath := filepath.Join(desktopSrcDir, file.Name())
+					dstFilePath := filepath.Join(projectDir, "temp_bridge_"+file.Name())
+					input, err := ioutil.ReadFile(srcFilePath)
+					if err == nil {
+						err = ioutil.WriteFile(dstFilePath, input, 0644)
+						if err == nil {
+							copiedBridges = append(copiedBridges, dstFilePath)
+						}
+					}
+				}
+			}
+		}
+
+		err = ioutil.WriteFile(desktopFile, []byte(desktopSource), 0644)
+		if err == nil {
+			buildFiles := []string{desktopFile}
+			buildFiles = append(buildFiles, copiedBridges...)
+			
+			args := []string{"build", "-o", binaryPath}
+			args = append(args, buildFiles...)
+			
+			cmd := exec.Command("go", args...)
+			cmd.Dir = projectDir
+			
+			if config.Output.Goos != "" || config.Output.Goarch != "" {
+				cmd.Env = os.Environ()
+				if config.Output.Goos != "" {
+					cmd.Env = append(cmd.Env, "GOOS="+config.Output.Goos)
+				}
+				if config.Output.Goarch != "" {
+					cmd.Env = append(cmd.Env, "GOARCH="+config.Output.Goarch)
+				}
+			}
+
+			output, cmdErr := cmd.CombinedOutput()
+			
+			// Clean up all temporary files
+			os.Remove(desktopFile)
+			for _, bridge := range copiedBridges {
+				os.Remove(bridge)
+			}
+			
+			if cmdErr != nil {
+				fmt.Printf("[Error] Failed to compile Desktop Native Application: %v\nOutput: %s\n", cmdErr, string(output))
+			} else {
+				fmt.Printf("✓ Desktop Native Application compiled successfully: %s (Target OS: %s, Arch: %s)\n", binaryPath, goos, config.Output.Goarch)
+			}
+		} else {
+			fmt.Printf("[Error] Failed to write desktop build file: %v\n", err)
+		}
+	}
+
+	if targetLower == "android" && activeMode == "build" {
+		fmt.Println("Scaffolding Android Mobile Project...")
+		androidDir := filepath.Join(outDir, "android")
+		os.MkdirAll(filepath.Join(androidDir, "app/src/main/java/org/pphlx/app"), 0755)
+		
+		// Write MainActivity.java
+		javaSource := `package org.pphlx.app;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+
+public class MainActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        WebView webView = new WebView(this);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        webView.setWebViewClient(new WebViewClient());
+        webView.loadUrl("file:///android_asset/index.html");
+        setContentView(webView);
+    }
+}`
+		ioutil.WriteFile(filepath.Join(androidDir, "app/src/main/java/org/pphlx/app/MainActivity.java"), []byte(javaSource), 0644)
+
+		// Write AndroidManifest.xml
+		manifestSource := `<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.pphlx.app">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application
+        android:allowBackup="true"
+        android:label="PPHLX Mobile App"
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>`
+		ioutil.WriteFile(filepath.Join(androidDir, "app/src/main/AndroidManifest.xml"), []byte(manifestSource), 0644)
+
+		// Write build.gradle files
+		gradleRootSource := `// Top-level build file
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.2'
+    }
+}
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}`
+		ioutil.WriteFile(filepath.Join(androidDir, "build.gradle"), []byte(gradleRootSource), 0644)
+
+		gradleAppSource := `plugins {
+    id 'com.android.application'
+}
+android {
+    namespace 'org.pphlx.app'
+    compileSdk 34
+    defaultConfig {
+        applicationId "org.pphlx.app"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+}`
+		ioutil.WriteFile(filepath.Join(androidDir, "app/build.gradle"), []byte(gradleAppSource), 0644)
+
+		// Copy web assets into Android assets
+		assetsDir := filepath.Join(androidDir, "app/src/main/assets")
+		os.MkdirAll(assetsDir, 0755)
+		
+		filepath.Walk(outDir, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if path == androidDir || strings.HasPrefix(path, androidDir+string(filepath.Separator)) {
+				return nil
+			}
+			rel, err := filepath.Rel(outDir, path)
+			if err == nil && rel != "." {
+				dst := filepath.Join(assetsDir, rel)
+				if info.IsDir() {
+					os.MkdirAll(dst, 0755)
+				} else {
+					copyFileIfNewer(path, dst)
+				}
+			}
+			return nil
+		})
+		fmt.Printf("✓ Android Mobile Project scaffolded successfully: %s\n", androidDir)
+	}
+
+	if targetLower == "ios" && activeMode == "build" {
+		fmt.Println("Scaffolding iOS Xcode Project...")
+		iosDir := filepath.Join(outDir, "ios")
+		os.MkdirAll(filepath.Join(iosDir, "PPHLXApp"), 0755)
+
+		// Write ViewController.swift
+		swiftSource := `import UIKit
+import WebKit
+
+class ViewController: UIViewController, WKUIDelegate {
+    var webView: WKWebView!
+    
+    override func loadView() {
+        let webConfiguration = WKWebViewConfiguration()
+        webView = WKWebView(frame: .zero, configuration: webConfiguration)
+        webView.uiDelegate = self
+        view = webView
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        if let indexURL = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "www") {
+            webView.loadFileURL(indexURL, allowingReadAccessTo: indexURL.deletingLastPathComponent())
+        }
+    }
+}`
+		ioutil.WriteFile(filepath.Join(iosDir, "PPHLXApp/ViewController.swift"), []byte(swiftSource), 0644)
+
+		// Write AppDelegate.swift
+		appDelegateSource := `import UIKit
+
+@main
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    var window: UIWindow?
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        window = UIWindow(frame: UIScreen.main.bounds)
+        let viewController = ViewController()
+        window?.rootViewController = viewController
+        window?.makeKeyAndVisible()
+        return true
+    }
+}`
+		ioutil.WriteFile(filepath.Join(iosDir, "PPHLXApp/AppDelegate.swift"), []byte(appDelegateSource), 0644)
+
+		// Copy web assets into iOS www folder
+		wwwDir := filepath.Join(iosDir, "PPHLXApp/www")
+		os.MkdirAll(wwwDir, 0755)
+
+		filepath.Walk(outDir, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if path == iosDir || strings.HasPrefix(path, iosDir+string(filepath.Separator)) {
+				return nil
+			}
+			rel, err := filepath.Rel(outDir, path)
+			if err == nil && rel != "." {
+				dst := filepath.Join(wwwDir, rel)
+				if info.IsDir() {
+					os.MkdirAll(dst, 0755)
+				} else {
+					copyFileIfNewer(path, dst)
+				}
+			}
+			return nil
+		})
+		fmt.Printf("✓ iOS Xcode Project scaffolded successfully: %s\n", iosDir)
 	}
 
 	fmt.Printf("[%s] Build complete successfully!\n", time.Now().Format("15:04:05"))

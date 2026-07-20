@@ -1,0 +1,8 @@
+{
+  "name": "pphlx-desktop-demo",
+  "version": "1.0.0",
+  "description": "PPHLX Native Desktop App Demo",
+  "scripts": {
+    "build": "pphlx build"
+  }
+}

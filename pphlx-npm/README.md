@@ -101,15 +101,15 @@ To configure a default target, add the `"output"` block:
   "srcDir": "src",
   "outDir": "dist",
   "output": {
-    "target": "standalone",
-    "goos": "linux",
-    "goarch": "amd64"
+    "target": "desktop",
+    "goos": "darwin",
+    "goarch": "arm64"
   }
 }
 ```
 
-*   `target`: `"php"` (default), `"standalone"` (single compiled Go binary), `"ssg"` (static HTML/JS/CSS), or `"blade"`/`"twig"` (framework-native template views).
-*   `goos` / `goarch`: (Optional) Target cross-compilation OS (e.g. `linux`, `darwin`, `windows`) and architecture (e.g. `amd64`, `arm64`) when compiling a standalone binary.
+*   `target`: `"php"` (default), `"standalone"` (headless Go server binary), `"desktop"` (native desktop GUI app), `"android"` (scaffolded Android Studio Gradle project), `"ios"` (scaffolded Swift Xcode project), `"ssg"` (static HTML/JS/CSS), or `"blade"`/`"twig"` (framework-native template views).
+*   `goos` / `goarch`: (Optional) Target cross-compilation OS (e.g. `linux`, `darwin`, `windows`) and architecture (e.g. `amd64`, `arm64`) when compiling standalone or desktop binaries.
 
 ### CLI Overrides
 
@@ -119,11 +119,23 @@ Pass the `--target` (or `-t`) flag to temporarily customize the output target du
 # Compile to a Standalone Go Binary
 npx pphlx build --target standalone
 
+# Compile to a Native Desktop App
+npx pphlx build --target desktop
+
+# Compile to an Android Gradle project
+npx pphlx build --target android
+
+# Compile to an iOS Xcode project
+npx pphlx build --target ios
+
 # Compile to Static HTML (SSG)
 npx pphlx build --target ssg
 
 # Compile to Laravel Blade templates
 npx pphlx build --target blade
+
+# Compile to Symfony Twig templates
+npx pphlx build --target twig
 ```
 
 ---
