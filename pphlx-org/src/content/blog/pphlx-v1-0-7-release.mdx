@@ -1,0 +1,36 @@
+---
+version: "1.0.7"
+title: "PPHLX v1.0.7: Native Desktop Targets and Mobile App Scaffolding"
+authors:
+  - pphlx-team
+description: |
+  We are excited to release PPHLX v1.0.7! This version introduces compilation support for native OS desktop windows and automated Android Studio / Xcode project scaffolding.
+publishDate: "July 20, 2026"
+permalink: "https://pphlx.org/blog/pphlx-v1-0-7-release"
+lang: "en"
+homepageLink:
+  title: "PPHLX v1.0.7"
+  subtitle: "Available now!"
+---
+
+We are proud to release **PPHLX v1.0.7**, adding native cross-platform targets to compile your layout and business logic directly into desktop binaries and mobile project workspaces.
+
+## What's New in v1.0.7
+
+### 💻 GPU-Accelerated WebView Native Windows (`desktop`)
+Build lightweight desktop applications utilizing Edge WebView2 on Windows (CGO-free, producing compact ~9.4MB binaries) and Safari/GTK WebKit on macOS/Linux.
+
+### 🔌 Standard Desktop Drivers & Extensions
+Interoperate with the host OS natively in JavaScript via the `pphlx.desktop` API. Automatically compile custom Go extensions located in `src/desktop/` and bind them to client-side scripts.
+
+### 📱 Android & iOS Scaffolding
+Scaffold full, ready-to-run Android Studio projects (`--target android`) and Swift Xcode workspaces (`--target ios`) preloaded with your compiled layout assets.
+
+---
+
+## Upgrade Today
+
+Update to the latest version using NPM:
+```bash
+npm install pphlx@latest
+```

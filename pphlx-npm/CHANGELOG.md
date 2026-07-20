@@ -5,6 +5,14 @@ All notable changes to the PPHLX Node.js compiler CLI will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2026-07-20
+
+### Added
+- **Parallel Multi-Environment Compiling**: Support defining an `"environments"` map inside `pphlx.config.json` to compile multiple targets (e.g. web, desktop, and mobile) concurrently.
+- **CLI Profile Flags**: Expose `--env` (or `-e`) to build a specific profile, and `--all` to compile all profiles concurrently using native Go Goroutines.
+
+---
+
 ## [1.0.7] - 2026-07-20
 
 ### Added

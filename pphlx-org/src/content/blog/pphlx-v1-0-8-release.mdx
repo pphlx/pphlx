@@ -1,0 +1,62 @@
+---
+version: "1.0.8"
+title: "PPHLX v1.0.8: Parallel Multi-Environment Compiling and CLI Profile Flags"
+authors:
+  - pphlx-team
+description: |
+  We are proud to release PPHLX v1.0.8! This version introduces Go Goroutine-powered parallel multi-environment builds and command line profile selection flags.
+publishDate: "July 20, 2026"
+permalink: "https://pphlx.org/blog/pphlx-v1-0-8-release"
+lang: "en"
+homepageLink:
+  title: "PPHLX v1.0.8"
+  subtitle: "Available now!"
+---
+
+We are thrilled to present **PPHLX v1.0.8**, introducing native multi-profile configurations and parallel compilation pipelines powered by Go Goroutines.
+
+## What's New in v1.0.8
+
+### ⚡ Parallel Multi-Environment Compiling (`--all`)
+You can now define a root-level `"environments"` map inside `pphlx.config.json` to manage profiles for your web server, native desktop application, and mobile workspaces in one unified file:
+
+```json
+{
+  "srcDir": "src",
+  "outDir": "dist",
+  "environments": {
+    "web": {
+      "outDir": "dist/web",
+      "output": { "target": "php" }
+    },
+    "desktop-win": {
+      "outDir": "dist/desktop-windows",
+      "output": {
+        "target": "desktop",
+        "goos": "windows",
+        "goarch": "amd64"
+      }
+    }
+  }
+}
+```
+
+Run all targets concurrently on multiple CPU cores:
+```bash
+pphlx build --all
+```
+
+### 🔌 Named Profile Selection (`--env`)
+Build only a specific environment from your profiles map:
+```bash
+pphlx build --env desktop-win
+```
+
+---
+
+## Upgrade Today
+
+Get the latest compiler version using NPM:
+```bash
+npm install pphlx@latest
+```

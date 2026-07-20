@@ -48,6 +48,7 @@ export const collections = {
 	blog: defineCollection({
 		loader: glob({ base: './src/content/blog', pattern: '*.mdx' }),
 		schema: z.object({
+			version: z.string().optional().describe('The software version associated with this release blog (e.g. 1.0.8).'),
 			title: z.string().describe('The blog post title.'),
 			description: z
 				.string()

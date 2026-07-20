@@ -4,9 +4,30 @@ import PillLink from './PillLink.astro';
 
 /** Blog posts with a banner configured in their frontmatter. */
 const blogPostsWithBanner = await getCollection('blog', (entry) => !!entry.data.homepageLink);
+
+const compareVersions = (v1: string, v2: string) => {
+	const parts1 = v1.split('.').map(Number);
+	const parts2 = v2.split('.').map(Number);
+	for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+		const p1 = parts1[i] || 0;
+		const p2 = parts2[i] || 0;
+		if (p1 !== p2) return p1 - p2;
+	}
+	return 0;
+};
+
 /** The most recent blog post. */
 const latestBlogPost = blogPostsWithBanner
-	.sort((a, b) => (a.data.publishDate > b.data.publishDate ? 1 : -1))
+	.sort((a, b) => {
+		const dateA = new Date(a.data.publishDate).getTime();
+		const dateB = new Date(b.data.publishDate).getTime();
+		if (dateA !== dateB) {
+			return dateA > dateB ? 1 : -1;
+		}
+		const verA = a.data.version || '0.0.0';
+		const verB = b.data.version || '0.0.0';
+		return compareVersions(verA, verB);
+	})
 	.pop();
 ---
 

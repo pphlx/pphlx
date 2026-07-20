@@ -28,16 +28,24 @@ type OutputConfig struct {
 	Goarch string `json:"goarch"`
 }
 
+type ConfigProfile struct {
+	OutDir string       `json:"outDir"`
+	CssOut string       `json:"cssOut"`
+	JsOut  string       `json:"jsOut"`
+	Output OutputConfig `json:"output"`
+}
+
 // Config holds project configuration
 type Config struct {
-	SrcDir  string       `json:"srcDir"`
-	OutDir  string       `json:"outDir"`
-	CssOut  string       `json:"cssOut"`
-	JsOut   string       `json:"jsOut"`
-	Site    string       `json:"site"`
-	Sitemap bool         `json:"sitemap"`
-	Default string       `json:"default"`
-	Output  OutputConfig `json:"output"`
+	SrcDir       string                   `json:"srcDir"`
+	OutDir       string                   `json:"outDir"`
+	CssOut       string                   `json:"cssOut"`
+	JsOut        string                   `json:"jsOut"`
+	Site         string                   `json:"site"`
+	Sitemap      bool                     `json:"sitemap"`
+	Default      string                   `json:"default"`
+	Output       OutputConfig             `json:"output"`
+	Environments map[string]ConfigProfile `json:"environments"`
 }
 
 // Component represents a parsed .pphx or JS/React component

@@ -1,0 +1,35 @@
+---
+version: "1.0.2"
+title: "PPHLX v1.0.2: Watch-Mode Throttling and AST Parsing Optimizations"
+authors:
+  - pphlx-team
+description: |
+  We are happy to release PPHLX v1.0.2! This version introduces hot-reloading watchers throttling, AST compilation performance enhancements, and specific framework build fixes.
+publishDate: "July 14, 2026"
+permalink: "https://pphlx.org/blog/pphlx-v1-0-2-release"
+lang: "en"
+homepageLink:
+  title: "PPHLX v1.0.2"
+  subtitle: "Available now!"
+---
+
+We are excited to share **PPHLX v1.0.2**, optimizing local template watchers, resolving compilation locks, and refining AST parsers.
+
+## What's New in v1.0.2
+
+### 🏎️ AST Parsing Optimizations
+*   **Reduced Compiler Latency**: Optimized Go compiler routines to parse nested components faster, reducing AST generation overhead.
+*   **Throttled Rebuilds**: The dev server watch engine now buffers rapid successive updates to prevent file-locking conflicts.
+
+### 🐛 Bug Fixes
+*   **Framework Bundling**: Fixed Svelte, SolidJS, and TresJS components compiling under isolated Windows path scopes.
+*   **Asset Mapping**: Resolved production packaging bugs where some asset mappings were missing from the production directory.
+
+---
+
+## Upgrade Today
+
+Update using NPM:
+```bash
+npm install pphlx@latest
+```

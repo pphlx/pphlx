@@ -1,0 +1,39 @@
+---
+version: "1.0.5"
+title: "PPHLX v1.0.5: Zero-Config Installers and Live Preview Servers"
+authors:
+  - pphlx-team
+description: |
+  We are happy to release PPHLX v1.0.5! This version adds automatic npm script registrations, a native PHP preview server, and template check subcommands.
+publishDate: "July 17, 2026"
+permalink: "https://pphlx.org/blog/pphlx-v1-0-5-release"
+lang: "en"
+homepageLink:
+  title: "PPHLX v1.0.5"
+  subtitle: "Available now!"
+---
+
+We are introducing **PPHLX v1.0.5**, focusing on developer onboarding speed, automated script setups, and local preview environments.
+
+## What's New in v1.0.5
+
+### 🚀 Zero-Config Post-Install Scripts
+NPM installations now automatically register standard scripts (`dev`, `start`, `watch`, `build`, `preview`, `check`) inside your project's `package.json` so you can start writing code immediately.
+
+### 🐘 Native Live Preview Mode (`preview`)
+Preview compiled production builds locally with a built-in lightweight PHP routing wrapper:
+```bash
+pphlx preview
+```
+
+### 🔍 Diagnostic Check Core (`check`)
+Validate component declarations and logic tag syntaxes directly in the compiler terminal.
+
+---
+
+## Upgrade Today
+
+Get the updates using NPM:
+```bash
+npm install pphlx@latest
+```

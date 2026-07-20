@@ -1,0 +1,42 @@
+---
+version: "1.0.1"
+title: "PPHLX v1.0.1: Hot Reloading Dev Server and Project Bootstrap Tools"
+authors:
+  - pphlx-team
+description: |
+  We are happy to release PPHLX v1.0.1! This version adds local watch-mode compile servers, project bootstrapping commands, and dynamic framework island detectors.
+publishDate: "April 10, 2026"
+permalink: "https://pphlx.org/blog/pphlx-v1-0-1-release"
+lang: "en"
+homepageLink:
+  title: "PPHLX v1.0.1"
+  subtitle: "Available now!"
+---
+
+We are introducing **PPHLX v1.0.1**, adding interactive development workflows and automation commands.
+
+## What's New in v1.0.1
+
+### 🚀 Hot Reloading Watcher (`dev`)
+Run local watch servers compiling templates dynamically in the background on every file change:
+```bash
+pphlx dev
+```
+
+### 📦 Boostrapping Commands (`init`)
+Easily scaffold new PPHLX workspaces:
+```bash
+pphlx init
+```
+
+### 🧩 Automatic Island Extraction
+Automatically detect React/Vue/Svelte components inside layouts and bundle them dynamically using Vite.
+
+---
+
+## Upgrade Today
+
+Update using NPM:
+```bash
+npm install pphlx@latest
+```
