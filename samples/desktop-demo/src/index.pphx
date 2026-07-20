@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPHLX Desktop Application Demo</title>
+    {{PPHLX_CSS}}
+</head>
+<body style="background-color: #0f172a; color: #f8fafc; font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;">
+    
+    <div style="background-color: #1e293b; padding: 40px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); text-align: center; max-width: 500px; width: 100%;">
+        <h1 style="margin-top: 0; color: #38bdf8; font-size: 2rem;">PPHLX App Engine</h1>
+        <p style="color: #94a3b8; margin-bottom: 30px;">Testing native OS bridge drivers and custom Go modules.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button onclick="openFile()" style="background-color: #0284c7; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                📁 Open File Dialog
+            </button>
+            
+            <button onclick="saveFile()" style="background-color: #059669; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                💾 Save File Dialog
+            </button>
+            
+            <button onclick="triggerNotification()" style="background-color: #7c3aed; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                🔔 Show System Notification
+            </button>
+            
+            <button onclick="getSystem()" style="background-color: #ea580c; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                ⚙️ Call Custom Go Bridge
+            </button>
+            
+            <button onclick="closeApp()" style="background-color: #dc2626; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 12px;">
+                🛑 Close Application
+            </button>
+        </div>
+        
+        <div id="output" style="margin-top: 30px; padding: 12px; background-color: #0f172a; border-radius: 8px; font-family: monospace; font-size: 0.9rem; color: #10b981; min-height: 24px; word-break: break-all;">
+            Click a button to test...
+        </div>
+    </div>
+
+    {{PPHLX_JS}}
+    <script>
+        function log(message) {
+            document.getElementById('output').textContent = message;
+        }
+
+        async function openFile() {
+            log("Opening file selector...");
+            const path = await pphlx.desktop.openFileDialog();
+            if (path) {
+                log("Selected file: " + path);
+            } else {
+                log("Dialog cancelled.");
+            }
+        }
+
+        async function saveFile() {
+            log("Opening save dialogue...");
+            const path = await pphlx.desktop.saveFileDialog();
+            if (path) {
+                log("Will save to: " + path);
+            } else {
+                log("Dialog cancelled.");
+            }
+        }
+
+        function triggerNotification() {
+            log("Triggering notification...");
+            pphlx.desktop.showNotification("PPHLX Desktop Alert", "This is a native OS notification triggered from JavaScript!");
+            log("Notification triggered.");
+        }
+
+        async function getSystem() {
+            log("Calling custom Go bridge...");
+            if (window.CustomBridge && window.CustomBridge.GetSystemInfo) {
+                const info = await window.CustomBridge.GetSystemInfo();
+                log("System Info: " + info);
+            } else {
+                log("Custom bridge extension not loaded.");
+            }
+        }
+
+        function closeApp() {
+            log("Closing app...");
+            pphlx.desktop.window.close();
+        }
+    </script>
+</body>
+</html>

@@ -5,6 +5,17 @@ All notable changes to the PPHLX Node.js compiler CLI will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2026-07-20
+
+### Added
+- **Desktop Compilation Target**: Package your web codebases into native Windows, macOS, and Linux desktop apps utilizing a GPU-accelerated system WebView.
+- **CGO-Free Windows Builds**: Zero-CGO pure-Go compilation on Windows via the `go-webview2` engine (producing ~9.4MB native binaries).
+- **Core Native Drivers**: Bound cross-platform JS and PHP APIs for native OS interactions (`openFileDialog`, `saveFileDialog`, `showNotification`, `window.close`).
+- **Custom Go Bridge Extension**: Automatically compiles developer-defined Go files inside `src/desktop/` and binds them to the Javascript namespace.
+- **Mobile Target Scaffolding**: Natively generate Gradle Android Studio projects (`android`) and Swift Xcode projects (`ios`) preloaded with compiled static assets.
+
+---
+
 ## [1.0.6] - 2026-07-18
 
 ### Added
