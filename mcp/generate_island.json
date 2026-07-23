@@ -1,0 +1,27 @@
+{
+  "name": "pphlx/generate_island",
+  "description": "Generate a component template file and append the @import statement inside a .pphx template.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "framework": {
+        "type": "string",
+        "description": "The UI framework layout style",
+        "enum": ["react", "vue", "svelte", "solid", "preact"]
+      },
+      "componentName": {
+        "type": "string",
+        "description": "PascalCase component name (e.g. ShoppingCart)"
+      },
+      "targetPagePath": {
+        "type": "string",
+        "description": "Absolute path to the target .pphx file"
+      }
+    },
+    "required": [
+      "framework",
+      "componentName",
+      "targetPagePath"
+    ]
+  }
+}

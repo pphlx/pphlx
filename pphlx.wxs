@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <!-- Unique Product ID and Upgrade Code GUIDs -->
+    <Product Id="*" 
+             Name="PPHLX CLI" 
+             Language="1033" 
+             Version="1.0.0" 
+             Manufacturer="Jackie Crafts Private Limited" 
+             UpgradeCode="5F9D7C4A-2B1D-4A73-8C6A-3F9C4A28B101">
+             
+        <Package InstallerVersion="200" 
+                 Compressed="yes" 
+                 InstallScope="perMachine" 
+                 Description="PPHLX native CLI compiler installer"
+                 Comments="Official PPHLX Toolchain Installer" />
+
+        <MajorUpgrade DowngradeErrorMessage="A newer version of PPHLX is already installed." />
+        
+        <!-- Embed CAB file in the MSI -->
+        <MediaTemplate EmbedCab="yes" />
+
+        <!-- Directory Structure -->
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFilesFolder">
+                <Directory Id="INSTALLDIR" Name="PPHLX">
+                    
+                    <!-- Binary File Component -->
+                    <Component Id="PphlxBinary" Guid="3D7B5C9F-4A2D-4E83-9E1A-2C3D8F9A1052">
+                        <File Id="PphlxExecutable" Source="pphlx.exe" KeyPath="yes" />
+                    </Component>
+
+                    <!-- Path Environment Variable Component -->
+                    <Component Id="PphlxPathEnv" Guid="D2A3B4C5-E6F7-48A9-9B0C-1D2E3F4A5B6C">
+                        <!-- Create the registry key so we have a keyPath for the path modification -->
+                        <RegistryValue Root="HKLM" Key="Software\PPHLX" Name="InstallPath" Type="string" Value="[INSTALLDIR]" KeyPath="yes" />
+                        <!-- Append installation directory to System PATH -->
+                        <Environment Id="PATH" Name="PATH" Value="[INSTALLDIR]" Permanent="no" Part="last" Action="set" System="yes" />
+                    </Component>
+
+                </Directory>
+            </Directory>
+        </Directory>
+
+        <!-- Features -->
+        <Feature Id="Complete" Title="PPHLX CLI" Level="1">
+            <ComponentRef Id="PphlxBinary" />
+            <ComponentRef Id="PphlxPathEnv" />
+        </Feature>
+
+    </Product>
+</Wix>

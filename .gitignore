@@ -1,0 +1,49 @@
+# Compiled binaries
+pphlx
+pphlx.exe
+pphlx-dbg
+pphlx-dbg.exe
+pphlx-core/bin/
+
+# Test project build folder
+*/dist/*
+# Operating System Files
+Thumbs.db
+db.db
+.DS_Store
+
+# IDE configurations
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+PWA_Plus
+
+# Node/npm Dependency & Log files
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# PPHLX Compiler Temporary Files
+src/.pphlx_entry.js
+pphlx.vite.config.mjs
+
+# WiX Installer Artifacts and Binaries
+.wix-bin/
+*.msi
+*.wixobj
+*.wixpdb
+*.vsix
+
+# Compiled release tarballs
+releases/*.tar.gz
+
+# Playwright test results and reports
+pphlx-org/playwright-report/
+pphlx-org/test-results/
