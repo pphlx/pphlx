@@ -1,0 +1,17 @@
+{
+  "name": "pphlx/get_best_practices",
+  "description": "Get best practice guidelines for PPHLX development topics.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "topic": {
+        "type": "string",
+        "description": "Target guideline topic",
+        "enum": ["state-sharing", "styling", "routing", "php-variables"]
+      }
+    },
+    "required": [
+      "topic"
+    ]
+  }
+}
