@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.1] - 2026-07-24
+
+### Added
+*   **Sub-Millisecond & Pipeline Build Timing**: Added precision build timing output (`✓ Built in 0.8ms`), Standalone Go binary compilation timing (`in 1.18s`), and total pipeline elapsed duration (`in 3.5s`).
+
+### Fixed
+*   **Cross-Platform Shell Execution for Vite Delegation**: Replaced hardcoded `cmd /c` with platform check (`runtime.GOOS == "windows"` vs `sh -c`), fixing Vite component bundling failures on Linux, macOS, and WSL environments (`exec: "cmd": executable file not found in $PATH`).
+*   **Standalone Go Binary Cross-Platform Build Flags**: Ensured `GOOS` and `GOARCH` environment variable injection works smoothly across non-Windows operating systems during native compilation passes.
+
+---
+
 ## [1.1.0] - 2026-07-23
 
 ### Added

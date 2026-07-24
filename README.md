@@ -1,8 +1,16 @@
 # PPHLX Compiler Core
 
-PPHLX (`pphlx.org`) is a Fast, Zero-Dependency Multi-Framework PHP Template Compiler. Build highly interactive monolithic applications using React, Vue, and Svelte side-by-side on your native PHP backend with zero Node.js runtime overhead.
+<br/>
+<p align="center">
+  <img src=".github/assets/banner.webp" alt="Bring Your Own UI Framework">
+  <br/><br/>
+  <a href="https://pphlx.org">PPHLX</a> is the high-performance monolithic compiler for modern PHP web applications.
+  <br/>
+  Build component-driven PHP apps with React, Vue, Svelte, or pure PHP templates — with zero Node.js runtime in production.
+  <br/><br/>
+</p>
 
-It gives developers the speed, layout nesting, and component reusability of modern frontend frameworks (like React or Astro) while deploying native, zero-runtime overhead PHP pages compatible with any environment (including WHMCS, WordPress, or standard shared hosting).
+PPHLX gives developers the speed, layout nesting, and component reusability of modern frontend web frameworks while outputting native, zero-runtime PHP pages compatible with any hosting environment (including WHMCS, WordPress, Laravel, or standard shared hosting).
 
 ---
 

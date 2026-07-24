@@ -298,6 +298,7 @@ func projectFileExists(filePath string) bool {
 
 // compileAll executes the main compilation loop for all templates
 func compileAll(config Config, projectDir string) {
+	startTime := time.Now()
 	activeConfig = config
 	targetLower := strings.ToLower(config.Output.Target)
 	fmt.Printf("[%s] Rebuilding templates...\n", time.Now().Format("15:04:05"))
@@ -739,6 +740,13 @@ self.addEventListener('fetch', (event) => {
 		fmt.Println("Generated sitemap.xml natively.")
 	}
 
+	elapsedMs := float64(time.Since(startTime).Microseconds()) / 1000.0
+	if elapsedMs >= 10.0 {
+		fmt.Printf("✓ Built in %.0fms\n", elapsedMs)
+	} else {
+		fmt.Printf("✓ Built in %.1fms\n", elapsedMs)
+	}
+
 	if targetLower == "standalone" && activeMode == "build" {
 		fmt.Println("Compiling Standalone Go Binary...")
 		standaloneFile := filepath.Join(projectDir, "standalone_main.go")
@@ -823,6 +831,7 @@ func main() {
 
 		err = ioutil.WriteFile(standaloneFile, []byte(standaloneSource), 0644)
 		if err == nil {
+			goStart := time.Now()
 			cmd := exec.Command("go", "build", "-o", binaryPath, standaloneFile)
 			cmd.Dir = projectDir
 			
@@ -839,10 +848,11 @@ func main() {
 
 			output, cmdErr := cmd.CombinedOutput()
 			os.Remove(standaloneFile)
+			goElapsed := time.Since(goStart).Round(time.Millisecond)
 			if cmdErr != nil {
 				fmt.Printf("[Error] Failed to compile Standalone Go Binary: %v\nOutput: %s\n", cmdErr, string(output))
 			} else {
-				fmt.Printf("✓ Standalone Go Binary compiled successfully: %s (Target OS: %s, Arch: %s)\n", binaryPath, goos, config.Output.Goarch)
+				fmt.Printf("✓ Standalone Go Binary compiled successfully in %v: %s (Target OS: %s, Arch: %s)\n", goElapsed, binaryPath, goos, config.Output.Goarch)
 			}
 		} else {
 			fmt.Printf("[Error] Failed to write standalone build file: %v\n", err)
@@ -1313,7 +1323,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 		fmt.Printf("✓ iOS Xcode Project scaffolded successfully: %s\n", iosDir)
 	}
 
-	fmt.Printf("[%s] Build complete successfully!\n", time.Now().Format("15:04:05"))
+	totalElapsed := time.Since(startTime).Round(time.Millisecond)
+	fmt.Printf("[%s] Build complete successfully in %v!\n", time.Now().Format("15:04:05"), totalElapsed)
 }
 
 // copyFileIfNewer copies a file if the destination is missing or older than source
@@ -2112,8 +2123,12 @@ export default defineConfig({
 
 	fmt.Println("Running local Vite compilation for Vue/Svelte components...")
 	
-	// Use powershell shell exec to spawn npx command on Windows safely
-	cmd := exec.Command("cmd", "/c", "npx vite build --config pphlx.vite.config.mjs")
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", "npx vite build --config pphlx.vite.config.mjs")
+	} else {
+		cmd = exec.Command("sh", "-c", "npx vite build --config pphlx.vite.config.mjs")
+	}
 	cmd.Dir = projectDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
