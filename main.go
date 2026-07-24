@@ -610,6 +610,24 @@ window.pphlx.desktop = {
 		return
 	}
 
+	// Copy static assets from public/ directory if present
+	publicDir := filepath.Join(projectDir, "public")
+	if pubInfo, pubErr := os.Stat(publicDir); pubErr == nil && pubInfo.IsDir() {
+		_ = filepath.Walk(publicDir, func(p string, info os.FileInfo, err error) error {
+			if err != nil || info.IsDir() {
+				return err
+			}
+			rel, relErr := filepath.Rel(publicDir, p)
+			if relErr != nil {
+				return nil
+			}
+			dst := filepath.Join(outDir, rel)
+			_ = os.MkdirAll(filepath.Dir(dst), 0755)
+			_ = copyFileIfNewer(p, dst)
+			return nil
+		})
+	}
+
 	// Write global CSS & JS (always write CSS to prevent 404)
 	os.MkdirAll(filepath.Dir(cssOut), 0755)
 	ioutil.WriteFile(cssOut, []byte(globalCSS.String()), 0644)
@@ -1468,8 +1486,43 @@ func startDevServerAndWatcher(config Config, projectDir string, mode string) {
 			// Fallback to Go built-in HTTP server if PHP is not available
 			currentPort := port
 			go func() {
-				fs := http.FileServer(http.Dir(outDir))
-				_ = http.ListenAndServe(fmt.Sprintf("%s:%d", hostAddr, currentPort), fs)
+				handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					reqPath := r.URL.Path
+					if reqPath == "/" || strings.HasSuffix(reqPath, "/") {
+						reqPath += "index.php"
+					}
+
+					fullPath := filepath.Join(outDir, filepath.FromSlash(reqPath))
+					info, err := os.Stat(fullPath)
+					if err != nil && !strings.HasSuffix(reqPath, ".php") && !strings.HasSuffix(reqPath, ".html") {
+						fullPath = filepath.Join(outDir, "index.php")
+						info, err = os.Stat(fullPath)
+					}
+
+					if err == nil && !info.IsDir() {
+						ext := strings.ToLower(filepath.Ext(fullPath))
+						switch ext {
+						case ".php", ".html":
+							w.Header().Set("Content-Type", "text/html; charset=utf-8")
+						case ".css":
+							w.Header().Set("Content-Type", "text/css; charset=utf-8")
+						case ".js":
+							w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+						case ".svg":
+							w.Header().Set("Content-Type", "image/svg+xml")
+						case ".ico":
+							w.Header().Set("Content-Type", "image/x-icon")
+						case ".json":
+							w.Header().Set("Content-Type", "application/json")
+						}
+						http.ServeFile(w, r, fullPath)
+						return
+					}
+
+					fs := http.FileServer(http.Dir(outDir))
+					fs.ServeHTTP(w, r)
+				})
+				_ = http.ListenAndServe(fmt.Sprintf("%s:%d", hostAddr, currentPort), handler)
 			}()
 		}
 
