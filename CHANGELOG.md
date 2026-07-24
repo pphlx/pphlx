@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.3] - 2026-07-24
+
+### Added
+*   **Smart Dev Server HTTP Routing & MIME Polyfill**: Updated `pphlx dev` server handler to route `/` and `/index.php` to serve `text/html; charset=utf-8` directly in browsers (preventing directory listings and file downloads on systems without PHP CLI).
+*   **Static Assets Copying**: Automatically walk `public/` directory and copy `public/favicon.svg` and `public/favicon.ico` directly into `outDir` (`dist/`).
+
+---
+
+## [1.1.2] - 2026-07-24
+
+### Added
+- **Embedded Binary Scaffolder Engine**: Packed starter template (`src/index.pphx`, `src/layouts/Layout.pphx`, `src/assets/pphlx.svg`, `public/favicon.svg`, `public/favicon.ico`) directly inside native binaries (`pphlx-win.exe`, `pphlx-linux`, `pphlx-macos`) and `pphlx.wasm`. Zero network latency and 100% offline project initialization.
+- **Dual Favicon & README Scaffolding**: `pphlx init` automatically writes `public/favicon.ico` (base64 binary), `public/favicon.svg`, and project `README.md` with complete directory tree diagrams.
+
+---
+
 ## [1.1.1] - 2026-07-24
 
 ### Added

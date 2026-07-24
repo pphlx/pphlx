@@ -24,6 +24,10 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+// Version defines the single source of truth compiler version across all CLI outputs, templates, and manifests.
+const Version = "1.1.3"
+
+
 // OutputConfig holds compilation output options
 type OutputConfig struct {
 	Target string `json:"target"`
@@ -321,9 +325,11 @@ func compileAll(config Config, projectDir string) {
 		return
 	}
 
-	// Wipe outDir completely before rebuilding (like Astro & Next.js)
-	if projectFileExists(outDir) {
-		_ = os.RemoveAll(outDir)
+	// Wipe outDir completely before rebuilding (like Astro & Next.js) in build mode only
+	if activeMode != "dev" && activeMode != "watch" {
+		if projectFileExists(outDir) {
+			_ = os.RemoveAll(outDir)
+		}
 	}
 	_ = os.MkdirAll(outDir, 0755)
 
@@ -497,29 +503,33 @@ window.pphlx.desktop = {
 				}
 			}
 
-			// Inject css and js links (calculating correct relative paths)
-			cssRelPath := getRelativePath(phpOutPath, cssOut)
-			jsRelPath := getRelativePath(phpOutPath, jsOut)
-			
-			cssTag := fmt.Sprintf(`<link rel="stylesheet" href="%s">`, cssRelPath)
-			jsTag := fmt.Sprintf(`<script src="%s"></script>`, jsRelPath)
-
-			hasCssPlaceholder := strings.Contains(compiledPage, "{{PPHLX_CSS}}")
-			hasJsPlaceholder := strings.Contains(compiledPage, "{{PPHLX_JS}}")
-
-			if hasCssPlaceholder {
+			// Inject css and js links if outputs are configured
+			if cssOut != "" {
+				cssRelPath := getRelativePath(phpOutPath, cssOut)
+				cssTag := fmt.Sprintf(`<link rel="stylesheet" href="%s">`, cssRelPath)
 				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", cssTag)
-			}
-			if hasJsPlaceholder {
-				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", jsTag)
+			} else {
+				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", "")
 			}
 
-			// Fallback: Inject before </head> if no explicit placeholders were used
+			if jsOut != "" {
+				jsRelPath := getRelativePath(phpOutPath, jsOut)
+				jsTag := fmt.Sprintf(`<script src="%s"></script>`, jsRelPath)
+				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", jsTag)
+			} else {
+				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", "")
+			}
+
+			// Fallback: Inject before </head> if cssOut or jsOut are configured and no placeholders were used
 			if strings.Contains(compiledPage, "</head>") {
-				if !hasCssPlaceholder {
+				if cssOut != "" && !strings.Contains(compiledPage, cssOut) {
+					cssRelPath := getRelativePath(phpOutPath, cssOut)
+					cssTag := fmt.Sprintf(`<link rel="stylesheet" href="%s">`, cssRelPath)
 					compiledPage = strings.ReplaceAll(compiledPage, "</head>", cssTag+"\n</head>")
 				}
-				if !hasJsPlaceholder {
+				if jsOut != "" && !strings.Contains(compiledPage, jsOut) {
+					jsRelPath := getRelativePath(phpOutPath, jsOut)
+					jsTag := fmt.Sprintf(`<script src="%s"></script>`, jsRelPath)
 					compiledPage = strings.ReplaceAll(compiledPage, "</head>", jsTag+"\n</head>")
 				}
 			}
@@ -608,6 +618,24 @@ window.pphlx.desktop = {
 	if err != nil {
 		fmt.Printf("Build Error: %v\n", err)
 		return
+	}
+
+	// Copy static assets from public/ directory if present
+	publicDir := filepath.Join(projectDir, "public")
+	if pubInfo, pubErr := os.Stat(publicDir); pubErr == nil && pubInfo.IsDir() {
+		_ = filepath.Walk(publicDir, func(p string, info os.FileInfo, err error) error {
+			if err != nil || info.IsDir() {
+				return err
+			}
+			rel, relErr := filepath.Rel(publicDir, p)
+			if relErr != nil {
+				return nil
+			}
+			dst := filepath.Join(outDir, rel)
+			_ = os.MkdirAll(filepath.Dir(dst), 0755)
+			_ = copyFileIfNewer(p, dst)
+			return nil
+		})
 	}
 
 	// Write global CSS & JS (always write CSS to prevent 404)
@@ -953,7 +981,7 @@ func main() {
 	w.Bind("pphlxDesktopShowNotification", func(title, message string) {
 		escapedTitle := strings.ReplaceAll(title, "'", "''")
 		escapedMsg := strings.ReplaceAll(message, "'", "''")
-		cmd := exec.Command("powershell", "-NoProfile", "-Command", fmt.Sprintf("Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('%s', '%s')", escapedMsg, escapedTitle))
+		cmd := exec.Command("powershell", "-NoProfile", "-Command", "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('" + escapedMsg + "', '" + escapedTitle + "')")
 		cmd.Run()
 	})
 
@@ -1061,9 +1089,9 @@ func main() {
 		case "windows":
 			escapedTitle := strings.ReplaceAll(title, "'", "''")
 			escapedMsg := strings.ReplaceAll(message, "'", "''")
-			cmd = exec.Command("powershell", "-NoProfile", "-Command", fmt.Sprintf("Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('%s', '%s')", escapedMsg, escapedTitle))
+			cmd = exec.Command("powershell", "-NoProfile", "-Command", "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('" + escapedMsg + "', '" + escapedTitle + "')")
 		case "darwin":
-			cmd = exec.Command("osascript", "-e", fmt.Sprintf("display notification \"%s\" with title \"%s\"", message, title))
+			cmd = exec.Command("osascript", "-e", fmt.Sprintf("display notification \"%%s\" with title \"%%s\"", message, title))
 		default:
 			cmd = exec.Command("notify-send", title, message)
 		}
@@ -1423,9 +1451,14 @@ func startDevServerAndWatcher(config Config, projectDir string, mode string) {
 	}
 
 	port := findFreePort(6321)
-	outDir := filepath.Join(projectDir, config.OutDir)
-	if config.OutDir == "" {
-		outDir = filepath.Join(projectDir, "dist")
+	outDir := projectDir
+	if mode == "preview" {
+		outDir = filepath.Join(projectDir, config.OutDir)
+		if config.OutDir == "" {
+			outDir = filepath.Join(projectDir, "dist")
+		}
+	} else if config.SrcDir != "" && config.SrcDir != "." {
+		outDir = filepath.Join(projectDir, config.SrcDir)
 	}
 
 	hostAddr := "127.0.0.1"
@@ -1468,8 +1501,43 @@ func startDevServerAndWatcher(config Config, projectDir string, mode string) {
 			// Fallback to Go built-in HTTP server if PHP is not available
 			currentPort := port
 			go func() {
-				fs := http.FileServer(http.Dir(outDir))
-				_ = http.ListenAndServe(fmt.Sprintf("%s:%d", hostAddr, currentPort), fs)
+				handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					reqPath := r.URL.Path
+					if reqPath == "/" || strings.HasSuffix(reqPath, "/") {
+						reqPath += "index.php"
+					}
+
+					fullPath := filepath.Join(outDir, filepath.FromSlash(reqPath))
+					info, err := os.Stat(fullPath)
+					if err != nil && !strings.HasSuffix(reqPath, ".php") && !strings.HasSuffix(reqPath, ".html") {
+						fullPath = filepath.Join(outDir, "index.php")
+						info, err = os.Stat(fullPath)
+					}
+
+					if err == nil && !info.IsDir() {
+						ext := strings.ToLower(filepath.Ext(fullPath))
+						switch ext {
+						case ".php", ".html":
+							w.Header().Set("Content-Type", "text/html; charset=utf-8")
+						case ".css":
+							w.Header().Set("Content-Type", "text/css; charset=utf-8")
+						case ".js":
+							w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+						case ".svg":
+							w.Header().Set("Content-Type", "image/svg+xml")
+						case ".ico":
+							w.Header().Set("Content-Type", "image/x-icon")
+						case ".json":
+							w.Header().Set("Content-Type", "application/json")
+						}
+						http.ServeFile(w, r, fullPath)
+						return
+					}
+
+					fs := http.FileServer(http.Dir(outDir))
+					fs.ServeHTTP(w, r)
+				})
+				_ = http.ListenAndServe(fmt.Sprintf("%s:%d", hostAddr, currentPort), handler)
 			}()
 		}
 
@@ -1478,7 +1546,7 @@ func startDevServerAndWatcher(config Config, projectDir string, mode string) {
 		}
 	}
 
-	version := "1.1.0"
+	version := Version
 	if mode == "preview" {
 		fmt.Printf("\n  \x1b[30m\x1b[42m pphlx \x1b[0m \x1b[32mv%s preview mode ready\x1b[0m\n\n", version)
 		fmt.Printf("  \x1b[90m┃\x1b[0m \x1b[1mLocal\x1b[0m    \x1b[36mhttp://localhost:%d/\x1b[0m\n", port)
