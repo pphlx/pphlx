@@ -6,7 +6,7 @@ $TempWixDir = Join-Path $ProjectDir ".wix-bin"
 
 # 1. Compile the Go binary first to ensure it's up to date
 Write-Host "Compiling Go binary..." -ForegroundColor Cyan
-go build -o pphlx.exe main.go
+go build -o pphlx.exe .
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Go compilation failed!"
     exit 1

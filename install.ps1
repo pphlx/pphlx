@@ -59,7 +59,7 @@ try {
 }
 catch {
     Write-Host "Note: Release asset file ($DownloadUrl) is not uploaded yet." -ForegroundColor Yellow
-    Write-Host "You can run PPHLX locally or via npm: npm install -g pphlx" -ForegroundColor Cyan
+    Write-Host "You can run PPHLX locally or via npm: npm create pphlx@latest" -ForegroundColor Cyan
     Remove-Item -Path $TempDir -Recurse -Force -ErrorAction SilentlyContinue
     exit 0
 }
