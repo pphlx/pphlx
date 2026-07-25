@@ -1,0 +1,9 @@
+{
+  "srcDir": "src",
+  "outDir": "dist",
+  "cssOut": "dist/css/styles.css",
+  "jsOut": "dist/js/bundle.js",
+  "output": {
+    "target": "ssg"
+  }
+}

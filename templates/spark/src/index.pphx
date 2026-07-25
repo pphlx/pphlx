@@ -1,0 +1,16 @@
+@import Layout from './layouts/Layout.pphx'
+@import Navbar from './components/Navbar.pphx'
+@import Hero from './components/Hero.pphx'
+@import Wiring from './components/Wiring.pphx'
+@import Features from './components/Features.pphx'
+@import Deploy from './components/Deploy.pphx'
+@import Footer from './components/Footer.pphx'
+
+<Layout title="Spark - The PPHLX Monolith Template">
+    <Navbar />
+    <Hero />
+    <Wiring />
+    <Features />
+    <Deploy />
+    <Footer />
+</Layout>

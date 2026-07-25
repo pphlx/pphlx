@@ -1,0 +1,71 @@
+<nav id="main-nav" class="fixed top-0 left-0 w-full h-20 z-[100] bg-black/80 backdrop-blur-xl border-b border-transparent transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
+        <a href="/" class="flex items-center gap-2 font-extrabold text-lg tracking-tight hover:opacity-80 transition-opacity">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 12l10 10 10-10Z"/>
+                <path d="M2 12h20"/>
+            </svg>
+            <span>Spark</span>
+        </a>
+        <div class="hidden md:flex gap-6">
+            <a href="#showcase" class="flex items-center gap-1 text-[15px] font-medium text-dim hover:text-white transition-colors">
+                Showcase <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </a>
+            <a href="#docs" class="flex items-center gap-1 text-[15px] font-medium text-dim hover:text-white transition-colors">
+                Docs <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </a>
+            <a href="#resources" class="flex items-center gap-1 text-[15px] font-medium text-dim hover:text-white transition-colors">
+                Resources <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </a>
+            <a href="#enterprise" class="flex items-center gap-1 text-[15px] font-medium text-dim hover:text-white transition-colors">
+                Enterprise
+            </a>
+        </div>
+        <div class="flex items-center gap-6">
+            <button id="search-trigger" class="hidden lg:flex items-center gap-6 text-sm text-dim hover:text-white transition-colors cursor-text">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                Search <span class="bg-[#222] border border-[#333] px-1.5 py-0.5 rounded text-xs font-mono">⌘K</span>
+            </button>
+            <div class="flex items-center gap-4 border-l border-white/10 pl-6">
+                <a href="/start" class="relative inline-flex items-center justify-center px-4 py-1.5 text-[15px] font-medium text-white rounded-full group hover:bg-white/5 transition-colors focus:outline-none">
+                    <!-- Border Mask Container -->
+                    <span class="absolute inset-0 rounded-full p-[1px] pointer-events-none overflow-hidden" style="-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;">
+                        <!-- Spinning Gradient -->
+                        <span class="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,rgba(255,255,255,0.1)_0%,#3b82f6_50%,rgba(255,255,255,0.1)_100%)]"></span>
+                    </span>
+                    <span class="relative z-10">Get Started</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Search Modal -->
+<div id="search-modal" class="fixed inset-0 w-full h-screen bg-black/80 backdrop-blur-md z-[1000] flex justify-center pt-[10vh] opacity-0 pointer-events-none [&.active]:opacity-100 [&.active]:pointer-events-auto transition-opacity duration-200">
+    <div class="bg-[#111] border border-[#333] w-full max-w-[600px] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden transform -translate-y-5 scale-95 transition-transform duration-200 [.active_&]:translate-y-0 [.active_&]:scale-100 h-fit">
+        <div class="flex items-center px-5 py-4 border-b border-[#222] gap-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" placeholder="Search documentation..." autocomplete="off" class="flex-1 bg-transparent border-none text-white text-lg outline-none placeholder:text-gray-500">
+            <button id="search-close" class="bg-[#222] border border-[#333] text-dim px-2 py-1 rounded-md text-xs cursor-pointer hover:bg-[#333] hover:text-white transition-colors">ESC</button>
+        </div>
+        <div class="px-5 py-10 text-center">
+            <p class="text-gray-500 text-sm">No recent searches</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('scroll', () => {
+        const nav = document.getElementById('main-nav');
+        if (window.scrollY > 50) {
+            nav.classList.add('border-white/10');
+            nav.classList.remove('border-transparent');
+        } else {
+            nav.classList.remove('border-white/10');
+            nav.classList.add('border-transparent');
+        }
+    });
+</script>

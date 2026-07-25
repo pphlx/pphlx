@@ -75,7 +75,7 @@ Analogous to `package.json`. Declares project meta, triggers, and third-party UI
 ```
 
 ### 2. Compiler Config (`pphlx.config.mjs`)
-Analogous to `astro.config.mjs`. Configures source directories, target paths, and asset outputs:
+Configures source directories, target paths, and asset outputs:
 ```javascript
 import { defineConfig } from "pphlx/config";
 

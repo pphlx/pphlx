@@ -1,0 +1,27 @@
+<section class="pt-20 px-2 pb-2">
+    <div class="w-full min-h-[calc(100vh-5.5rem)] bg-gradient-to-b from-blue-800 to-black rounded-2xl md:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden shadow-2xl border border-white/20">
+        
+        <!-- Mild Gridline Pattern -->
+        <div class="absolute inset-0 opacity-100 pointer-events-none" style="background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px; background-position: center center;"></div>
+        
+        <div class="relative z-10 px-6 max-w-5xl mx-auto w-full flex flex-col items-center">
+            
+            <!-- Massive Cloudflare-style Title (Reduced size slightly) -->
+            <h1 class="text-5xl md:text-6xl lg:text-[4.5rem] leading-[1.1] font-semibold tracking-tight text-white mb-8">
+                20+ Frameworks.<br class="hidden md:block" /> Zero Lock-in.
+            </h1>
+            
+            <!-- Cloudflare-style Subtitle -->
+            <p class="text-lg md:text-xl text-gray-300 font-light leading-relaxed max-w-2xl mx-auto mb-10">
+                One platform for your apps, agents, and workforce.<br class="hidden md:block"/>
+                PPHLX compiles components from 20+ major JavaScript & 3D UI frameworks into standalone, statically-hydrated PHP pages.
+            </p>
+            
+            <!-- Simple Solid White Button (Cloudflare style) -->
+            <a href="/explore" class="bg-white text-black font-semibold text-base md:text-lg px-8 py-3.5 rounded-full hover:bg-gray-100 transition-colors inline-flex items-center justify-center">
+                Explore 20+ supported frameworks
+            </a>
+            
+        </div>
+    </div>
+</section>

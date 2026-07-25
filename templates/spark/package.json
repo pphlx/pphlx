@@ -1,0 +1,37 @@
+{
+  "author": "PPHLX",
+  "dependencies": {
+    "pphlx": "1.1.4"
+  },
+  "name": "pphlx-spark",
+  "version": "1.0.0",
+  "description": "Architecture for the Modern Monolith",
+  "license": "MIT",
+  "keywords": [
+    "php",
+    "pphlx",
+    "compiler",
+    "web",
+    "monolith",
+    "tailwind",
+    "spark"
+  ],
+  "scripts": {
+    "build:css": "tailwindcss -i ./public/css/input.css -o ./public/css/tailwind.css --minify",
+    "build": "npm run build:css && pphlx",
+    "check": "pphlx check",
+    "dev:css": "tailwindcss -i ./public/css/input.css -o ./dist/css/tailwind.css --watch",
+    "dev:app": "pphlx dev",
+    "dev": "concurrently --hide 0 --raw \"npm run dev:css\" \"npm run dev:app\"",
+    "preview": "pphlx preview",
+    "start": "npm run dev",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "pphlx watch"
+  },
+  "type": "commonjs",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "concurrently": "^10.0.4",
+    "tailwindcss": "^4.3.3"
+  }
+}

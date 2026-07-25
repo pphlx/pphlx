@@ -1,12 +1,17 @@
 # Compiled binaries
 pphlx
 pphlx.exe
+pphlx-win.exe
+pphlx-linux
+pphlx-macos
 pphlx-dbg
 pphlx-dbg.exe
 pphlx-core/bin/
 
-# Test project build folder
-*/dist/*
+# Test project & template dist build folders
+dist/
+**/dist/
+templates/*/dist/
 # Operating System Files
 Thumbs.db
 db.db

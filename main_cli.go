@@ -297,19 +297,15 @@ func main() {
 		config.Output.Target = "php"
 	}
 
-	// Run execution mode handler
-	switch activeMode {
-	case "dev":
-		devConfig := config
-		devConfig.OutDir = config.SrcDir
-		if devConfig.OutDir == "" {
-			devConfig.OutDir = "."
-		}
-		compileAll(devConfig, projectDir)
-		startDevServerAndWatcher(config, projectDir, activeMode)
-	case "build":
+	// Run initial compilation for build mode (dev mode compiles into dev cache inside startDevServerAndWatcher)
+	if activeMode != "dev" {
 		compileAll(config, projectDir)
-	case "preview":
+	}
+
+	// Non-blocking background telemetry dispatch
+	sendTelemetryAsync(config, activeMode)
+
+	if activeMode == "dev" || activeMode == "preview" {
 		startDevServerAndWatcher(config, projectDir, activeMode)
 	}
 }
@@ -374,60 +370,146 @@ func sendTelemetryAsync(config Config, cmdName string) {
 }
 
 func runInitCLI() {
-	fmt.Println("Initializing PPHLX configuration...")
+	fmt.Println("Initializing PPHLX project configuration...")
 
-	// 1. Update package.json scripts if package.json exists
+	currDir, _ := filepath.Abs(".")
+	projectName := filepath.Base(currDir)
+
+	// 1. Create or update package.json
 	pkgPath := "package.json"
+	var pkgData map[string]interface{}
 	if _, err := os.Stat(pkgPath); err == nil {
-		content, err := ioutil.ReadFile(pkgPath)
-		if err == nil {
-			var pkgData map[string]interface{}
-			if err := json.Unmarshal(content, &pkgData); err == nil && pkgData != nil {
-				scripts, ok := pkgData["scripts"].(map[string]interface{})
-				if !ok || scripts == nil {
-					scripts = make(map[string]interface{})
-				}
-				if _, exists := scripts["build"]; !exists {
-					scripts["build"] = "pphlx"
-				}
-				if _, exists := scripts["dev"]; !exists {
-					scripts["dev"] = "pphlx dev"
-				}
-				if _, exists := scripts["watch"]; !exists {
-					scripts["watch"] = "pphlx watch"
-				}
-				if _, exists := scripts["start"]; !exists {
-					scripts["start"] = "pphlx dev"
-				}
-				if _, exists := scripts["preview"]; !exists {
-					scripts["preview"] = "pphlx preview"
-				}
-				if _, exists := scripts["check"]; !exists {
-					scripts["check"] = "pphlx check"
-				}
-				pkgData["scripts"] = scripts
+		content, _ := ioutil.ReadFile(pkgPath)
+		json.Unmarshal(content, &pkgData)
+	}
+	if pkgData == nil {
+		pkgData = make(map[string]interface{})
+		pkgData["name"] = projectName
+		pkgData["version"] = "1.0.0"
+		pkgData["private"] = true
+	}
+	scripts, ok := pkgData["scripts"].(map[string]interface{})
+	if !ok || scripts == nil {
+		scripts = make(map[string]interface{})
+	}
+	scripts["build"] = "pphlx"
+	scripts["dev"] = "pphlx dev"
+	scripts["watch"] = "pphlx watch"
+	scripts["start"] = "pphlx dev"
+	scripts["preview"] = "pphlx preview"
+	scripts["check"] = "pphlx check"
+	pkgData["scripts"] = scripts
 
-				pkgBytes, _ := json.MarshalIndent(pkgData, "", "  ")
-				_ = ioutil.WriteFile(pkgPath, pkgBytes, 0644)
-				fmt.Println("✓ Configured package.json scripts")
-			}
+	pkgBytes, _ := json.MarshalIndent(pkgData, "", "  ")
+	ioutil.WriteFile(pkgPath, pkgBytes, 0644)
+	fmt.Println("✓ Configured package.json scripts")
+
+	// 2. Create pphlx.json
+	pphlxJsonPath := "pphlx.json"
+	if _, err := os.Stat(pphlxJsonPath); os.IsNotExist(err) {
+		pphlxJson := map[string]interface{}{
+			"name":        projectName,
+			"version":     "1.0.0",
+			"description": "PPHLX Monolithic Application",
+			"scripts": map[string]string{
+				"build": "pphlx build",
+				"dev":   "pphlx dev",
+				"watch": "pphlx watch",
+			},
+			"dependencies": map[string]string{
+				"pphlx": "^1.1.0",
+			},
 		}
+		pBytes, _ := json.MarshalIndent(pphlxJson, "", "  ")
+		ioutil.WriteFile(pphlxJsonPath, pBytes, 0644)
+		fmt.Println("✓ Created pphlx.json (Project Manifest)")
 	}
 
-	// 2. Create minimal pphlx.config.json if not present
+	// 3. Create pphlx.config.json
 	configJsonPath := "pphlx.config.json"
 	if _, err := os.Stat(configJsonPath); os.IsNotExist(err) {
 		configJson := map[string]interface{}{
-			"srcDir": "src",
-			"outDir": "dist",
+			"srcDir":   ".",
+			"outDir":   "dist",
+			"cssOut":   "dist/css/styles.css",
+			"jsOut":    "dist/js/bundle.js",
 			"output": map[string]string{
 				"target": "php",
 			},
 		}
 		cBytes, _ := json.MarshalIndent(configJson, "", "  ")
-		_ = ioutil.WriteFile(configJsonPath, cBytes, 0644)
+		ioutil.WriteFile(configJsonPath, cBytes, 0644)
 		fmt.Println("✓ Created pphlx.config.json (Compiler Config)")
 	}
+
+	// 4. Create pphlx.vite.config.mjs
+	viteConfigPath := "pphlx.vite.config.mjs"
+	if _, err := os.Stat(viteConfigPath); os.IsNotExist(err) {
+		viteContent := `import { defineConfig } from 'vite';
+import pphlx from 'pphlx/vite';
+
+export default defineConfig({
+  plugins: [pphlx()],
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true
+  }
+});
+`
+		ioutil.WriteFile(viteConfigPath, []byte(viteContent), 0644)
+		fmt.Println("✓ Created pphlx.vite.config.mjs (Vite Integration Config)")
+	}
+
+	// 5. Scaffold root layouts/, components/, and index.pphx templates (out of src)
+	if _, err := os.Stat("layouts"); os.IsNotExist(err) {
+		os.MkdirAll("layouts", 0755)
+
+		layoutContent := `{|
+if (!defined('PPHLX_EXEC')) {
+    define('PPHLX_EXEC', true);
+}
+$_title = !empty($title) ? $title : 'PPHLX Monolith App';
+|}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{|= $_title; |}</title>
+    {{PPHLX_CSS}}
+</head>
+<body>
+    <main>
+        {{slot}}
+    </main>
+    {{PPHLX_JS}}
+</body>
+</html>
+`
+		ioutil.WriteFile("layouts/Layout.pphx", []byte(layoutContent), 0644)
+		fmt.Println("✓ Created layouts/Layout.pphx")
+	}
+
+	if _, err := os.Stat("components"); os.IsNotExist(err) {
+		os.MkdirAll("components", 0755)
+		fmt.Println("✓ Created components/ directory")
+	}
+
+	if _, err := os.Stat("index.pphx"); os.IsNotExist(err) {
+		indexContent := `@import Layout from './layouts/Layout.pphx'
+
+<Layout title="Welcome to PPHLX App">
+    <div style="font-family:sans-serif;padding:40px;text-align:center;">
+        <h1>🚀 Welcome to PPHLX Monolith</h1>
+        <p>Zero Node.js runtime in production. Standalone PHP template execution.</p>
+    </div>
+</Layout>
+`
+		ioutil.WriteFile("index.pphx", []byte(indexContent), 0644)
+		fmt.Println("✓ Created root index.pphx template")
+	}
+
+	fmt.Println("\033[1;32m✓ PPHLX project initialized successfully!\033[0m")
 }
 
 

@@ -1,0 +1,29 @@
+<footer class="pt-0 pb-40 px-6 mt-16 relative overflow-hidden flex flex-col items-center justify-center">
+    <!-- Subtle Background Glow to match Astro's feel -->
+    <div class="absolute bottom-[-50%] left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-white/[0.02] blur-[120px] rounded-full pointer-events-none"></div>
+
+    <div class="max-w-[600px] mx-auto relative z-10 flex flex-col items-center text-center">
+        <p class="text-[#888] text-xs mb-4 font-normal">Brought to you by</p>
+        
+        <a href="https://pphlx.org" target="_blank" class="flex items-center gap-3 mb-6 hover:opacity-90 transition-opacity">
+            <svg width="48" height="48" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g fill="white">
+                    <path d="M71.0767 37.0375C57.0027 37.5229 44.6666 44.8052 40.3067 48.8143C38.1184 50.418 32.3344 56.982 29.5322 64.8508C24.5709 78.7825 30.5345 93.4158 36.4981 101.785C40.9582 108.044 53.9487 121.461 72.4298 122.883C87.4139 124.035 102.243 116.986 108.311 111.758C113.022 107.698 125.049 96.122 125.901 76.7279C126.753 57.3337 113.725 48.2536 106.607 44.0034C99.6417 39.8439 91.423 36.3359 71.0767 37.0375Z"/>
+                    <path d="M90.7213 30.9738C90.3707 30.7733 91.0721 29.2532 91.473 28.5683C100.995 10.9281 111.068 6.01696 111.519 5.8165C111.88 5.65614 112.2 5.68892 112.371 5.86662C127.555 22.2539 128.832 51.5766 128.056 53.7756C127.809 54.4772 126.403 54.2266 126.052 53.3747C114.526 34.2813 91.2174 31.2573 90.7213 30.9738Z"/>
+                    <path d="M44.9172 35.4339C44.7568 35.4339 43.7128 35.3598 42.1609 35.4339C16.9536 36.6366 6.98092 45.6572 0.466128 51.4203C-0.149998 51.9653 -0.0015954 52.6063 0.0652232 52.8736C3.77366 67.1561 18.6575 80.9374 20.3113 81.7894C21.6343 82.4709 21.8982 81.3718 21.8647 80.737C20.3113 56.4317 31.4314 47.8686 35.9969 43.7027C40.0061 40.0444 44.959 37.7206 45.5185 36.9373C46.2703 35.8849 45.1176 35.4339 44.9172 35.4339Z"/>
+                </g>
+                <path fill="black" d="M87.7146 102.737C87.1934 102.417 87.5643 101.668 87.7146 101.485C94.647 95.8384 108.482 84.6362 109.163 83.7943C109.845 82.9524 110.116 82.9758 110.166 83.0927C111.497 86.1998 109.665 94.7693 106.056 98.7784C102.448 102.788 97.1862 103.489 94.48 103.489C91.7738 103.489 88.3661 103.138 87.7146 102.737Z"/>
+                <path fill="black" d="M43.8648 83.0426C43.3837 82.762 43.2635 83.3934 43.2635 83.7442C43.0129 85.5483 42.8625 89.4071 45.0175 94.8695C47.1724 100.332 53.1359 102.988 56.1428 103.389C59.1496 103.79 65.0631 103.138 65.9651 102.788C66.8672 102.437 66.6667 101.936 66.3159 101.635C65.9651 101.334 44.4662 83.3934 43.8648 83.0426Z"/>
+            </svg>
+            <span class="text-white text-5xl font-extrabold tracking-tight leading-none" style="letter-spacing: -0.05em;">pphlx</span>
+        </a>
+        
+        <p class="text-[#a1a1aa] text-[15px] leading-relaxed max-w-[480px] mb-6 font-normal">
+            PPHLX produces pure, optimized PHP output, meaning you can host your application on literally any server that supports PHP. No proprietary cloud platforms, no vendor lock-in.
+        </p>
+        
+        <a href="https://pphlx.org" target="_blank" class="text-[#71a8ff] hover:text-[#93c5fd] hover:underline underline-offset-4 decoration-transparent transition-colors text-[15px] font-normal">
+            Learn about PPHLX
+        </a>
+    </div>
+</footer>

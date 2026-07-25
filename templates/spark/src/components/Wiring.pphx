@@ -1,0 +1,245 @@
+<section class="py-32 px-6 relative bg-black overflow-hidden">
+    <div class="max-w-7xl mx-auto">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-center tracking-tight text-white mb-6">
+            Architecture for the Modern Monolith
+        </h2>
+        <p class="text-gray-400 text-center max-w-2xl mx-auto mb-24 text-lg">
+            PPHLX seamlessly integrates your favorite modern UI frameworks into standard PHP environments with zero Node.js overhead.
+        </p>
+        
+        <!-- Desktop Layout -->
+        <div class="relative w-full max-w-[1000px] mx-auto hidden lg:block h-[460px]">
+            <!-- SVG Connections -->
+            <svg class="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 1000 460">
+                <defs>
+                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="2" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+
+                    <!-- Comet gradients -->
+                    <linearGradient id="comet-blue" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0" />
+                        <stop offset="100%" stop-color="#60a5fa" stop-opacity="1" />
+                    </linearGradient>
+                    <linearGradient id="comet-pink" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#ec4899" stop-opacity="0" />
+                        <stop offset="100%" stop-color="#f472b6" stop-opacity="1" />
+                    </linearGradient>
+                    <linearGradient id="comet-orange" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#f97316" stop-opacity="0" />
+                        <stop offset="100%" stop-color="#fb923c" stop-opacity="1" />
+                    </linearGradient>
+                    <linearGradient id="comet-green" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#10b981" stop-opacity="0" />
+                        <stop offset="100%" stop-color="#34d399" stop-opacity="1" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Base PCB Paths (Faint dark gray lines) -->
+                <!-- Top Left to Engine Left Pin -->
+                <path id="path-tl" d="M 320,70 L 370,70 Q 380,70 380,80 L 380,210 Q 380,220 390,220 L 410,220" fill="none" stroke="#222" stroke-width="1.5" />
+                <!-- Bottom Left to Engine Left Pin -->
+                <path id="path-bl" d="M 320,390 L 370,390 Q 380,390 380,380 L 380,250 Q 380,240 390,240 L 410,240" fill="none" stroke="#222" stroke-width="1.5" />
+                <!-- Top Right to Engine Right Pin -->
+                <path id="path-tr" d="M 680,70 L 630,70 Q 620,70 620,80 L 620,210 Q 620,220 610,220 L 590,220" fill="none" stroke="#222" stroke-width="1.5" />
+                <!-- Bottom Right to Engine Right Pin -->
+                <path id="path-br" d="M 680,390 L 630,390 Q 620,390 620,380 L 620,250 Q 620,240 610,240 L 590,240" fill="none" stroke="#222" stroke-width="1.5" />
+                
+                <!-- Decorative PCB Lines ending in dots -->
+                <!-- Top Left Deco -->
+                <path d="M 430,200 L 430,120 Q 430,110 420,110 L 390,110" fill="none" stroke="#222" stroke-width="1.5" />
+                <circle cx="390" cy="110" r="2.5" fill="#333" />
+                <!-- Top Right Deco -->
+                <path d="M 570,200 L 570,140 Q 570,130 580,130 L 640,130 Q 650,130 650,140 L 650,180" fill="none" stroke="#222" stroke-width="1.5" />
+                <circle cx="650" cy="180" r="2.5" fill="#333" />
+                <!-- Bottom Left Deco -->
+                <path d="M 460,260 L 460,330 Q 460,340 470,340 L 530,340" fill="none" stroke="#222" stroke-width="1.5" />
+                <circle cx="530" cy="340" r="2.5" fill="#333" />
+                <!-- Bottom Right Deco -->
+                <path d="M 540,260 L 540,310 Q 540,320 530,320 L 490,320" fill="none" stroke="#222" stroke-width="1.5" />
+                <circle cx="490" cy="320" r="2.5" fill="#333" />
+                
+                <!-- Animated Comet Paths -->
+                <style>
+                    .comet-line {
+                        /* 40px comet, massive gap ensures only one comet exists on the path */
+                        stroke-dasharray: 40 1000; 
+                        animation: flow 5s ease-in-out infinite;
+                    }
+                    /* Stagger the 4 comets so they arrive one by one */
+                    .delay-1 { animation-delay: 1.25s; }
+                    .delay-2 { animation-delay: 2.5s; }
+                    .delay-3 { animation-delay: 3.75s; }
+                    
+                    @keyframes flow {
+                        /* Start perfectly hidden before the path */
+                        0% { stroke-dashoffset: 40; }
+                        /* Travel across the 232px path using the ease-in-out curve over 30% of the time (1.5s) */
+                        30% { stroke-dashoffset: -232; }
+                        /* Stay perfectly hidden past the end of the path for the remaining time (3.5s pause) */
+                        100% { stroke-dashoffset: -232; }
+                    }
+                </style>
+                <!-- TL flows TO engine -->
+                <path d="M 320,70 L 370,70 Q 380,70 380,80 L 380,210 Q 380,220 390,220 L 410,220" fill="none" stroke="#3b82f6" stroke-width="2" class="comet-line" stroke-linecap="round" filter="url(#glow)" />
+                <!-- TR flows TO engine -->
+                <path d="M 680,70 L 630,70 Q 620,70 620,80 L 620,210 Q 620,220 610,220 L 590,220" fill="none" stroke="#f97316" stroke-width="2" class="comet-line delay-1" stroke-linecap="round" filter="url(#glow)" />
+                <!-- BL flows TO engine -->
+                <path d="M 320,390 L 370,390 Q 380,390 380,380 L 380,250 Q 380,240 390,240 L 410,240" fill="none" stroke="#ec4899" stroke-width="2" class="comet-line delay-2" stroke-linecap="round" filter="url(#glow)" />
+                <!-- BR flows TO engine -->
+                <path d="M 680,390 L 630,390 Q 620,390 620,380 L 620,250 Q 620,240 610,240 L 590,240" fill="none" stroke="#10b981" stroke-width="2" class="comet-line delay-3" stroke-linecap="round" filter="url(#glow)" />
+            </svg>
+            
+            <!-- Center Engine (Next.js Style Microchip) -->
+            <div class="absolute left-[500px] top-[230px] w-[180px] h-[60px] -translate-x-1/2 -translate-y-1/2 z-20 flex items-center justify-center group cursor-default">
+                <div class="w-full h-full bg-[#111] border border-[#333] rounded-lg shadow-[0_0_50px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_50px_rgba(255,255,255,0.15)] group-hover:border-[#444] transition-all duration-300 flex items-center justify-center relative overflow-hidden">
+                    <span class="font-sans text-gray-100 text-[16.5px] font-bold tracking-tight relative z-10">PPHLX Engine</span>
+                    
+                    <!-- Top pins (6) -->
+                    <div class="absolute top-[-4px] left-0 w-full flex justify-center gap-2.5">
+                        <div class="w-1.5 h-1 bg-[#444] rounded-t-sm shadow-[0_-1px_2px_rgba(255,255,255,0.1)]"></div>
+                        <div class="w-1.5 h-1 bg-[#444] rounded-t-sm shadow-[0_-1px_2px_rgba(255,255,255,0.1)]"></div>
+                        <div class="w-1.5 h-1 bg-[#444] rounded-t-sm shadow-[0_-1px_2px_rgba(255,255,255,0.1)]"></div>
+                        <div class="w-1.5 h-1 bg-[#444] rounded-t-sm shadow-[0_-1px_2px_rgba(255,255,255,0.1)]"></div>
+                        <div class="w-1.5 h-1 bg-[#444] rounded-t-sm shadow-[0_-1px_2px_rgba(255,255,255,0.1)]"></div>
+                        <div class="w-1.5 h-1 bg-[#444] rounded-t-sm shadow-[0_-1px_2px_rgba(255,255,255,0.1)]"></div>
+                    </div>
+                    
+                    <!-- Bottom pins (6) -->
+                    <div class="absolute bottom-[-4px] left-0 w-full flex justify-center gap-2.5">
+                        <div class="w-1.5 h-1 bg-[#444] rounded-b-sm shadow-[0_1px_2px_rgba(255,255,255,0.1)]"></div>
+                        <div class="w-1.5 h-1 bg-[#444] rounded-b-sm shadow-[0_1px_2px_rgba(255,255,255,0.1)]"></div>
+                        <div class="w-1.5 h-1 bg-[#444] rounded-b-sm shadow-[0_1px_2px_rgba(255,255,255,0.1)]"></div>
+                        <div class="w-1.5 h-1 bg-[#444] rounded-b-sm shadow-[0_1px_2px_rgba(255,255,255,0.1)]"></div>
+                        <div class="w-1.5 h-1 bg-[#444] rounded-b-sm shadow-[0_1px_2px_rgba(255,255,255,0.1)]"></div>
+                        <div class="w-1.5 h-1 bg-[#444] rounded-b-sm shadow-[0_1px_2px_rgba(255,255,255,0.1)]"></div>
+                    </div>
+                    
+                    <!-- Left pins (2, aligned to paths) -->
+                    <div class="absolute left-[-4px] top-[16px] w-1 h-1.5 bg-[#444] rounded-l-sm shadow-[-1px_0_2px_rgba(255,255,255,0.1)]"></div>
+                    <div class="absolute left-[-4px] top-[36px] w-1 h-1.5 bg-[#444] rounded-l-sm shadow-[-1px_0_2px_rgba(255,255,255,0.1)]"></div>
+                    
+                    <!-- Right pins (2, aligned to paths) -->
+                    <div class="absolute right-[-4px] top-[16px] w-1 h-1.5 bg-[#444] rounded-r-sm shadow-[1px_0_2px_rgba(255,255,255,0.1)]"></div>
+                    <div class="absolute right-[-4px] top-[36px] w-1 h-1.5 bg-[#444] rounded-r-sm shadow-[1px_0_2px_rgba(255,255,255,0.1)]"></div>
+                </div>
+            </div>
+            
+            <!-- Cards -->
+            <!-- Top Left -->
+            <div class="absolute left-0 top-0 w-[320px] h-[140px] bg-[#0a0a0a] border border-[#222] rounded-xl p-5 z-20 transition-colors group">
+                <div class="absolute -inset-[1px] rounded-xl p-[1px] pointer-events-none overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;">
+                    <div class="absolute inset-[-150%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#3b82f6_50%,transparent_100%)] animate-[spin_3s_linear_infinite]"></div>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                        </div>
+                        <h3 class="text-white font-semibold text-[15px]">Server-First Rendering</h3>
+                    </div>
+                    <p class="text-gray-400 text-[13px] leading-relaxed">Renders component islands on the server, compiling layouts into native PHP with zero runtime Node.js overhead.</p>
+                </div>
+            </div>
+            
+            <!-- Bottom Left -->
+            <div class="absolute left-0 bottom-0 w-[320px] h-[140px] bg-[#0a0a0a] border border-[#222] rounded-xl p-5 z-20 transition-colors group">
+                <div class="absolute -inset-[1px] rounded-xl p-[1px] pointer-events-none overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;">
+                    <div class="absolute inset-[-150%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#ec4899_50%,transparent_100%)] animate-[spin_3s_linear_infinite]"></div>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500 group-hover:scale-110 transition-transform">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        </div>
+                        <h3 class="text-white font-semibold text-[15px]">File-Based Routing</h3>
+                    </div>
+                    <p class="text-gray-400 text-[13px] leading-relaxed">Highly intuitive, automatic routing system. PPHLX maps your <code class="bg-[#111] px-1 py-0.5 rounded text-pink-400 border border-[#333]">src/pages</code> directly to URLs seamlessly.</p>
+                </div>
+            </div>
+            
+            <!-- Top Right -->
+            <div class="absolute right-0 top-0 w-[320px] h-[140px] bg-[#0a0a0a] border border-[#222] rounded-xl p-5 z-20 transition-colors group">
+                <div class="absolute -inset-[1px] rounded-xl p-[1px] pointer-events-none overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;">
+                    <div class="absolute inset-[-150%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#f97316_50%,transparent_100%)] animate-[spin_3s_linear_infinite]"></div>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                        </div>
+                        <h3 class="text-white font-semibold text-[15px]">Multi-Framework</h3>
+                    </div>
+                    <p class="text-gray-400 text-[13px] leading-relaxed">Mount React, Vue, Svelte, or SolidJS components side-by-side on the same screen, hydrated via static PHP.</p>
+                </div>
+            </div>
+            
+            <!-- Bottom Right -->
+            <div class="absolute right-0 bottom-0 w-[320px] h-[140px] bg-[#0a0a0a] border border-[#222] rounded-xl p-5 z-20 transition-colors group">
+                <div class="absolute -inset-[1px] rounded-xl p-[1px] pointer-events-none overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;">
+                    <div class="absolute inset-[-150%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#10b981_50%,transparent_100%)] animate-[spin_3s_linear_infinite]"></div>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        </div>
+                        <h3 class="text-white font-semibold text-[15px]">Monolithic-Ready</h3>
+                    </div>
+                    <p class="text-gray-400 text-[13px] leading-relaxed">Designed to develop WordPress Plugin, WHMCS addon, Modern SaaS Products, Web Apps and etc.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile/Tablet Layout (Grid Fallback) -->
+        <div class="lg:hidden flex flex-col items-center gap-8">
+            <div class="w-[180px] h-[60px] bg-[#111] border border-[#333] rounded-lg shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:border-[#444] transition-all duration-300 flex items-center justify-center mb-4 cursor-default">
+                <span class="font-sans text-gray-100 text-[16.5px] font-bold tracking-tight">PPHLX Engine</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div class="bg-[#0a0a0a] border border-[#222] rounded-xl p-5 transition-colors group relative">
+                    <div class="absolute -inset-[1px] rounded-xl p-[1px] pointer-events-none overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;">
+                        <div class="absolute inset-[-150%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#3b82f6_50%,transparent_100%)] animate-[spin_3s_linear_infinite]"></div>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="text-white font-semibold text-[15px] mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div> Server-First Rendering</h3>
+                        <p class="text-gray-400 text-[13px]">Renders component islands on the server, compiling layouts into native PHP with zero runtime Node.js overhead.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-[#0a0a0a] border border-[#222] rounded-xl p-5 transition-colors group relative">
+                    <div class="absolute -inset-[1px] rounded-xl p-[1px] pointer-events-none overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;">
+                        <div class="absolute inset-[-150%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#ec4899_50%,transparent_100%)] animate-[spin_3s_linear_infinite]"></div>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="text-white font-semibold text-[15px] mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-pink-500"></div> File-Based Routing</h3>
+                        <p class="text-gray-400 text-[13px]">Highly intuitive, automatic routing system. PPHLX maps your <code class="bg-[#111] px-1 py-0.5 rounded text-pink-400 border border-[#333]">src/pages</code> directly to URLs seamlessly.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-[#0a0a0a] border border-[#222] rounded-xl p-5 transition-colors group relative">
+                    <div class="absolute -inset-[1px] rounded-xl p-[1px] pointer-events-none overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;">
+                        <div class="absolute inset-[-150%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#f97316_50%,transparent_100%)] animate-[spin_3s_linear_infinite]"></div>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="text-white font-semibold text-[15px] mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-orange-500"></div> Multi-Framework</h3>
+                        <p class="text-gray-400 text-[13px]">Mount React, Vue, Svelte, or SolidJS components side-by-side on the same screen, hydrated via static PHP.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-[#0a0a0a] border border-[#222] rounded-xl p-5 transition-colors group relative">
+                    <div class="absolute -inset-[1px] rounded-xl p-[1px] pointer-events-none overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude;">
+                        <div class="absolute inset-[-150%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#10b981_50%,transparent_100%)] animate-[spin_3s_linear_infinite]"></div>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="text-white font-semibold text-[15px] mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-green-500"></div> Monolithic-Ready</h3>
+                        <p class="text-gray-400 text-[13px]">Designed to drop compiled outputs directly inside WHMCS addons, WordPress, or shared server hosts natively.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</section>

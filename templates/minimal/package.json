@@ -1,0 +1,27 @@
+{
+  "author": "PPHLX",
+  "dependencies": {
+    "pphlx": "1.1.4"
+  },
+  "name": "pphlx-minimal",
+  "version": "1.0.0",
+  "description": "Minimal PPHLX starter kit with zero configuration",
+  "keywords": [
+    "php",
+    "pphlx",
+    "compiler",
+    "web",
+    "minimal",
+    "starter"
+  ],
+  "scripts": {
+    "build": "pphlx",
+    "check": "pphlx check",
+    "dev": "pphlx dev",
+    "preview": "pphlx preview",
+    "start": "pphlx dev",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "pphlx watch"
+  },
+  "type": "commonjs"
+}

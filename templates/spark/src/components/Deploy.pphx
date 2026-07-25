@@ -1,0 +1,57 @@
+<section class="py-24 px-6 border-t border-white/5">
+    <div class="max-w-7xl mx-auto">
+        <h2 class="text-3xl font-bold mb-16 text-center md:text-left">
+            Get started in seconds <span class="text-dim font-normal block md:inline mt-2 md:mt-0">Deploy Spark anywhere</span>
+        </h2>
+        
+        <div class="flex flex-col lg:flex-row gap-16 lg:items-center">
+            <div class="flex-1">
+                <div class="flex flex-wrap gap-3 mb-8">
+                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">Starter</span>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-green-500/10 text-green-400 border border-green-500/20">Ecommerce</span>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">Blog</span>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">AI</span>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-pink-500/10 text-pink-400 border border-pink-500/20">Portfolio</span>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">SaaS</span>
+                </div>
+                
+                <p class="text-lg text-dim leading-relaxed mb-6 max-w-lg">
+                    PPHLX produces pure, optimized PHP output, meaning you can host your application on literally any server that supports PHP. No proprietary cloud platforms, no vendor lock-in.
+                </p>
+                <p class="text-lg text-dim leading-relaxed mb-8 max-w-lg">
+                    Designed to develop WordPress Plugins, WHMCS addons, Modern SaaS Products, Web Apps, and more.
+                </p>
+                <a href="/docs/deployment" class="inline-block bg-transparent text-white border border-white hover:bg-white hover:text-black font-medium px-5 py-2.5 rounded-md transition-colors">
+                    View Deployment Guide ↗
+                </a>
+            </div>
+            
+            <div class="flex-1 relative h-[400px] flex justify-center items-center group perspective-1000">
+                <!-- Back Card -->
+                <div class="absolute w-[280px] bg-black border border-[#333] rounded-xl overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.8)] transition-transform duration-300 z-[1] opacity-60 -translate-x-10 -translate-y-5 -rotate-[5deg] scale-90 group-hover:-translate-x-[60px] group-hover:-translate-y-[30px] group-hover:-rotate-[8deg] group-hover:scale-90">
+                    <div class="h-[140px] bg-[#111] border-b border-[#333]"></div>
+                    <div class="p-4">
+                        <h5 class="font-semibold text-base mb-1">PPHLX Commerce</h5>
+                        <p class="text-[#888] text-sm">High-performance storefront</p>
+                    </div>
+                </div>
+                <!-- Middle Card -->
+                <div class="absolute w-[280px] bg-black border border-[#333] rounded-xl overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.8)] transition-transform duration-300 z-[2] opacity-80 translate-x-0 translate-y-0 -rotate-[2deg] scale-95">
+                    <div class="h-[140px] bg-[#111] border-b border-[#333]"></div>
+                    <div class="p-4">
+                        <h5 class="font-semibold text-base mb-1">PPHLX Monolith</h5>
+                        <p class="text-[#888] text-sm">All-in-one scalable application</p>
+                    </div>
+                </div>
+                <!-- Front Card -->
+                <div class="absolute w-[280px] bg-black border border-[#333] rounded-xl overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.8)] transition-transform duration-300 z-[3] opacity-100 translate-x-10 translate-y-5 rotate-[2deg] scale-100 group-hover:translate-x-[60px] group-hover:translate-y-[30px] group-hover:rotate-[5deg] group-hover:scale-105">
+                    <div class="h-[140px] bg-white text-black flex items-center justify-center text-3xl font-extrabold tracking-tight">SPARK.</div>
+                    <div class="p-4">
+                        <h5 class="font-semibold text-base mb-1">Spark Boilerplate</h5>
+                        <p class="text-[#888] text-sm">A Spark starter from create-pphlx-app.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

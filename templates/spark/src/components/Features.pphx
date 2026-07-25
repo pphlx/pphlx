@@ -1,0 +1,254 @@
+<section class="py-20 px-6 border-t border-white/5" id="features">
+    <style>
+        @keyframes flyHTML {
+            0% { left: 0%; opacity: 0; transform: scale(0.8) translateY(-50%); }
+            15% { left: 15%; opacity: 1; transform: scale(1) translateY(-50%); }
+            50% { left: 85%; opacity: 1; transform: scale(1) translateY(-50%); }
+            65% { left: 100%; opacity: 0; transform: scale(0.8) translateY(-50%); }
+            100% { left: 100%; opacity: 0; transform: scale(0.8) translateY(-50%); }
+        }
+        @keyframes revealHTML {
+            0% { transform: scaleY(1); }
+            55% { transform: scaleY(1); }
+            65% { transform: scaleY(0); }
+            90% { transform: scaleY(0); }
+            100% { transform: scaleY(1); }
+        }
+        @keyframes pinkDotFlow {
+            0% { left: 0%; opacity: 0; transform: translateY(-50%); }
+            15% { left: 15%; opacity: 1; transform: translateY(-50%); }
+            85% { left: 85%; opacity: 1; transform: translateY(-50%); }
+            100% { left: 100%; opacity: 0; transform: translateY(-50%); }
+        }
+        @keyframes badPacketFlow {
+            0% { left: 20px; opacity: 0; transform: translateY(-50%) scale(0.5); }
+            5% { left: 30px; opacity: 1; transform: translateY(-50%) scale(1); }
+            14% { left: 120px; opacity: 1; transform: translateY(-50%) scale(1); }
+            17% { left: 125px; opacity: 0; transform: translateY(-50%) scale(2.5); }
+            100% { left: 125px; opacity: 0; transform: translateY(-50%); }
+        }
+        @keyframes goodPacketFlow {
+            0% { left: 20px; opacity: 0; transform: translateY(-50%) scale(0.5); }
+            33% { left: 20px; opacity: 0; transform: translateY(-50%) scale(0.5); }
+            38% { left: 30px; opacity: 1; transform: translateY(-50%) scale(1); }
+            47% { left: 125px; opacity: 1; transform: translateY(-50%) scale(1); }
+            55% { left: 170px; opacity: 1; transform: translateY(-50%) scale(1); }
+            57% { left: 170px; opacity: 0; transform: translateY(-50%) scale(0.5); }
+            100% { left: 170px; opacity: 0; transform: translateY(-50%); }
+        }
+        @keyframes shieldFlash {
+            0% { border-color: rgba(34,211,238,0.3); box-shadow: -2px 0 10px rgba(34,211,238,0.2); }
+            14% { border-color: rgba(34,211,238,0.3); box-shadow: -2px 0 10px rgba(34,211,238,0.2); }
+            17% { border-color: rgba(239,68,68,1); box-shadow: -4px 0 15px rgba(239,68,68,0.8); }
+            25% { border-color: rgba(34,211,238,0.3); box-shadow: -2px 0 10px rgba(34,211,238,0.2); }
+            45% { border-color: rgba(34,211,238,0.3); box-shadow: -2px 0 10px rgba(34,211,238,0.2); }
+            47% { border-color: rgba(34,197,94,0.8); box-shadow: -4px 0 15px rgba(34,197,94,0.5); }
+            55% { border-color: rgba(34,211,238,0.3); box-shadow: -2px 0 10px rgba(34,211,238,0.2); }
+            100% { border-color: rgba(34,211,238,0.3); box-shadow: -2px 0 10px rgba(34,211,238,0.2); }
+        }
+        @keyframes serverFlash {
+            0% { border-color: transparent; box-shadow: none; }
+            53% { border-color: transparent; box-shadow: none; }
+            56% { border-color: rgba(34,197,94,0.8); box-shadow: 0 0 30px rgba(34,197,94,0.3), inset 0 0 15px rgba(34,197,94,0.2); }
+            70% { border-color: transparent; box-shadow: none; }
+            100% { border-color: transparent; box-shadow: none; }
+        }
+    </style>
+    <div class="max-w-7xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold mb-10 text-center md:text-left">
+            What's in Spark? <span class="text-dim block md:inline mt-2 md:mt-0 font-normal">Everything you need to build great PPHLX products.</span>
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Card 1 -->
+            <div class="bg-[#0a0a0a] border border-[#222] rounded-xl overflow-hidden flex flex-col hover:border-[#444] transition-colors group">
+                <div class="h-40 bg-[#111] border-b border-[#222] relative flex items-center justify-center overflow-hidden bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px]">
+                    <div class="w-[240px] h-full relative mx-auto flex items-center justify-center">
+                        
+                        <!-- Network Origin -->
+                        <div class="absolute left-[10px] top-1/2 -translate-y-1/2 flex flex-col items-center gap-1 opacity-40">
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-cyan-400 transition-colors duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                        </div>
+                        
+                        <!-- Connection Lines -->
+                        <div class="absolute left-[30px] right-[115px] top-[40%] -translate-y-1/2 border-t border-dashed border-[#333]"></div>
+                        <div class="absolute left-[30px] right-[80px] top-[60%] -translate-y-1/2 border-t border-dashed border-[#333]"></div>
+
+                        <!-- Packets -->
+                        <div class="absolute top-[40%] left-0 w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444] hidden group-hover:block z-20" style="animation: badPacketFlow 3s infinite ease-in;"></div>
+                        <div class="absolute top-[60%] left-0 w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_8px_#22c55e] hidden group-hover:block z-20" style="animation: goodPacketFlow 3s infinite ease-in-out;"></div>
+                        
+                        <!-- Static Shield -->
+                        <div class="absolute left-[125px] top-1/2 -translate-y-1/2 w-6 h-20 border-l-2 border-[#333] rounded-[50%] z-10 group-hover:border-cyan-500/30 transition-colors duration-500">
+                            <!-- Animated Shield Flash -->
+                            <div class="absolute inset-0 border-l-2 border-transparent rounded-[50%] hidden group-hover:block z-20" style="animation: shieldFlash 3s infinite; margin-left: -2px;"></div>
+                        </div>
+
+                        <!-- Static Server -->
+                        <div class="absolute left-[160px] top-1/2 -translate-y-1/2 w-[60px] h-[70px] bg-black border border-[#222] rounded-lg flex flex-col items-center justify-center shadow-[0_0_20px_rgba(0,0,0,0.8)] z-10">
+                            <svg class="w-6 h-6 text-gray-600 group-hover:text-gray-300 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            <span class="text-[7px] font-mono text-gray-600 group-hover:text-gray-400 transition-colors duration-300 mt-1">PPHLX</span>
+                            
+                            <!-- Animated Flash Overlay -->
+                            <div class="absolute inset-0 rounded-lg border border-transparent hidden group-hover:block z-20" style="animation: serverFlash 3s infinite;"></div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h4 class="text-lg font-semibold mb-2">Built-in Security</h4>
+                    <p class="text-sm text-dim leading-relaxed">Automatic CSRF protection, secure data processing, and compliance checks directly out of the box with PPHLX.</p>
+                </div>
+            </div>
+            
+            <!-- Card 2 -->
+            <div class="bg-[#0a0a0a] border border-[#222] rounded-xl overflow-hidden flex flex-col hover:border-[#444] transition-colors group">
+                <div class="h-40 bg-[#111] border-b border-[#222] relative flex items-center justify-center overflow-hidden bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px]">
+                    <div class="w-full flex items-center justify-center px-4 md:px-8 relative">
+                        <!-- Left: Server -->
+                        <div class="w-[70px] bg-black border border-[#222] rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.8)] relative z-10 group-hover:-translate-y-1 transition-transform duration-300 overflow-hidden">
+                            <!-- Top vents -->
+                            <div class="h-2 bg-[#111] w-full flex gap-0.5 px-2 pt-1">
+                                <div class="w-1 h-full bg-[#222] rounded-sm"></div>
+                                <div class="w-1 h-full bg-[#222] rounded-sm"></div>
+                                <div class="w-1 h-full bg-[#222] rounded-sm"></div>
+                            </div>
+                            <div class="p-2 space-y-1.5 flex flex-col items-center pb-3">
+                                <!-- Racks -->
+                                <div class="w-full h-2 bg-[#1a1a1a] border border-[#333] rounded-sm flex items-center px-1 justify-between">
+                                    <div class="w-4 h-0.5 bg-[#333] rounded"></div>
+                                    <div class="w-1 h-1 bg-green-500 rounded-full shadow-[0_0_4px_#22c55e] group-hover:animate-[pulse_0.5s_infinite]"></div>
+                                </div>
+                                <div class="w-full h-2 bg-[#1a1a1a] border border-[#333] rounded-sm flex items-center px-1 justify-between">
+                                    <div class="w-4 h-0.5 bg-[#333] rounded"></div>
+                                    <div class="w-1 h-1 bg-gray-600 rounded-full group-hover:bg-green-500 group-hover:shadow-[0_0_4px_#22c55e] transition-colors delay-100"></div>
+                                </div>
+                                <div class="w-full h-2 bg-[#1a1a1a] border border-[#333] rounded-sm flex items-center px-1 justify-between">
+                                    <div class="w-4 h-0.5 bg-[#333] rounded"></div>
+                                    <div class="w-1 h-1 bg-gray-600 rounded-full group-hover:bg-green-500 group-hover:shadow-[0_0_4px_#22c55e] transition-colors delay-200"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Connection animation -->
+                        <div class="flex-1 h-[2px] bg-[#222] mx-1.5 relative flex items-center">
+                            <div class="absolute top-1/2 -translate-y-1/2 w-7 h-3.5 rounded bg-green-500/20 border border-green-500/50 items-center justify-center hidden group-hover:flex z-10 shadow-[0_0_10px_rgba(34,197,94,0.3)]" style="animation: flyHTML 2s infinite ease-in-out;">
+                                <span class="text-[5px] font-bold text-green-400 font-mono tracking-wider">&lt;HTML/&gt;</span>
+                            </div>
+                        </div>
+
+                        <!-- Right: Browser Window -->
+                        <div class="w-[110px] bg-black border border-[#222] rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.8)] overflow-hidden relative z-10 group-hover:translate-y-1 transition-transform duration-300">
+                            <!-- Header -->
+                            <div class="bg-[#111] border-b border-[#222] p-1.5 flex gap-1 items-center">
+                                <div class="w-1.5 h-1.5 rounded-full bg-[#333] group-hover:bg-red-500/50 transition-colors"></div>
+                                <div class="w-1.5 h-1.5 rounded-full bg-[#333] group-hover:bg-yellow-500/50 transition-colors"></div>
+                                <div class="w-1.5 h-1.5 rounded-full bg-[#333] group-hover:bg-green-500/50 transition-colors"></div>
+                            </div>
+                            <!-- Content Area -->
+                            <div class="p-2 bg-[#050505] min-h-[55px] relative">
+                                <!-- Rendered Page Mockup -->
+                                <div class="w-full h-10 border border-[#222] group-hover:border-green-500/20 bg-[#0a0a0a] group-hover:bg-green-500/5 rounded p-1.5 flex flex-col gap-1.5 relative overflow-hidden transition-colors duration-0">
+                                    <div class="w-full h-2 bg-[#222] group-hover:bg-green-500/30 rounded-sm transition-colors duration-0"></div>
+                                    <div class="space-y-1">
+                                        <div class="w-full h-1 bg-[#222] rounded-sm"></div>
+                                        <div class="w-5/6 h-1 bg-[#222] rounded-sm"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Mask for reveal animation -->
+                                <div class="absolute inset-0 bg-[#050505] origin-top hidden group-hover:block z-20" style="animation: revealHTML 2s infinite ease-in-out;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h4 class="text-lg font-semibold mb-2">Monolithic Rendering</h4>
+                    <p class="text-sm text-dim leading-relaxed">Ship highly optimized HTML directly from the server. No client-side hydration delays or heavy JS bundles required.</p>
+                </div>
+            </div>
+            
+            <!-- Card 3 -->
+            <div class="bg-[#0a0a0a] border border-[#222] rounded-xl overflow-hidden flex flex-col hover:border-[#444] transition-colors group">
+                <div class="h-40 bg-[#111] border-b border-[#222] relative flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_center,#1a1a1a_0%,#0a0a0a_100%)]">
+                    <div class="w-full flex items-center justify-center px-4 md:px-6 relative">
+                        <!-- Left: File System -->
+                        <div class="w-[110px] bg-[#050505] border border-[#222] rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] p-2 font-mono text-[9px] relative z-10 group-hover:-translate-y-1 transition-transform duration-300">
+                            <div class="flex items-center gap-1.5 mb-1.5 text-gray-500">
+                                <svg class="w-3 h-3 text-pink-500/70" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+                                <span>pages/</span>
+                            </div>
+                            <div class="flex flex-col gap-1 pl-2 border-l border-[#333] ml-1.5 text-gray-500">
+                                <div class="flex items-center gap-1.5 pl-1.5">
+                                    <svg class="w-2.5 h-2.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                                    <span>index.pphx</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 pl-1.5 text-gray-500 group-hover:bg-pink-500/10 group-hover:text-pink-400 py-1 rounded-r relative group-hover:shadow-[inset_1px_0_0_#ec4899] transition-all duration-300">
+                                    <svg class="w-2.5 h-2.5 text-gray-600 group-hover:text-pink-400 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                                    <span>about.pphx</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 pl-1.5">
+                                    <svg class="w-2.5 h-2.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                                    <span>[slug].pphx</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Connection animation -->
+                        <div class="flex-1 h-px border-t border-dashed border-[#444] relative z-0 mx-2">
+                            <div class="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-pink-500 rounded-full shadow-[0_0_8px_#ec4899] hidden group-hover:block" style="animation: pinkDotFlow 1.5s infinite ease-in-out;"></div>
+                        </div>
+
+                        <!-- Right: Browser Window -->
+                        <div class="w-[110px] bg-black border border-[#222] rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] overflow-hidden relative z-10 group-hover:translate-y-1 transition-transform duration-300">
+                            <div class="bg-[#111] border-b border-[#222] p-1.5 flex gap-1 items-center">
+                                <div class="w-1.5 h-1.5 rounded-full bg-red-500/40"></div>
+                                <div class="w-1.5 h-1.5 rounded-full bg-yellow-500/40"></div>
+                                <div class="w-1.5 h-1.5 rounded-full bg-green-500/40"></div>
+                            </div>
+                            <div class="p-2">
+                                <div class="bg-[#111] border border-[#333] group-hover:border-pink-500/50 transition-colors rounded px-1.5 py-1 flex items-center font-mono text-[7px] text-gray-400 relative">
+                                    <span class="text-gray-600 mr-0.5">site.com</span><span class="text-gray-500 group-hover:text-pink-400 transition-colors">/about</span>
+                                </div>
+                                <!-- Mock Page Content -->
+                                <div class="mt-2 space-y-1 px-0.5 pb-1">
+                                    <div class="h-1 bg-[#222] rounded w-3/4"></div>
+                                    <div class="h-1 bg-[#222] rounded w-full"></div>
+                                    <div class="h-1 bg-[#222] rounded w-5/6"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h4 class="text-lg font-semibold mb-2">True File-Based Routing</h4>
+                    <p class="text-sm text-dim leading-relaxed">Just create a file in `src/pages` and it becomes a route. PPHLX handles the complex URL resolution seamlessly.</p>
+                </div>
+            </div>
+            
+            <!-- Card 4 -->
+            <div class="bg-[#0a0a0a] border border-[#222] rounded-xl overflow-hidden flex flex-col hover:border-[#444] transition-colors group">
+                <div class="p-6 pt-10">
+                    <h4 class="text-lg font-semibold mb-2">Data Fetching</h4>
+                    <p class="text-sm text-dim leading-relaxed">Make your database calls synchronous and secure. Spark leverages the PHP engine to render data instantly on request.</p>
+                </div>
+            </div>
+            
+            <!-- Card 5 -->
+            <div class="bg-[#0a0a0a] border border-[#222] rounded-xl overflow-hidden flex flex-col hover:border-[#444] transition-colors group">
+                <div class="p-6 pt-10">
+                    <h4 class="text-lg font-semibold mb-2">CSS Support</h4>
+                    <p class="text-sm text-dim leading-relaxed">Style your application with your favorite tools, including first-class support for Tailwind CSS and global stylesheets.</p>
+                </div>
+            </div>
+            
+            <!-- Card 6 -->
+            <div class="bg-[#0a0a0a] border border-[#222] rounded-xl overflow-hidden flex flex-col hover:border-[#444] transition-colors group">
+                <div class="p-6 pt-10">
+                    <h4 class="text-lg font-semibold mb-2">Zero Configuration</h4>
+                    <p class="text-sm text-dim leading-relaxed">Flexible rendering and layout structures without complex setups. Get started instantly with the Spark template.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/spark-logo.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/social.png">
+
+    <!-- SEO & Social Share -->
+    <meta name="description" content="Spark - The PPHLX Monolith Template. Build and deploy blazing fast monolithic applications with PHP.">
+    <meta name="theme-color" content="#000000">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pmc.jackiecrafts.com/">
+    <meta property="og:title" content="{{title}}">
+    <meta property="og:description" content="Spark - The PPHLX Monolith Template. Build and deploy blazing fast monolithic applications with PHP.">
+    <meta property="og:image" content="/social.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{title}}">
+    <meta name="twitter:description" content="Spark - The PPHLX Monolith Template. Build and deploy blazing fast monolithic applications with PHP.">
+    <meta name="twitter:image" content="/social.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/css/tailwind.css">
+    <!-- End critical styles -->
+    {{PPHLX_CSS}}
+</head>
+<body class="relative min-h-screen flex flex-col">
+    <main>
+        {{slot}}
+    </main>
+    <script>
+        const searchTrigger = document.getElementById('search-trigger');
+        const searchModal = document.getElementById('search-modal');
+        const searchClose = document.getElementById('search-close');
+        const searchInput = document.getElementById('search-input');
+
+        function openSearch() {
+            if(searchModal) {
+                searchModal.classList.add('active');
+                searchInput.focus();
+            }
+        }
+
+        function closeSearch() {
+            if(searchModal) {
+                searchModal.classList.remove('active');
+            }
+        }
+
+        if(searchTrigger) {
+            searchTrigger.addEventListener('click', openSearch);
+        }
+
+        if(searchClose) {
+            searchClose.addEventListener('click', closeSearch);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                openSearch();
+            }
+            if (e.key === 'Escape') {
+                closeSearch();
+            }
+        });
+    </script>
+    {{PPHLX_JS}}
+</body>
+</html>

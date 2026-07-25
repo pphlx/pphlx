@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.4] - 2026-07-25
+
+### Added
+- **Pure 100% In-Memory Go HTTP Dev Server Engine**: Refactored `pphlx dev` to compile pages and evaluate templates 100% in-memory without creating `.pphlx_dev_cache/` or `.pphlx_router.php` files on disk.
+- **2-Pass Dependency Graph Compilation & Component Suppression**: Automatically tracks component dependencies via `@import` statements to inline template components into parent routes while suppressing duplicate component emissions in `dist/`.
+- **Safe Empty `dist/` Directory Contents Wipe (`wipeDirContents`)**: Safely clears files and subdirectories inside `dist/*` while preserving the root `dist/` directory handle for active dev servers and file explorers.
+- **`.pphlxignore` Git-Style Exclusion Manifest**: Support for `.pphlxignore` build exclusion rules with wildcard matching.
+- **High-Performance Go-Optimized Dev Server Request Logger**: Real-time HTTP request logging with channel-buffered non-blocking worker (`logChan`), zero-allocation object pooling (`sync.Pool`), sub-millisecond precision (`µs`/`ms`), and category badges (`(page)`, `(virtual)`, `(asset)`, `(missing)`).
+- **Flexible `srcDir` Entry Resolution**: Added support for configuring `srcDir` as either a directory (e.g., `"src"`, `"src/demo"`) or an explicit template file (e.g., `"src/index.pphx"`).
+- **In-Memory Static Asset Fallback**: Multi-tier fallback serving static assets from `public/` and `src/` directly in memory without disk copies.
+- **Formatted Ready Banner**: Updated CLI dev server startup banner and ANSI color styling.
+
+---
+
 ## [1.1.3] - 2026-07-24
 
 ### Added
