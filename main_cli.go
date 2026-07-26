@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -73,12 +72,12 @@ func main() {
 				configFile := filepath.Join(configDir, "telemetry.json")
 
 				if subCmd == "disable" {
-					ioutil.WriteFile(configFile, []byte(`{"disabled": true}`), 0644)
+					os.WriteFile(configFile, []byte(`{"disabled": true}`), 0644)
 					fmt.Println("✓ PPHLX telemetry has been disabled globally on this machine.")
 					os.Exit(0)
 				}
 				if subCmd == "enable" {
-					ioutil.WriteFile(configFile, []byte(`{"disabled": false}`), 0644)
+					os.WriteFile(configFile, []byte(`{"disabled": false}`), 0644)
 					fmt.Println("✓ PPHLX telemetry has been enabled globally on this machine.")
 					os.Exit(0)
 				}
@@ -119,9 +118,11 @@ func main() {
 	// Default command is "build", check if user passed "dev" or "watch"
 	activeMode = "build"
 	if len(os.Args) > 1 {
-		cmd := strings.ToLower(os.Args[1])
-		if cmd == "dev" || cmd == "watch" {
+		switch strings.ToLower(os.Args[1]) {
+		case "dev", "watch":
 			activeMode = "dev"
+		case "preview", "start":
+			activeMode = "preview"
 		}
 	}
 
@@ -159,7 +160,7 @@ func main() {
 		}
 	}
 
-	configData, err := ioutil.ReadFile(configPath)
+	configData, err := os.ReadFile(configPath)
 	if err != nil {
 		fmt.Printf("Error reading config '%s': %v\n", configPath, err)
 		os.Exit(1)
@@ -297,9 +298,19 @@ func main() {
 		config.Output.Target = "php"
 	}
 
-	// Run initial compilation for build mode (dev mode compiles into dev cache inside startDevServerAndWatcher)
-	if activeMode != "dev" {
+	// Run initial compilation for build mode, or auto-build for preview/start if dist is missing or empty
+	if activeMode == "build" {
 		compileAll(config, projectDir)
+	} else if activeMode == "preview" {
+		outDir := filepath.Join(projectDir, config.OutDir)
+		if config.OutDir == "" {
+			outDir = filepath.Join(projectDir, "dist")
+		}
+		entries, err := os.ReadDir(outDir)
+		if os.IsNotExist(err) || len(entries) == 0 {
+			fmt.Println("[Notice] No pre-built output found in dist. Compiling project before starting preview server...")
+			compileAll(config, projectDir)
+		}
 	}
 
 	// Non-blocking background telemetry dispatch
@@ -319,7 +330,7 @@ func isTelemetryDisabled() bool {
 		return false
 	}
 	configFile := filepath.Join(homeDir, ".pphlx", "telemetry.json")
-	data, err := ioutil.ReadFile(configFile)
+	data, err := os.ReadFile(configFile)
 	if err == nil && strings.Contains(string(data), `"disabled": true`) {
 		return true
 	}
@@ -379,7 +390,7 @@ func runInitCLI() {
 	pkgPath := "package.json"
 	var pkgData map[string]interface{}
 	if _, err := os.Stat(pkgPath); err == nil {
-		content, _ := ioutil.ReadFile(pkgPath)
+		content, _ := os.ReadFile(pkgPath)
 		json.Unmarshal(content, &pkgData)
 	}
 	if pkgData == nil {
@@ -401,7 +412,7 @@ func runInitCLI() {
 	pkgData["scripts"] = scripts
 
 	pkgBytes, _ := json.MarshalIndent(pkgData, "", "  ")
-	ioutil.WriteFile(pkgPath, pkgBytes, 0644)
+	os.WriteFile(pkgPath, pkgBytes, 0644)
 	fmt.Println("✓ Configured package.json scripts")
 
 	// 2. Create pphlx.json
@@ -417,11 +428,11 @@ func runInitCLI() {
 				"watch": "pphlx watch",
 			},
 			"dependencies": map[string]string{
-				"pphlx": "^1.1.0",
+				"pphlx": "^" + Version,
 			},
 		}
 		pBytes, _ := json.MarshalIndent(pphlxJson, "", "  ")
-		ioutil.WriteFile(pphlxJsonPath, pBytes, 0644)
+		os.WriteFile(pphlxJsonPath, pBytes, 0644)
 		fmt.Println("✓ Created pphlx.json (Project Manifest)")
 	}
 
@@ -438,7 +449,7 @@ func runInitCLI() {
 			},
 		}
 		cBytes, _ := json.MarshalIndent(configJson, "", "  ")
-		ioutil.WriteFile(configJsonPath, cBytes, 0644)
+		os.WriteFile(configJsonPath, cBytes, 0644)
 		fmt.Println("✓ Created pphlx.config.json (Compiler Config)")
 	}
 
@@ -456,7 +467,7 @@ export default defineConfig({
   }
 });
 `
-		ioutil.WriteFile(viteConfigPath, []byte(viteContent), 0644)
+		os.WriteFile(viteConfigPath, []byte(viteContent), 0644)
 		fmt.Println("✓ Created pphlx.vite.config.mjs (Vite Integration Config)")
 	}
 
@@ -486,7 +497,7 @@ $_title = !empty($title) ? $title : 'PPHLX Monolith App';
 </body>
 </html>
 `
-		ioutil.WriteFile("layouts/Layout.pphx", []byte(layoutContent), 0644)
+		os.WriteFile("layouts/Layout.pphx", []byte(layoutContent), 0644)
 		fmt.Println("✓ Created layouts/Layout.pphx")
 	}
 
@@ -505,7 +516,7 @@ $_title = !empty($title) ? $title : 'PPHLX Monolith App';
     </div>
 </Layout>
 `
-		ioutil.WriteFile("index.pphx", []byte(indexContent), 0644)
+		os.WriteFile("index.pphx", []byte(indexContent), 0644)
 		fmt.Println("✓ Created root index.pphx template")
 	}
 

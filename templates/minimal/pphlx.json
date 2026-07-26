@@ -8,6 +8,6 @@
     "watch": "pphlx watch"
   },
   "dependencies": {
-    "pphlx": "^1.1.0"
+    "pphlx": "^1.1.5"
   }
 }

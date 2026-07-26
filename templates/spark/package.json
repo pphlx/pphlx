@@ -1,7 +1,7 @@
 {
   "author": "PPHLX",
   "dependencies": {
-    "pphlx": "1.1.4"
+    "pphlx": "1.1.5"
   },
   "name": "pphlx-spark",
   "version": "1.0.0",
