@@ -39,7 +39,8 @@ func main() {
 			currentDir = ""
 		}
 		
-		compiledPHP, css, jsList, err := compilePage(content, currentDir, "src")
+		// Single source of truth: Call CompilePageWithAssets defined in main.go
+		compiledPHP, css, jsList, err := CompilePageWithAssets(content, currentDir, "src")
 		
 		errStr := ""
 		if err != nil {

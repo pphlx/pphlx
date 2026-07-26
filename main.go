@@ -8,8 +8,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -26,7 +26,7 @@ import (
 )
 
 // Single source of truth for PPHLX compiler version
-const Version = "1.1.4"
+const Version = "1.1.5"
 
 // OutputConfig holds compilation output options
 type OutputConfig struct {
@@ -105,7 +105,7 @@ type Component struct {
 var mcpFS embed.FS
 
 var (
-	importRegex          = regexp.MustCompile(`(?m)^@import\s+(\w+)\s+from\s+'([^']+)'\s*\r?\n?`)
+	importRegex          = regexp.MustCompile(`(?m)^@import\s+(\w+)\s+from\s+['"]([^'"]+)['"]\s*\r?\n?`)
 	styleRegex           = regexp.MustCompile(`(?s)<style>(.*?)</style>`)
 	scriptRegex          = regexp.MustCompile(`(?s)<script>(.*?)</script>`)
 	templateRegex        = regexp.MustCompile(`(?s)<template[^>]*>(.*?)</template>`)
@@ -134,7 +134,7 @@ func readProjectFile(filePath string) ([]byte, error) {
 		}
 		return nil, fmt.Errorf("file not found in VFS: %s", filePath)
 	}
-	return ioutil.ReadFile(filePath)
+	return os.ReadFile(filePath)
 }
 
 // Diagnostic represents an AST or compiler lint error
@@ -339,7 +339,7 @@ func pruneEmptyDirs(dirPath string) {
 		if err != nil || !info.IsDir() || path == dirPath {
 			return nil
 		}
-		entries, err := ioutil.ReadDir(path)
+		entries, err := os.ReadDir(path)
 		if err == nil && len(entries) == 0 {
 			_ = os.Remove(path)
 		}
@@ -352,7 +352,7 @@ func wipeDirContents(dirPath string) error {
 	if !projectFileExists(dirPath) {
 		return os.MkdirAll(dirPath, 0755)
 	}
-	entries, err := ioutil.ReadDir(dirPath)
+	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err
 	}
@@ -414,6 +414,31 @@ func isPphlxIgnored(relPath string, ignorePatterns []string) bool {
 	return false
 }
 
+// FrameworkSourceExtensions defines supported UI framework source extensions that must be omitted from standalone dist/ copying if not compiled
+var FrameworkSourceExtensions = map[string]bool{
+	".jsx":       true,
+	".tsx":       true,
+	".vue":       true,
+	".svelte":    true,
+	".solid.jsx": true,
+	".solid.tsx": true,
+	".ts":        true,
+	".mts":       true,
+	".cts":       true,
+	".marko":     true,
+	".astro":     true,
+}
+
+// isFrameworkSourceFile checks if a path ends with any supported UI framework source extension
+func isFrameworkSourceFile(filePath string) bool {
+	lowerPath := strings.ToLower(filePath)
+	if strings.HasSuffix(lowerPath, ".solid.jsx") || strings.HasSuffix(lowerPath, ".solid.tsx") {
+		return true
+	}
+	ext := filepath.Ext(lowerPath)
+	return FrameworkSourceExtensions[ext]
+}
+
 // buildDependencyGraph scans @import statements across srcDir to find imported components/helpers
 func buildDependencyGraph(srcDir string, ignorePatterns []string) map[string]bool {
 	importedAsComponent := make(map[string]bool)
@@ -421,8 +446,44 @@ func buildDependencyGraph(srcDir string, ignorePatterns []string) map[string]boo
 		return importedAsComponent
 	}
 
+	// Recursive scanner helper for nested component dependencies
+	var scanFileDependencies func(filePath string)
+	scanFileDependencies = func(filePath string) {
+		relPath, errRel := filepath.Rel(srcDir, filePath)
+		if errRel == nil && isPphlxIgnored(relPath, ignorePatterns) {
+			return
+		}
+
+		contentBytes, err := readProjectFile(filePath)
+		if err != nil {
+			return
+		}
+		dir := filepath.Dir(filePath)
+		matches := importRegex.FindAllStringSubmatch(string(contentBytes), -1)
+		for _, m := range matches {
+			if len(m) > 2 {
+				importPath := m[2]
+				resolvedPath := filepath.Clean(filepath.Join(dir, importPath))
+				cleanSlash := strings.ReplaceAll(resolvedPath, "\\", "/")
+
+				childRel, childErr := filepath.Rel(srcDir, resolvedPath)
+				if childErr == nil && isPphlxIgnored(childRel, ignorePatterns) {
+					continue
+				}
+
+				if !importedAsComponent[resolvedPath] {
+					importedAsComponent[resolvedPath] = true
+					importedAsComponent[cleanSlash] = true
+					if projectFileExists(resolvedPath) {
+						scanFileDependencies(resolvedPath)
+					}
+				}
+			}
+		}
+	}
+
 	_ = filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() || !strings.HasSuffix(info.Name(), ".pphx") {
+		if err != nil || info.IsDir() {
 			return nil
 		}
 
@@ -431,25 +492,55 @@ func buildDependencyGraph(srcDir string, ignorePatterns []string) map[string]boo
 			return nil
 		}
 
-		contentBytes, err := readProjectFile(path)
-		if err != nil {
-			return nil
-		}
-
-		dir := filepath.Dir(path)
-		matches := importRegex.FindAllStringSubmatch(string(contentBytes), -1)
-		for _, m := range matches {
-			if len(m) > 2 {
-				importPath := m[2]
-				resolvedPath := filepath.Clean(filepath.Join(dir, importPath))
-				importedAsComponent[resolvedPath] = true
-				importedAsComponent[strings.ReplaceAll(resolvedPath, "\\", "/")] = true
-			}
+		if strings.HasSuffix(info.Name(), ".pphx") || isFrameworkSourceFile(path) {
+			scanFileDependencies(path)
 		}
 		return nil
 	})
 
 	return importedAsComponent
+}
+
+// formatDuration formats a time.Duration into dynamic human-readable units (ns, µs, ms, s, m, h, d, mo, y)
+func formatDuration(d time.Duration) string {
+	if d < time.Microsecond {
+		return fmt.Sprintf("%dns", d.Nanoseconds())
+	}
+	if d < time.Millisecond {
+		return fmt.Sprintf("%.2fµs", float64(d.Nanoseconds())/1000.0)
+	}
+	if d < time.Second {
+		return fmt.Sprintf("%.0fms", float64(d.Milliseconds()))
+	}
+	if d < time.Minute {
+		return fmt.Sprintf("%.2fs", d.Seconds())
+	}
+	if d < time.Hour {
+		mins := int(d.Minutes())
+		secs := d.Seconds() - float64(mins*60)
+		return fmt.Sprintf("%dm %.1fs", mins, secs)
+	}
+	if d < 24*time.Hour {
+		hours := int(d.Hours())
+		mins := int(d.Minutes()) % 60
+		secs := int(d.Seconds()) % 60
+		return fmt.Sprintf("%dh %dm %ds", hours, mins, secs)
+	}
+	days := int(d.Hours() / 24)
+	if days < 30 {
+		hours := int(d.Hours()) % 24
+		mins := int(d.Minutes()) % 60
+		return fmt.Sprintf("%dd %dh %dm", days, hours, mins)
+	}
+	months := days / 30
+	remDays := days % 30
+	if months < 12 {
+		hours := int(d.Hours()) % 24
+		return fmt.Sprintf("%dmo %dd %dh", months, remDays, hours)
+	}
+	years := months / 12
+	remMonths := months % 12
+	return fmt.Sprintf("%dy %dmo %dd", years, remMonths, remDays)
 }
 
 // compileAll executes the main compilation loop for all templates
@@ -462,8 +553,27 @@ func compileAll(config Config, projectDir string) {
 	srcRootDir, entryFile := resolveSourceRootAndEntry(config, projectDir)
 	srcDir := srcRootDir
 	outDir := filepath.Join(projectDir, config.OutDir)
-	cssOut := filepath.Join(projectDir, config.CssOut)
-	jsOut := filepath.Join(projectDir, config.JsOut)
+	if config.OutDir == "" {
+		outDir = filepath.Join(projectDir, "dist")
+	}
+
+	cssOutVal := config.CssOut
+	if cssOutVal == "" {
+		cssOutVal = filepath.Join(config.OutDir, "assets", "css", "styles.css")
+		if config.OutDir == "" {
+			cssOutVal = filepath.Join("dist", "assets", "css", "styles.css")
+		}
+	}
+	cssOut := filepath.Join(projectDir, cssOutVal)
+
+	jsOutVal := config.JsOut
+	if jsOutVal == "" {
+		jsOutVal = filepath.Join(config.OutDir, "assets", "js", "bundle.js")
+		if config.OutDir == "" {
+			jsOutVal = filepath.Join("dist", "assets", "js", "bundle.js")
+		}
+	}
+	jsOut := filepath.Join(projectDir, jsOutVal)
 
 	// Run AST Diagnostic & Lint Engine before wiping outDir
 	diagnostics := RunDiagnostics(srcDir, projectDir)
@@ -591,18 +701,19 @@ window.pphlx.desktop = {
 		}
 
 		// Process files
-		if strings.HasSuffix(info.Name(), ".pphx") {
-			// Enforce src/ boundary & component suppression:
-			// If file is imported as a component and NOT inside pages/, suppress standalone emission!
-			cleanRel := strings.ReplaceAll(relPath, "\\", "/")
-			isInsidePages := strings.HasPrefix(cleanRel, "pages/") || cleanRel == "pages"
-			canonicalPath := filepath.Clean(path)
-			canonicalPathSlash := strings.ReplaceAll(canonicalPath, "\\", "/")
+		cleanRel := strings.ReplaceAll(relPath, "\\", "/")
+		isInsidePages := strings.HasPrefix(cleanRel, "pages/") || cleanRel == "pages"
+		canonicalPath := filepath.Clean(path)
+		canonicalPathSlash := strings.ReplaceAll(canonicalPath, "\\", "/")
 
-			if (importedAsComponent[canonicalPath] || importedAsComponent[canonicalPathSlash]) && !isInsidePages {
-				// Suppress standalone component emission in dist/
-				return nil
-			}
+		// Universal Component Suppression Rule:
+		// If ANY file (.pphx, .js, .jsx, .vue, .svelte, .solid, .ts, .php, .html)
+		// was imported as a component dependency and is NOT inside pages/, suppress standalone emission/copying in dist/!
+		if (importedAsComponent[canonicalPath] || importedAsComponent[canonicalPathSlash]) && !isInsidePages {
+			return nil
+		}
+
+		if strings.HasSuffix(info.Name(), ".pphx") {
 			ext := ".php"
 			switch targetLower {
 			case "ssg", "android", "ios":
@@ -614,7 +725,7 @@ window.pphlx.desktop = {
 			}
 			phpOutPath := strings.TrimSuffix(outPath, ".pphx") + ext
 
-			pageContent, err := ioutil.ReadFile(path)
+			pageContent, err := os.ReadFile(path)
 			if err != nil {
 				return err
 			}
@@ -672,31 +783,48 @@ window.pphlx.desktop = {
 				}
 			}
 
-			// Inject css and js links (calculating correct relative paths)
-			cssRelPath := getRelativePath(phpOutPath, cssOut)
-			jsRelPath := getRelativePath(phpOutPath, jsOut)
-
-			cssTag := fmt.Sprintf(`<link rel="stylesheet" href="%s">`, cssRelPath)
-			jsTag := fmt.Sprintf(`<script src="%s"></script>`, jsRelPath)
+			// Autonomous Conditional Asset Tag Injection
+			hasCssContent := strings.TrimSpace(globalCSS.String()) != ""
+			hasJsContent := strings.TrimSpace(globalJS.String()) != "" || len(viteComponents) > 0
 
 			hasCssPlaceholder := strings.Contains(compiledPage, "{{PPHLX_CSS}}")
 			hasJsPlaceholder := strings.Contains(compiledPage, "{{PPHLX_JS}}")
 
-			if hasCssPlaceholder {
-				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", cssTag)
-			}
-			if hasJsPlaceholder {
-				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", jsTag)
-			}
-
-			// Fallback: Inject before </head> if no explicit placeholders were used
-			if strings.Contains(compiledPage, "</head>") {
-				if !hasCssPlaceholder {
+			if hasCssContent {
+				cssRelPath := getRelativePath(phpOutPath, cssOut)
+				cssTag := fmt.Sprintf(`<link rel="stylesheet" href="%s">`, cssRelPath)
+				if hasCssPlaceholder {
+					compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", cssTag)
+				} else if strings.Contains(compiledPage, "</head>") {
 					compiledPage = strings.ReplaceAll(compiledPage, "</head>", cssTag+"\n</head>")
 				}
-				if !hasJsPlaceholder {
-					compiledPage = strings.ReplaceAll(compiledPage, "</head>", jsTag+"\n</head>")
+			} else if hasCssPlaceholder {
+				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", "")
+			}
+
+			if hasJsContent {
+				jsTargetForRel := jsOut
+				if strings.TrimSpace(config.JsOut) == "" {
+					jsTargetForRel = filepath.Join(projectDir, config.OutDir, "assets", "js", "bundle.js")
+					if config.OutDir == "" {
+						jsTargetForRel = filepath.Join(projectDir, "dist", "assets", "js", "bundle.js")
+					}
 				}
+				jsRelPath := getRelativePath(phpOutPath, jsTargetForRel)
+				if jsRelPath != "" {
+					jsTag := fmt.Sprintf(`<script src="%s"></script>`, jsRelPath)
+					if hasJsPlaceholder {
+						compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", jsTag)
+					} else if strings.Contains(compiledPage, "</body>") {
+						compiledPage = strings.ReplaceAll(compiledPage, "</body>", jsTag+"\n</body>")
+					} else if strings.Contains(compiledPage, "</head>") {
+						compiledPage = strings.ReplaceAll(compiledPage, "</head>", jsTag+"\n</head>")
+					}
+				} else if hasJsPlaceholder {
+					compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", "")
+				}
+			} else if hasJsPlaceholder {
+				compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", "")
 			}
 
 			if strings.Contains(compiledPage, `type="text/partytown"`) || strings.Contains(compiledPage, `type='text/partytown'`) {
@@ -711,7 +839,7 @@ window.pphlx.desktop = {
 			if targetLower == "ssg" || targetLower == "android" || targetLower == "ios" {
 				// Evaluate PHP to static HTML
 				tempFile := phpOutPath + ".tmp.php"
-				err = ioutil.WriteFile(tempFile, pageBytes, 0644)
+				err = os.WriteFile(tempFile, pageBytes, 0644)
 				if err == nil {
 					cmd := exec.Command("php", tempFile)
 					outBytes, cmdErr := cmd.Output()
@@ -725,24 +853,29 @@ window.pphlx.desktop = {
 			}
 
 			os.MkdirAll(filepath.Dir(phpOutPath), 0755)
-			err = ioutil.WriteFile(phpOutPath, pageBytes, 0644)
+			err = os.WriteFile(phpOutPath, pageBytes, 0644)
 			if err != nil {
 				return err
 			}
 			if entryFile != "" && filepath.Clean(path) == filepath.Clean(entryFile) {
 				entryOutPath := filepath.Join(targetOutDir, "index"+ext)
 				if entryOutPath != phpOutPath {
-					_ = ioutil.WriteFile(entryOutPath, pageBytes, 0644)
+					_ = os.WriteFile(entryOutPath, pageBytes, 0644)
 				}
 			}
 		} else {
-			// Skip project manifests, configs, and lockfiles from being copied as static assets
+			// Skip project manifests, configs, lockfiles, and unabsorbed framework source files from being copied as static assets into dist/
 			baseName := info.Name()
 			if baseName == "package.json" || baseName == "package-lock.json" || baseName == "pphlx.json" || baseName == "pphlx.config.json" || baseName == "pphlx.config.mjs" || baseName == "pphlx.vite.config.mjs" || baseName == "go.mod" || baseName == "go.sum" || strings.HasPrefix(baseName, ".") {
 				return nil
 			}
 
-			// Smart copy non-.pphx files
+			// Omit unabsorbed framework source files (.jsx, .vue, .svelte, etc.) from dist/ copying
+			if isFrameworkSourceFile(path) {
+				return nil
+			}
+
+			// Smart copy static asset files as-is with exact tree hierarchy
 			err = copyFileIfNewer(path, outPath)
 			if err != nil {
 				return fmt.Errorf("error copying file %s to %s: %v", path, outPath, err)
@@ -750,7 +883,7 @@ window.pphlx.desktop = {
 
 			// If it's a php file, check sitemap inclusion
 			if strings.HasSuffix(info.Name(), ".php") {
-				pageContent, err := ioutil.ReadFile(path)
+				pageContent, err := os.ReadFile(path)
 				if err == nil {
 					includeInSitemap := false
 					matches := sitemapOverrideRegex.FindStringSubmatch(string(pageContent))
@@ -806,24 +939,34 @@ window.pphlx.desktop = {
 			if info.IsDir() {
 				return os.MkdirAll(destPath, 0755)
 			}
-			data, err := ioutil.ReadFile(path)
+			data, err := os.ReadFile(path)
 			if err != nil {
 				return err
 			}
-			return ioutil.WriteFile(destPath, data, 0644)
+			return os.WriteFile(destPath, data, 0644)
 		})
 	}
 
 	targetCssOut := cssOut
+	if strings.TrimSpace(config.CssOut) == "" {
+		targetCssOut = filepath.Join(targetOutDir, "assets", "css", "styles.css")
+	}
+
 	targetJsOut := jsOut
+	if strings.TrimSpace(config.JsOut) == "" {
+		targetJsOut = filepath.Join(targetOutDir, "assets", "js", "bundle.js")
+	}
+
 	if activeMode == "dev" {
 		targetCssOut = filepath.Join(targetOutDir, "css", "styles.css")
 		targetJsOut = filepath.Join(targetOutDir, "js", "bundle.js")
 	}
 
-	// Write global CSS & JS (always write CSS to prevent 404)
-	os.MkdirAll(filepath.Dir(targetCssOut), 0755)
-	ioutil.WriteFile(targetCssOut, []byte(globalCSS.String()), 0644)
+	// Write global CSS bundle ONLY if non-empty CSS content exists
+	if strings.TrimSpace(globalCSS.String()) != "" {
+		os.MkdirAll(filepath.Dir(targetCssOut), 0755)
+		_ = os.WriteFile(targetCssOut, []byte(globalCSS.String()), 0644)
+	}
 
 	// Inject lightweight PPHLX Islands hydration runtime
 	runtimeScript := `
@@ -835,8 +978,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const islandId = island.id;
     const props = window.pphlxProps ? window.pphlxProps[islandId] : {};
     
-    if (window[compName]) {
-      const ComponentModule = window[compName];
+    let ComponentModule = window[compName];
+    if (!ComponentModule && window.PphlxViteComponents && window.PphlxViteComponents[compName]) {
+      ComponentModule = window.PphlxViteComponents[compName];
+    }
+    if (ComponentModule) {
       const Component = ComponentModule.default || ComponentModule;
       
       if (framework === "react" && window.ReactDOM && window.ReactDOM.createRoot) {
@@ -892,7 +1038,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	if globalJS.Len() > 0 {
 		os.MkdirAll(filepath.Dir(targetJsOut), 0755)
-		ioutil.WriteFile(targetJsOut, []byte(globalJS.String()), 0644)
+		os.WriteFile(targetJsOut, []byte(globalJS.String()), 0644)
 	}
 
 	// Trigger local Vite compilation if Svelte/Vue/Angular components are found
@@ -901,6 +1047,16 @@ document.addEventListener("DOMContentLoaded", () => {
 		if err != nil {
 			fmt.Printf("Vite Build Error: %v\n", err)
 			return
+		}
+		// Append compiled Vite bundle into targetJsOut so all Vue/Svelte/Solid components are loaded
+		viteBundlePath := filepath.Join(projectDir, config.OutDir, "assets", "js", "pphlx_vite.js")
+		if config.OutDir == "" {
+			viteBundlePath = filepath.Join(projectDir, "dist", "assets", "js", "pphlx_vite.js")
+		}
+		if viteJS, errRead := os.ReadFile(viteBundlePath); errRead == nil {
+			existingJS, _ := os.ReadFile(targetJsOut)
+			mergedJS := string(existingJS) + "\n" + string(viteJS) + "\n"
+			_ = os.WriteFile(targetJsOut, []byte(mergedJS), 0644)
 		}
 	}
 
@@ -922,8 +1078,8 @@ self.addEventListener('activate', () => self.clients.claim());
 self.addEventListener('fetch', (event) => {
   // Proxy partytown fetch event handler
 });`
-		ioutil.WriteFile(filepath.Join(partytownDir, "partytown.js"), []byte(partytownJS), 0644)
-		ioutil.WriteFile(filepath.Join(partytownDir, "partytown-sw.js"), []byte(partytownSW), 0644)
+		os.WriteFile(filepath.Join(partytownDir, "partytown.js"), []byte(partytownJS), 0644)
+		os.WriteFile(filepath.Join(partytownDir, "partytown-sw.js"), []byte(partytownSW), 0644)
 		fmt.Println("Generated native Partytown scripts in ~partytown/")
 	}
 
@@ -947,18 +1103,13 @@ self.addEventListener('fetch', (event) => {
 
 		sitemapBuilder.WriteString("</urlset>\n")
 		sitemapPath := filepath.Join(outDir, "sitemap.xml")
-		ioutil.WriteFile(sitemapPath, []byte(sitemapBuilder.String()), 0644)
+		os.WriteFile(sitemapPath, []byte(sitemapBuilder.String()), 0644)
 		fmt.Println("Generated sitemap.xml natively.")
 	}
 
 	pruneEmptyDirs(targetOutDir)
 
-	elapsedMs := float64(time.Since(startTime).Microseconds()) / 1000.0
-	if elapsedMs >= 10.0 {
-		fmt.Printf("✓ Built in %.0fms\n", elapsedMs)
-	} else {
-		fmt.Printf("✓ Built in %.1fms\n", elapsedMs)
-	}
+	fmt.Printf("✓ Built in %s\n", formatDuration(time.Since(startTime)))
 
 	if targetLower == "standalone" && activeMode == "build" {
 		fmt.Println("Compiling Standalone Go Binary...")
@@ -1042,7 +1193,7 @@ func main() {
 }
 `, config.OutDir, config.OutDir)
 
-		err = ioutil.WriteFile(standaloneFile, []byte(standaloneSource), 0644)
+		err = os.WriteFile(standaloneFile, []byte(standaloneSource), 0644)
 		if err == nil {
 			goStart := time.Now()
 			cmd := exec.Command("go", "build", "-o", binaryPath, standaloneFile)
@@ -1302,14 +1453,14 @@ func main() {
 		var copiedBridges []string
 		desktopSrcDir := filepath.Join(projectDir, config.SrcDir, "desktop")
 		if _, err := os.Stat(desktopSrcDir); err == nil {
-			files, _ := ioutil.ReadDir(desktopSrcDir)
+			files, _ := os.ReadDir(desktopSrcDir)
 			for _, file := range files {
 				if strings.HasSuffix(file.Name(), ".go") {
 					srcFilePath := filepath.Join(desktopSrcDir, file.Name())
 					dstFilePath := filepath.Join(projectDir, "temp_bridge_"+file.Name())
-					input, err := ioutil.ReadFile(srcFilePath)
+					input, err := os.ReadFile(srcFilePath)
 					if err == nil {
-						err = ioutil.WriteFile(dstFilePath, input, 0644)
+						err = os.WriteFile(dstFilePath, input, 0644)
 						if err == nil {
 							copiedBridges = append(copiedBridges, dstFilePath)
 						}
@@ -1318,7 +1469,7 @@ func main() {
 			}
 		}
 
-		err = ioutil.WriteFile(desktopFile, []byte(desktopSource), 0644)
+		err = os.WriteFile(desktopFile, []byte(desktopSource), 0644)
 		if err == nil {
 			buildFiles := []string{desktopFile}
 			buildFiles = append(buildFiles, copiedBridges...)
@@ -1384,7 +1535,7 @@ public class MainActivity extends Activity {
         setContentView(webView);
     }
 }`
-		ioutil.WriteFile(filepath.Join(androidDir, "app/src/main/java/org/pphlx/app/MainActivity.java"), []byte(javaSource), 0644)
+		os.WriteFile(filepath.Join(androidDir, "app/src/main/java/org/pphlx/app/MainActivity.java"), []byte(javaSource), 0644)
 
 		// Write AndroidManifest.xml
 		manifestSource := `<?xml version="1.0" encoding="utf-8"?>
@@ -1405,7 +1556,7 @@ public class MainActivity extends Activity {
         </activity>
     </application>
 </manifest>`
-		ioutil.WriteFile(filepath.Join(androidDir, "app/src/main/AndroidManifest.xml"), []byte(manifestSource), 0644)
+		os.WriteFile(filepath.Join(androidDir, "app/src/main/AndroidManifest.xml"), []byte(manifestSource), 0644)
 
 		// Write build.gradle files
 		gradleRootSource := `// Top-level build file
@@ -1424,7 +1575,7 @@ allprojects {
         mavenCentral()
     }
 }`
-		ioutil.WriteFile(filepath.Join(androidDir, "build.gradle"), []byte(gradleRootSource), 0644)
+		os.WriteFile(filepath.Join(androidDir, "build.gradle"), []byte(gradleRootSource), 0644)
 
 		gradleAppSource := `plugins {
     id 'com.android.application'
@@ -1440,7 +1591,7 @@ android {
         versionName "1.0"
     }
 }`
-		ioutil.WriteFile(filepath.Join(androidDir, "app/build.gradle"), []byte(gradleAppSource), 0644)
+		os.WriteFile(filepath.Join(androidDir, "app/build.gradle"), []byte(gradleAppSource), 0644)
 
 		// Copy web assets into Android assets
 		assetsDir := filepath.Join(androidDir, "app/src/main/assets")
@@ -1493,7 +1644,7 @@ class ViewController: UIViewController, WKUIDelegate {
         }
     }
 }`
-		ioutil.WriteFile(filepath.Join(iosDir, "PPHLXApp/ViewController.swift"), []byte(swiftSource), 0644)
+		os.WriteFile(filepath.Join(iosDir, "PPHLXApp/ViewController.swift"), []byte(swiftSource), 0644)
 
 		// Write AppDelegate.swift
 		appDelegateSource := `import UIKit
@@ -1509,7 +1660,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
 }`
-		ioutil.WriteFile(filepath.Join(iosDir, "PPHLXApp/AppDelegate.swift"), []byte(appDelegateSource), 0644)
+		os.WriteFile(filepath.Join(iosDir, "PPHLXApp/AppDelegate.swift"), []byte(appDelegateSource), 0644)
 
 		// Copy web assets into iOS www folder
 		wwwDir := filepath.Join(iosDir, "PPHLXApp/www")
@@ -1632,7 +1783,7 @@ func getInMemoryGlobalCSS(config Config, projectDir string) string {
 	srcRootDir, _ := resolveSourceRootAndEntry(config, projectDir)
 	_ = filepath.Walk(srcRootDir, func(path string, info os.FileInfo, err error) error {
 		if err == nil && !info.IsDir() && strings.HasSuffix(info.Name(), ".pphx") {
-			content, err := ioutil.ReadFile(path)
+			content, err := os.ReadFile(path)
 			if err == nil {
 				_, css, _, _ := compilePage(string(content), filepath.Dir(path), srcRootDir)
 				for _, style := range css {
@@ -1652,39 +1803,54 @@ func getInMemoryGlobalCSS(config Config, projectDir string) string {
 func getInMemoryGlobalJS() string {
 	return `
 // PPHLX Islands Runtime
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".pphlx-island").forEach(island => {
-    const compName = island.getAttribute("data-component");
-    const framework = island.getAttribute("data-framework") || "";
-    const islandId = island.id;
-    const props = window.pphlxProps ? window.pphlxProps[islandId] : {};
-    
-    if (window[compName]) {
-      const ComponentModule = window[compName];
-      const Component = ComponentModule.default || ComponentModule;
-      if (framework === "react" && window.ReactDOM && window.ReactDOM.createRoot) {
-        const root = window.ReactDOM.createRoot(island);
-        root.render(window.React.createElement(Component, props));
-      } else if (framework === "vue" && window.Vue && window.Vue.createApp) {
-        window.Vue.createApp(Component, props).mount(island);
-      } else if (framework === "svelte") {
-        if (Component.prototype && Component.prototype.$destroy) {
-          new Component({ target: island, props: props });
-        } else if (window.Svelte && window.Svelte.mount) {
-          window.Svelte.mount(Component, { target: island, props: props });
-        } else if (typeof Component === "function") {
-          Component(island, props);
-        }
-      } else if (framework === "solid" && window.SolidJS && window.SolidJS.render) {
-        window.SolidJS.render(() => Component(props), island);
-      } else if (framework === "preact" && window.preact && window.preact.render) {
-        window.preact.render(window.preact.h(Component, props), island);
-      } else if (Component.render) {
-        Component.render(island, props);
+(function() {
+  function initPphlxIslands() {
+    document.querySelectorAll(".pphlx-island").forEach(island => {
+      const compName = island.getAttribute("data-component");
+      const framework = island.getAttribute("data-framework") || "";
+      const islandId = island.id;
+      const props = window.pphlxProps ? window.pphlxProps[islandId] : {};
+      
+      let ComponentModule = window[compName];
+      if (!ComponentModule && window.PphlxViteComponents && window.PphlxViteComponents[compName]) {
+        ComponentModule = window.PphlxViteComponents[compName];
       }
-    }
-  });
-});
+      if (!ComponentModule && typeof window !== "undefined") {
+        try { ComponentModule = eval(compName); } catch(e) {}
+      }
+      
+      if (ComponentModule) {
+        const Component = ComponentModule.default || ComponentModule;
+        if (framework === "react" && window.ReactDOM && window.ReactDOM.createRoot) {
+          const root = window.ReactDOM.createRoot(island);
+          root.render(window.React.createElement(Component, props));
+        } else if (framework === "vue" && window.Vue && window.Vue.createApp) {
+          window.Vue.createApp(Component, props).mount(island);
+        } else if (framework === "svelte") {
+          if (Component.prototype && Component.prototype.$destroy) {
+            new Component({ target: island, props: props });
+          } else if (window.Svelte && window.Svelte.mount) {
+            window.Svelte.mount(Component, { target: island, props: props });
+          } else if (typeof Component === "function") {
+            Component(island, props);
+          }
+        } else if (framework === "solid" && window.SolidJS && window.SolidJS.render) {
+          window.SolidJS.render(() => Component(props), island);
+        } else if (framework === "preact" && window.preact && window.preact.render) {
+          window.preact.render(window.preact.h(Component, props), island);
+        } else if (Component.render) {
+          Component.render(island, props);
+        }
+      }
+    });
+  }
+
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    initPphlxIslands();
+  } else {
+    document.addEventListener("DOMContentLoaded", initPphlxIslands);
+  }
+})();
 `
 }
 
@@ -1775,39 +1941,139 @@ func startDevServerAndWatcher(config Config, projectDir string, mode string) {
 
 	if mode == "preview" {
 		currentPort := port
-		go func() {
-			fs := http.FileServer(http.Dir(outDir))
-			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				start := time.Now()
-				rl := devLoggerPool.Get().(*devResponseLogger)
-				rl.ResponseWriter = w
-				rl.statusCode = http.StatusOK
+		readyElapsedMs := time.Since(serverStartTime).Milliseconds()
 
+		fmt.Printf("\n  \x1b[30m\x1b[42m pphlx \x1b[0m \x1b[32mv%s\x1b[0m \x1b[90mpreview ready in\x1b[0m \x1b[37m%d\x1b[0m \x1b[90mms\x1b[0m\n\n", Version, readyElapsedMs)
+		fmt.Printf("  \x1b[90m┃\x1b[0m \x1b[1mLocal\x1b[0m    \x1b[36mhttp://localhost:%d/\x1b[0m\n", currentPort)
+		if hasHost {
+			ips := getLocalIPs()
+			for _, ip := range ips {
+				fmt.Printf("  \x1b[90m┃\x1b[0m \x1b[1mNetwork\x1b[0m  \x1b[36mhttp://%s:%d/\x1b[0m\n", ip, currentPort)
+			}
+		}
+		fmt.Printf("  \x1b[90m┃\x1b[0m \x1b[90mServing directory: %s\x1b[0m\n\n", outDir)
+
+		fs := http.FileServer(http.Dir(outDir))
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			rl := devLoggerPool.Get().(*devResponseLogger)
+			rl.ResponseWriter = w
+			rl.statusCode = http.StatusOK
+
+			reqPath := filepath.Clean(r.URL.Path)
+			targetFile := filepath.Join(outDir, reqPath)
+
+			if reqPath == "/" || reqPath == "\\" || reqPath == "." {
+				targetFile = filepath.Join(outDir, "index.php")
+				if _, err := os.Stat(targetFile); os.IsNotExist(err) {
+					targetFile = filepath.Join(outDir, "index.html")
+				}
+			} else if fi, err := os.Stat(targetFile); err != nil || fi.IsDir() {
+				if _, err := os.Stat(targetFile + ".php"); err == nil {
+					targetFile = targetFile + ".php"
+				} else if _, err := os.Stat(targetFile + ".html"); err == nil {
+					targetFile = targetFile + ".html"
+				} else if _, err := os.Stat(filepath.Join(targetFile, "index.php")); err == nil {
+					targetFile = filepath.Join(targetFile, "index.php")
+				} else if _, err := os.Stat(filepath.Join(targetFile, "index.html")); err == nil {
+					targetFile = filepath.Join(targetFile, "index.html")
+				}
+			}
+
+			if strings.HasSuffix(targetFile, ".php") {
+				if phpContent, err := os.ReadFile(targetFile); err == nil {
+					finalHtml := string(phpContent)
+					_, phpErr := exec.LookPath("php")
+					if phpErr == nil {
+						cmd := exec.Command("php", "-r", "eval('?>'.file_get_contents('php://stdin'));")
+						cmd.Stdin = strings.NewReader(finalHtml)
+						outBytes, cmdErr := cmd.CombinedOutput()
+						if cmdErr == nil {
+							finalHtml = string(outBytes)
+						} else {
+							fmt.Printf("\033[1;31m[PHP Preview Server Evaluation Error]\033[0m %v\nOutput: %s\n", cmdErr, string(outBytes))
+						}
+					}
+					if strings.Contains(finalHtml, "<?php") {
+						phpCodeBlockRegex := regexp.MustCompile(`(?s)<\?php.*?\?>`)
+						finalHtml = phpCodeBlockRegex.ReplaceAllString(finalHtml, "")
+					}
+					rl.Header().Set("Content-Type", "text/html; charset=utf-8")
+					rl.Write([]byte(finalHtml))
+				} else {
+					fs.ServeHTTP(rl, r)
+				}
+			} else if strings.HasSuffix(targetFile, ".html") {
+				rl.Header().Set("Content-Type", "text/html; charset=utf-8")
+				http.ServeFile(rl, r, targetFile)
+			} else {
 				fs.ServeHTTP(rl, r)
+			}
 
-				dur := time.Since(start)
-				category := "asset"
-				if rl.statusCode >= 400 {
-					category = "missing"
-				}
-				select {
-				case logChan <- LogEvent{
-					Timestamp: time.Now().Format("15:04:05"),
-					Status:    rl.statusCode,
-					Path:      r.URL.Path,
-					Duration:  dur,
-					Category:  category,
-				}:
-				default:
-				}
+			dur := time.Since(start)
+			category := "page"
+			if strings.HasSuffix(reqPath, ".css") || strings.HasSuffix(reqPath, ".js") || strings.HasSuffix(reqPath, ".webp") || strings.HasSuffix(reqPath, ".png") || strings.HasSuffix(reqPath, ".ico") || strings.HasSuffix(reqPath, ".svg") {
+				category = "asset"
+			}
+			if rl.statusCode >= 400 {
+				category = "missing"
+			}
+			select {
+			case logChan <- LogEvent{
+				Timestamp: time.Now().Format("15:04:05"),
+				Status:    rl.statusCode,
+				Path:      r.URL.Path,
+				Duration:  dur,
+				Category:  category,
+			}:
+			default:
+			}
 
-				devLoggerPool.Put(rl)
-			})
-			_ = http.ListenAndServe(fmt.Sprintf("%s:%d", hostAddr, currentPort), handler)
-		}()
+			devLoggerPool.Put(rl)
+		})
+		_ = http.ListenAndServe(fmt.Sprintf("%s:%d", hostAddr, currentPort), handler)
+		return
 	} else {
 		// Pure 100% In-Memory Go HTTP Server Engine (Zero Disk Writes)
 		currentPort := port
+		var (
+			devCacheMutex sync.RWMutex
+			devCSSCache   = make(map[string]bool)
+			devJSCache    = make(map[string]bool)
+			devCSSBuffer  strings.Builder
+			devJSBuffer   strings.Builder
+		)
+
+		// Build component dependency graph for dev mode direct request protections
+		ignorePatterns := loadPphlxIgnore(projectDir)
+		importedAsComponent := buildDependencyGraph(srcRootDir, ignorePatterns)
+
+		// Pre-compile entry page once at startup to populate initial in-memory dev buffers
+		if pageBytes, err := os.ReadFile(entryFile); err == nil {
+			_, css, js, _ := compilePage(string(pageBytes), filepath.Dir(entryFile), srcRootDir)
+			for _, style := range css {
+				cleanStyle := strings.TrimSpace(style)
+				if cleanStyle != "" && !devCSSCache[cleanStyle] {
+					devCSSCache[cleanStyle] = true
+					devCSSBuffer.WriteString(cleanStyle)
+					devCSSBuffer.WriteByte('\n')
+				}
+			}
+			for _, script := range js {
+				cleanScript := strings.TrimSpace(script)
+				if cleanScript != "" && !devJSCache[cleanScript] {
+					devJSCache[cleanScript] = true
+					devJSBuffer.WriteString(cleanScript)
+					devJSBuffer.WriteByte('\n')
+				}
+			}
+		}
+
+		// Non-blocking background worker for Vue/Svelte/SolidJS Vite components
+		if len(viteComponents) > 0 {
+			go runViteBuild(config, projectDir)
+		}
+
 		go func() {
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				start := time.Now()
@@ -1852,27 +2118,122 @@ func startDevServerAndWatcher(config Config, projectDir string, mode string) {
 					return
 				}
 
+				// Calculate dynamic CSS and JS asset paths from user's pphlx.config.json
+				devCssPath := "/css/styles.css"
+				if config.CssOut != "" {
+					relCss, err := filepath.Rel(outDir, filepath.Join(projectDir, config.CssOut))
+					if err == nil {
+						devCssPath = "/" + filepath.ToSlash(relCss)
+					}
+				}
+
+				devJsPath := "/js/bundle.js"
+				if config.JsOut != "" {
+					relJs, err := filepath.Rel(outDir, filepath.Join(projectDir, config.JsOut))
+					if err == nil {
+						devJsPath = "/" + filepath.ToSlash(relJs)
+					}
+				}
+
+				cleanReq := filepath.ToSlash(reqPath)
+
 				// 3. Virtual global CSS & JS bundle endpoints
-				if reqPath == "/css/styles.css" || reqPath == "\\css\\styles.css" {
+				if cleanReq == devCssPath || cleanReq == "/css/styles.css" || reqPath == "/css/styles.css" || reqPath == "\\css\\styles.css" {
 					category = "virtual"
 					rl.Header().Set("Content-Type", "text/css; charset=utf-8")
-					rl.Write([]byte(getInMemoryGlobalCSS(config, projectDir)))
+					rl.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+					devCacheMutex.RLock()
+					cssOut := getInMemoryGlobalCSS(config, projectDir) + "\n" + devCSSBuffer.String()
+					devCacheMutex.RUnlock()
+					rl.Write([]byte(cssOut))
 					return
 				}
-				if reqPath == "/js/bundle.js" || reqPath == "\\js\\bundle.js" {
+				if cleanReq == devJsPath || cleanReq == "/js/bundle.js" || reqPath == "/js/bundle.js" || reqPath == "\\js\\bundle.js" {
 					category = "virtual"
 					rl.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-					rl.Write([]byte(getInMemoryGlobalJS()))
+					rl.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+					devCacheMutex.RLock()
+					jsOut := devJSBuffer.String()
+					outDirName := config.OutDir
+					if outDirName == "" {
+						outDirName = "dist"
+					}
+					if activeMode == "dev" {
+						outDirName = ".pphlx/cache"
+					}
+					viteBundlePath := filepath.Join(projectDir, outDirName, "assets", "js", "pphlx_vite.js")
+					if viteJS, err := os.ReadFile(viteBundlePath); err == nil {
+						jsOut += "\n" + string(viteJS) + "\n"
+					}
+					jsOut += "\n" + getInMemoryGlobalJS() + "\n"
+					devCacheMutex.RUnlock()
+					rl.Write([]byte(jsOut))
 					return
 				}
 
-				// 4. Dynamic .pphx Template Compilation & In-Memory Render
+				// 4. Dev Server Direct Request Protection:
+				// Return a clean 404 Developer Safeguard Page if a browser directly requests an absorbed component module or framework source file
 				targetPphxFile := entryFile
 				if reqPath != "/" && reqPath != "\\" && reqPath != "/index.php" && reqPath != "/index.html" {
 					candidatePphx := filepath.Join(srcRootDir, reqPath)
 					if !strings.HasSuffix(candidatePphx, ".pphx") {
 						candidatePphx += ".pphx"
 					}
+
+					cleanCand := filepath.Clean(candidatePphx)
+					cleanCandSlash := strings.ReplaceAll(cleanCand, "\\", "/")
+					rawReqPath := filepath.Clean(filepath.Join(srcRootDir, reqPath))
+					rawReqSlash := strings.ReplaceAll(rawReqPath, "\\", "/")
+
+					// Check .pphlxignore patterns in dev server mode
+					reqRel, _ := filepath.Rel(srcRootDir, rawReqPath)
+					if isPphlxIgnored(reqRel, ignorePatterns) {
+						rl.WriteHeader(http.StatusNotFound)
+						rl.Header().Set("Content-Type", "text/html; charset=utf-8")
+						rl.Write(fmt.Appendf(nil, `
+							<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:3rem;background:#0b0d11;color:#f0f6fc;min-height:100vh;box-sizing:border-box;">
+								<div style="max-w-2xl:margin:0 auto;background:#13161c;border:1px solid #232731;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+									<span style="background:#e03e3e;color:#fff;font-weight:bold;padding:3px 8px;border-radius:4px;font-size:12px;font-family:monospace;">404 PPHLXIGNORED ROUTE</span>
+									<h2 style="margin-top:1rem;color:#ffffff;font-size:22px;">Ignored Route File</h2>
+									<p style="color:#9da5b4;font-size:14px;line-height:1.6;">The requested route <code style="color:#4bf3c8;background:#1c2029;padding:2px 6px;border-radius:4px;">%s</code> matches a pattern defined in <code style="color:#4bf3c8;">.pphlxignore</code> and is excluded from compilation and dev server routes.</p>
+								</div>
+							</div>
+						`, reqPath))
+						return
+					}
+
+					// Check if requested route is an absorbed component module
+					if importedAsComponent[cleanCand] || importedAsComponent[cleanCandSlash] || importedAsComponent[rawReqPath] || importedAsComponent[rawReqSlash] {
+						rl.WriteHeader(http.StatusNotFound)
+						rl.Header().Set("Content-Type", "text/html; charset=utf-8")
+						rl.Write(fmt.Appendf(nil, `
+							<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:3rem;background:#0b0d11;color:#f0f6fc;min-height:100vh;box-sizing:border-box;">
+								<div style="max-w-2xl:margin:0 auto;background:#13161c;border:1px solid #232731;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+									<span style="background:#ff4d4d;color:#fff;font-weight:bold;padding:3px 8px;border-radius:4px;font-size:12px;font-family:monospace;">404 ABSORBED COMPONENT MODULE</span>
+									<h2 style="margin-top:1rem;color:#ffffff;font-size:22px;">Direct HTTP Access Prohibited</h2>
+									<p style="color:#9da5b4;font-size:14px;line-height:1.6;">The module <code style="color:#4bf3c8;background:#1c2029;padding:2px 6px;border-radius:4px;">%s</code> is an inlined component module absorbed by another page template and cannot be requested directly as a standalone page route.</p>
+								</div>
+							</div>
+						`, reqPath))
+						return
+					}
+
+					// Check if requested route is an unattached framework source file (.jsx, .vue, .svelte, etc.)
+					if isFrameworkSourceFile(rawReqPath) {
+						rl.WriteHeader(http.StatusNotFound)
+						rl.Header().Set("Content-Type", "text/html; charset=utf-8")
+						rl.Write(fmt.Appendf(nil, `
+							<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:3rem;background:#0b0d11;color:#f0f6fc;min-height:100vh;box-sizing:border-box;">
+								<div style="max-w-2xl:margin:0 auto;background:#13161c;border:1px solid #232731;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+									<span style="background:#ff9800;color:#fff;font-weight:bold;padding:3px 8px;border-radius:4px;font-size:12px;font-family:monospace;">404 UNATTACHED FRAMEWORK SOURCE</span>
+									<h2 style="margin-top:1rem;color:#ffffff;font-size:22px;">Framework Source File</h2>
+									<p style="color:#9da5b4;font-size:14px;line-height:1.6;">The source file <code style="color:#4bf3c8;background:#1c2029;padding:2px 6px;border-radius:4px;">%s</code> is a UI framework component that must be imported inside a <code style="color:#4bf3c8;">.pphx</code> template page to render.</p>
+								</div>
+							</div>
+						`, reqPath))
+						return
+					}
+
 					if _, err := os.Stat(candidatePphx); err == nil {
 						targetPphxFile = candidatePphx
 					} else {
@@ -1883,7 +2244,7 @@ func startDevServerAndWatcher(config Config, projectDir string, mode string) {
 					}
 				}
 
-				pageContent, err := ioutil.ReadFile(targetPphxFile)
+				pageContent, err := os.ReadFile(targetPphxFile)
 				if err != nil {
 					rl.WriteHeader(http.StatusNotFound)
 					rl.Write([]byte("404 Not Found"))
@@ -1897,25 +2258,51 @@ func startDevServerAndWatcher(config Config, projectDir string, mode string) {
 					return
 				}
 
-				_ = css
-				_ = js
-
-				cssTag := `<link rel="stylesheet" href="/css/styles.css">`
-				jsTag := `<script src="/js/bundle.js"></script>`
-
-				if strings.Contains(compiledPage, "{{PPHLX_CSS}}") {
-					compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", cssTag)
+				devCacheMutex.Lock()
+				for _, style := range css {
+					cleanStyle := strings.TrimSpace(style)
+					if cleanStyle != "" && !devCSSCache[cleanStyle] {
+						devCSSCache[cleanStyle] = true
+						devCSSBuffer.WriteString(cleanStyle)
+						devCSSBuffer.WriteByte('\n')
+					}
 				}
-				if strings.Contains(compiledPage, "{{PPHLX_JS}}") {
-					compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", jsTag)
+				for _, script := range js {
+					cleanScript := strings.TrimSpace(script)
+					if cleanScript != "" && !devJSCache[cleanScript] {
+						devJSCache[cleanScript] = true
+						devJSBuffer.WriteString(cleanScript)
+						devJSBuffer.WriteByte('\n')
+					}
 				}
-				if strings.Contains(compiledPage, "</head>") {
-					if !strings.Contains(compiledPage, cssTag) {
+				devCacheMutex.Unlock()
+
+				hasDevCss := devCSSBuffer.Len() > 0
+				hasDevJs := devJSBuffer.Len() > 0 || len(viteComponents) > 0
+
+				cssTag := fmt.Sprintf(`<link rel="stylesheet" href="%s">`, devCssPath)
+				jsTag := fmt.Sprintf(`<script src="%s"></script>`, devJsPath)
+
+				if hasDevCss {
+					if strings.Contains(compiledPage, "{{PPHLX_CSS}}") {
+						compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", cssTag)
+					} else if strings.Contains(compiledPage, "</head>") {
 						compiledPage = strings.ReplaceAll(compiledPage, "</head>", cssTag+"\n</head>")
 					}
-					if !strings.Contains(compiledPage, jsTag) {
+				} else {
+					compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", "")
+				}
+
+				if hasDevJs {
+					if strings.Contains(compiledPage, "{{PPHLX_JS}}") {
+						compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", jsTag)
+					} else if strings.Contains(compiledPage, "</body>") {
+						compiledPage = strings.ReplaceAll(compiledPage, "</body>", jsTag+"\n</body>")
+					} else if strings.Contains(compiledPage, "</head>") {
 						compiledPage = strings.ReplaceAll(compiledPage, "</head>", jsTag+"\n</head>")
 					}
+				} else {
+					compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_JS}}", "")
 				}
 
 				finalHtml := strings.TrimLeft(compiledPage, " \t\r\n")
@@ -1923,10 +2310,13 @@ func startDevServerAndWatcher(config Config, projectDir string, mode string) {
 				// Optional PHP CLI stream evaluation in RAM if PHP code blocks exist
 				_, phpErr := exec.LookPath("php")
 				if phpErr == nil && (strings.Contains(finalHtml, "<?php") || strings.Contains(finalHtml, "{|")) {
-					cmd := exec.Command("php", "-r", "?>"+finalHtml)
-					outBytes, cmdErr := cmd.Output()
+					cmd := exec.Command("php", "-r", "eval('?>'.file_get_contents('php://stdin'));")
+					cmd.Stdin = strings.NewReader(finalHtml)
+					outBytes, cmdErr := cmd.CombinedOutput()
 					if cmdErr == nil {
 						finalHtml = string(outBytes)
+					} else {
+						fmt.Printf("\033[1;31m[PHP Dev Server Evaluation Error]\033[0m %v\nOutput: %s\n", cmdErr, string(outBytes))
 					}
 				}
 
@@ -2041,6 +2431,9 @@ func startWatcher(config Config, projectDir string) {
 						timer = time.AfterFunc(100*time.Millisecond, func() {
 							if activeMode == "dev" {
 								fmt.Printf("[%s] File changed: %s (in-memory updated)\n", time.Now().Format("15:04:05"), baseName)
+								if len(viteComponents) > 0 {
+									go runViteBuild(config, projectDir)
+								}
 							} else {
 								compileAll(config, projectDir)
 							}
@@ -2057,6 +2450,47 @@ func startWatcher(config Config, projectDir string) {
 	}()
 
 	<-done
+}
+
+// CompilePageWithAssets compiles a page and applies autonomous asset tag injection (CSS & JS scripts).
+// This is the single source of truth helper used across native CLI builds and Go WASM browser compilation.
+func CompilePageWithAssets(content string, currentDir string, srcDir string) (string, []string, []string, error) {
+	compiledPHP, css, jsList, err := compilePage(content, currentDir, srcDir)
+	if err != nil {
+		return compiledPHP, css, jsList, err
+	}
+
+	hasCssContent := len(css) > 0
+	hasJsContent := len(jsList) > 0 || len(viteComponents) > 0
+
+	hasCssPlaceholder := strings.Contains(compiledPHP, "{{PPHLX_CSS}}")
+	hasJsPlaceholder := strings.Contains(compiledPHP, "{{PPHLX_JS}}")
+
+	if hasCssContent {
+		cssTag := `<link rel="stylesheet" href="assets/css/styles.css">`
+		if hasCssPlaceholder {
+			compiledPHP = strings.ReplaceAll(compiledPHP, "{{PPHLX_CSS}}", cssTag)
+		} else if strings.Contains(compiledPHP, "</head>") {
+			compiledPHP = strings.ReplaceAll(compiledPHP, "</head>", cssTag+"\n</head>")
+		}
+	} else if hasCssPlaceholder {
+		compiledPHP = strings.ReplaceAll(compiledPHP, "{{PPHLX_CSS}}", "")
+	}
+
+	if hasJsContent {
+		jsTag := `<script src="assets/js/bundle.js"></script>`
+		if hasJsPlaceholder {
+			compiledPHP = strings.ReplaceAll(compiledPHP, "{{PPHLX_JS}}", jsTag)
+		} else if strings.Contains(compiledPHP, "</body>") {
+			compiledPHP = strings.ReplaceAll(compiledPHP, "</body>", jsTag+"\n</body>")
+		} else if strings.Contains(compiledPHP, "</head>") {
+			compiledPHP = strings.ReplaceAll(compiledPHP, "</head>", jsTag+"\n</head>")
+		}
+	} else if hasJsPlaceholder {
+		compiledPHP = strings.ReplaceAll(compiledPHP, "{{PPHLX_JS}}", "")
+	}
+
+	return compiledPHP, css, jsList, nil
 }
 
 // compilePage parses imports, layouts, and expands components
@@ -2118,6 +2552,7 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 				compObj = Component{
 					Name:          compName,
 					Path:          compPath,
+					JS:            "",
 					IsJsComponent: true,
 					Framework:     framework,
 				}
@@ -2150,8 +2585,16 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 			if err != nil {
 				return "", nil, nil, fmt.Errorf("failed to read imported component %s: %v", compName, err)
 			}
-			processedCompContent := parsePphlxBrackets(string(compContent))
-			compObj = parseComponent(compName, processedCompContent, compPath)
+			// Recursively compile nested template components (e.g. Layout importing Head)
+			nestedHtml, nestedCss, nestedJs, compileErr := compilePage(string(compContent), filepath.Dir(compPath), srcDir)
+			if compileErr == nil {
+				compObj = parseComponent(compName, nestedHtml, compPath)
+				cssBundles = append(cssBundles, nestedCss...)
+				jsBundles = append(jsBundles, nestedJs...)
+			} else {
+				processedCompContent := parsePphlxBrackets(string(compContent))
+				compObj = parseComponent(compName, processedCompContent, compPath)
+			}
 		}
 
 		imports[compName] = compObj
@@ -2188,6 +2631,9 @@ func compileJSComponent(compName string, compPath string) (string, error) {
 		Format:            api.FormatIIFE,
 		GlobalName:        compName,
 		External:          []string{"react", "react-dom", "preact", "preact/hooks", "solid-js"},
+		Banner: map[string]string{
+			"js": `var require = typeof require !== "undefined" ? require : function(m) { if (m === "react") return window.React; if (m === "react-dom") return window.ReactDOM; if (m === "preact") return window.preact; if (m === "solid-js") return window.SolidJS; return window[m]; };`,
+		},
 		Loader: map[string]api.Loader{
 			".js":  api.LoaderJSX,
 			".jsx": api.LoaderJSX,
@@ -2379,7 +2825,9 @@ func renderJSComponent(comp Component, attrs string, slot string) string {
 		}
 	}
 
-	islandId := fmt.Sprintf("pphlx-%s-%d", strings.ToLower(comp.Name), time.Now().UnixNano())
+	h := fnv.New32a()
+	h.Write([]byte(comp.Name + attrs))
+	islandId := fmt.Sprintf("pphlx-%s-%x", strings.ToLower(comp.Name), h.Sum32())
 
 	var propsBuilder strings.Builder
 	propsBuilder.WriteString("{")
@@ -2388,13 +2836,25 @@ func renderJSComponent(comp Component, attrs string, slot string) string {
 		if i > 0 {
 			propsBuilder.WriteString(",")
 		}
-		if strings.HasPrefix(v, "$") {
-			propsBuilder.WriteString(fmt.Sprintf("%q: <?php echo json_encode(%s); ?>", k, v))
+		cleanV := strings.TrimSpace(v)
+		if strings.HasPrefix(cleanV, "{|=") && strings.HasSuffix(cleanV, "|}") {
+			cleanV = strings.TrimSpace(cleanV[3 : len(cleanV)-2])
+		} else if strings.HasPrefix(cleanV, "{") && strings.HasSuffix(cleanV, "}") {
+			cleanV = strings.TrimSpace(cleanV[1 : len(cleanV)-1])
+		}
+
+		phpEchoRegex := regexp.MustCompile(`<\?php\s+echo\s+(.*?);?\s*\?>`)
+
+		if strings.HasPrefix(cleanV, "$") {
+			propsBuilder.WriteString(fmt.Sprintf("%q: <?php echo json_encode(%s); ?>", k, cleanV))
+		} else if m := phpEchoRegex.FindStringSubmatch(v); len(m) > 1 {
+			expr := strings.TrimSpace(m[1])
+			propsBuilder.WriteString(fmt.Sprintf("%q: <?php echo json_encode(%s); ?>", k, expr))
 		} else if strings.Contains(v, "<?php") {
 			if strings.Contains(v, "json_encode") {
 				propsBuilder.WriteString(fmt.Sprintf("%q: %s", k, v))
 			} else {
-				propsBuilder.WriteString(fmt.Sprintf("%q: %q", k, v))
+				propsBuilder.WriteString(fmt.Sprintf("%q: %s", k, v))
 			}
 		} else {
 			propsBuilder.WriteString(fmt.Sprintf("%q: %q", k, v))
@@ -2470,12 +2930,19 @@ func renderTemplate(comp Component, attrs string, slot string) string {
 
 // getRelativePath calculates the relative asset path from page to asset file
 func getRelativePath(fromPathPath, toPathPath string) string {
+	if strings.TrimSpace(toPathPath) == "" {
+		return ""
+	}
 	fromDir := filepath.Dir(fromPathPath)
 	rel, err := filepath.Rel(fromDir, toPathPath)
 	if err != nil {
-		return toPathPath
+		return filepath.ToSlash(toPathPath)
 	}
-	return filepath.ToSlash(rel)
+	cleanRel := filepath.ToSlash(rel)
+	if cleanRel == "." || cleanRel == "./" {
+		return ""
+	}
+	return cleanRel
 }
 
 // parseMjsField extracts a configuration string property from JavaScript .mjs config using regex
@@ -2523,6 +2990,24 @@ func runViteBuild(config Config, projectDir string) error {
 
 	var entryContent strings.Builder
 
+	if len(viteComponents) == 0 {
+		_ = filepath.Walk(entryDir, func(p string, info os.FileInfo, err error) error {
+			if err == nil && !info.IsDir() {
+				ext := strings.ToLower(filepath.Ext(p))
+				if ext == ".vue" || ext == ".svelte" || strings.HasSuffix(p, ".solid.jsx") || strings.HasSuffix(p, ".solid.tsx") {
+					baseName := filepath.Base(p)
+					name := strings.TrimSuffix(baseName, ext)
+					name = strings.TrimSuffix(name, ".solid")
+					if name != "" {
+						viteComponents[name] = p
+					}
+				}
+			}
+			return nil
+		})
+	}
+
+	var exportNames []string
 	for name, path := range viteComponents {
 		rel, err := filepath.Rel(entryDir, path)
 		if err != nil {
@@ -2534,6 +3019,7 @@ func runViteBuild(config Config, projectDir string) error {
 		}
 		entryContent.WriteString(fmt.Sprintf("import %s from '%s';\n", name, relPath))
 		entryContent.WriteString(fmt.Sprintf("window.%s = %s;\n", name, name))
+		exportNames = append(exportNames, name)
 	}
 
 	// Expose SolidJS render helper
@@ -2544,7 +3030,11 @@ func runViteBuild(config Config, projectDir string) error {
 	entryContent.WriteString("import { mount as svelteMount } from 'svelte';\n")
 	entryContent.WriteString("window.Svelte = { mount: svelteMount };\n")
 
-	err := ioutil.WriteFile(entryPath, []byte(entryContent.String()), 0644)
+	if len(exportNames) > 0 {
+		entryContent.WriteString(fmt.Sprintf("export { %s };\n", strings.Join(exportNames, ", ")))
+	}
+
+	err := os.WriteFile(entryPath, []byte(entryContent.String()), 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write Vite entry file: %v", err)
 	}
@@ -2552,7 +3042,15 @@ func runViteBuild(config Config, projectDir string) error {
 	relEntry, _ := filepath.Rel(projectDir, entryPath)
 	relEntryPath := filepath.ToSlash(relEntry)
 
-	outJsDir := filepath.ToSlash(filepath.Join(config.OutDir, "assets", "js"))
+	targetViteOutDir := config.OutDir
+	if targetViteOutDir == "" {
+		targetViteOutDir = "dist"
+	}
+	if activeMode == "dev" {
+		targetViteOutDir = ".pphlx/cache"
+	}
+
+	outJsDir := filepath.ToSlash(filepath.Join(targetViteOutDir, "assets", "js"))
 
 	viteConfigPath := filepath.Join(projectDir, "pphlx.vite.config.mjs")
 	viteConfig := fmt.Sprintf(`
@@ -2585,7 +3083,7 @@ export default defineConfig({
   }
 });
 `, relEntryPath, outJsDir)
-	ioutil.WriteFile(viteConfigPath, []byte(viteConfig), 0644)
+	os.WriteFile(viteConfigPath, []byte(viteConfig), 0644)
 
 	fmt.Println("Running local Vite compilation for Vue/Svelte components...")
 
@@ -2605,8 +3103,8 @@ export default defineConfig({
 	}
 
 	// Append compiled bundles to global JS
-	viteBundlePath := filepath.Join(projectDir, config.OutDir, "assets", "js", "pphlx_vite.js")
-	viteJS, err := ioutil.ReadFile(viteBundlePath)
+	viteBundlePath := filepath.Join(projectDir, targetViteOutDir, "assets", "js", "pphlx_vite.js")
+	viteJS, err := os.ReadFile(viteBundlePath)
 	if err == nil {
 		jsOut := filepath.Join(projectDir, config.JsOut)
 		f, err := os.OpenFile(jsOut, os.O_APPEND|os.O_WRONLY, 0644)
@@ -2614,8 +3112,6 @@ export default defineConfig({
 			defer f.Close()
 			f.Write([]byte("\n" + string(viteJS) + "\n"))
 		}
-		// Remove temporary vite asset file
-		os.Remove(viteBundlePath)
 	}
 
 	// Clean up temporary entry file
@@ -2662,7 +3158,7 @@ func addDependency(repoURL string, projectDir string) error {
 	}
 
 	// Create temporary directory for ZIP download
-	tempDir, err := ioutil.TempDir("", "pphlx-pkg-")
+	tempDir, err := os.MkdirTemp("", "pphlx-pkg-")
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir: %v", err)
 	}
@@ -2754,7 +3250,7 @@ func addDependency(repoURL string, projectDir string) error {
 	manifestPath := filepath.Join(projectDir, "pphlx.json")
 	var manifest map[string]interface{}
 
-	if manifestData, err := ioutil.ReadFile(manifestPath); err == nil {
+	if manifestData, err := os.ReadFile(manifestPath); err == nil {
 		json.Unmarshal(manifestData, &manifest)
 	}
 	if manifest == nil {
@@ -2775,7 +3271,7 @@ func addDependency(repoURL string, projectDir string) error {
 
 	newManifestData, err := json.MarshalIndent(manifest, "", "  ")
 	if err == nil {
-		ioutil.WriteFile(manifestPath, newManifestData, 0644)
+		os.WriteFile(manifestPath, newManifestData, 0644)
 	}
 
 	return nil
@@ -2998,7 +3494,7 @@ func handleToolCall(toolName string, args ToolCallArguments) (interface{}, error
 		// Read pphlx.json to resolve srcDir, defaulting to "src"
 		srcDirName := "src"
 		manifestPath := filepath.Join(projectDir, "pphlx.json")
-		if manifestData, err := ioutil.ReadFile(manifestPath); err == nil {
+		if manifestData, err := os.ReadFile(manifestPath); err == nil {
 			var manifest map[string]interface{}
 			if err := json.Unmarshal(manifestData, &manifest); err == nil {
 				if val, ok := manifest["srcDir"]; ok {
@@ -3037,12 +3533,12 @@ func handleToolCall(toolName string, args ToolCallArguments) (interface{}, error
 		componentFullPath := filepath.Join(componentsDir, componentFilename)
 
 		// Write component file
-		if err := ioutil.WriteFile(componentFullPath, []byte(boilerplateCode), 0644); err != nil {
+		if err := os.WriteFile(componentFullPath, []byte(boilerplateCode), 0644); err != nil {
 			return nil, fmt.Errorf("failed to write component file: %v", err)
 		}
 
 		// Inject @import at the top of the template file
-		pageData, err := ioutil.ReadFile(targetPath)
+		pageData, err := os.ReadFile(targetPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read template page: %v", err)
 		}
@@ -3056,7 +3552,7 @@ func handleToolCall(toolName string, args ToolCallArguments) (interface{}, error
 
 		if !strings.Contains(pageContent, fmt.Sprintf("@import %s", args.ComponentName)) {
 			newContent := importStatement + pageContent
-			ioutil.WriteFile(targetPath, []byte(newContent), 0644)
+			os.WriteFile(targetPath, []byte(newContent), 0644)
 		}
 
 		successMessage := fmt.Sprintf("[Success] Generated %s component: %s\nUpdated template: %s", args.Framework, componentFullPath, targetPath)
@@ -3144,7 +3640,7 @@ func installMCPServer() error {
 			}
 		}
 
-		err = ioutil.WriteFile(destPath, data, 0644)
+		err = os.WriteFile(destPath, data, 0644)
 		if err != nil {
 			return fmt.Errorf("failed to write file %s to %s: %v", baseName, destPath, err)
 		}
