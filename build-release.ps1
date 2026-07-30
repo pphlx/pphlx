@@ -7,7 +7,7 @@ if (!(Test-Path $ReleasesDir)) {
     New-Item -ItemType Directory -Path $ReleasesDir | Out-Null
 }
 
-Write-Host "Building PPHLX v1.1.5 Release Tarballs..." -ForegroundColor Cyan
+Write-Host "Building PPHLX v1.1.6 Release Tarballs..." -ForegroundColor Cyan
 
 # 1. Darwin arm64
 Write-Host "Compiling darwin/arm64..." -ForegroundColor Gray
@@ -54,5 +54,5 @@ Remove-Item $OutPath -Force -ErrorAction SilentlyContinue
 Remove-Item $WinExe -Force -ErrorAction SilentlyContinue
 
 Write-Host "------------------------------------------------" -ForegroundColor Green
-Write-Host "All v1.1.5 Release Tarballs built successfully in $ReleasesDir!" -ForegroundColor Green
+Write-Host "All v1.1.6 Release Tarballs built successfully in $ReleasesDir!" -ForegroundColor Green
 Write-Host "------------------------------------------------" -ForegroundColor Green

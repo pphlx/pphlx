@@ -5,6 +5,18 @@ All notable changes to the **PPHLX Compiler Core** will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2026-07-30
+
+### Fixed
+- **SSG Deep Route Asset Path Traversal Invariant**: Fixed asset injection tag generation for `"target": "ssg"` builds. Injected `<link rel="stylesheet">` and `<script src="...">` tags now use root-absolute (`/assets/css/styles.css`, `/assets/js/bundle.js`) or configured `base` URL prefixed paths (`/subfolder/assets/...`), preventing 404 resource errors on deep subpages (e.g. `/pages/gradient/index.html`).
+- **Non-Blocking Public & Static Asset Resolution**: Updated `RunDiagnostics` to inspect `public/`, `src/assets/`, and root project directories. Replaced fatal build halts (`[FATAL BUILD HALT]` / `os.Exit(1)`) with non-blocking diagnostic warnings, providing full developer flexibility for static or dynamically-loaded assets.
+- **Root Directory Cleanup & Isolated Temp Config Storage**: Isolated temporary auto-generated Vite bundler configuration files into `.pphlx/pphlx.vite.config.mjs`, ensuring project root directories remain 100% clean.
+
+### Added
+- **Single Source of Truth Configuration (`pphlx.config.mjs` / `pphlx.config.cjs`)**: Added ESM and CJS JavaScript configuration support with Astro parity. Developers can define site URL, base path, build target, and Vite island plugins in a single configuration file without needing secondary `.vite.config.mjs` files.
+- **Astro Parity Zero-Config Mode & Automatic Fallbacks**: Automatically assigns default settings (`srcDir: "src"`, `outDir: "dist"`, `base: "/"`, `output.target: "php"`) when fields are omitted or when running without a configuration file (`export default defineConfig({})`).
+- **Dynamic Framework Plugin Auto-Detection**: Added automatic `package.json` inspection (`detectVitePlugins`) to auto-detect installed framework dependencies (`vue`, `svelte`, `solid-js`, `react`, `preact`) and dynamically import only installed plugins in zero-config mode.
+
 ---
 
 ## [1.1.5] - 2026-07-28

@@ -36,7 +36,7 @@ if ($Tag -eq "latest") {
     }
     catch {
         # Fallback if API fails/rate limited
-        $Tag = "v1.1.5"
+        $Tag = "v1.1.6"
     }
 }
 

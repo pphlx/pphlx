@@ -126,62 +126,89 @@ func main() {
 		}
 	}
 
-	// 1. Read config (looking for pphlx.config.mjs first, then pphlx.config.json, then pphlx.json)
+	// 1. Read config (looking for pphlx.config.mjs, pphlx.config.cjs, pphlx.config.json, then pphlx.json)
 	configPath := "./pphlx.config.mjs"
 	if runtime.GOOS == "wasip1" {
 		configPath = "/pphlx.config.mjs"
 	}
-	isMjs := true
+	isJsConfig := true
+	configFound := true
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		if runtime.GOOS == "wasip1" {
-			configPath = "/pphlx.config.json"
+			configPath = "/pphlx.config.cjs"
 		} else {
-			configPath = "./pphlx.config.json"
+			configPath = "./pphlx.config.cjs"
 		}
-		isMjs = false
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
 			if runtime.GOOS == "wasip1" {
-				configPath = "/pphlx.json"
+				configPath = "/pphlx.config.json"
 			} else {
-				configPath = "./pphlx.json"
+				configPath = "./pphlx.config.json"
 			}
+			isJsConfig = false
 			if _, err := os.Stat(configPath); os.IsNotExist(err) {
-				// Only fallback to test_project if developing inside PPHLX root compiler repository
-				if _, err := os.Stat("pphlx-core"); err == nil {
-					configPath = "./test_project/pphlx.config.json"
-					isMjs = false
+				if runtime.GOOS == "wasip1" {
+					configPath = "/pphlx.json"
+				} else {
+					configPath = "./pphlx.json"
 				}
 				if _, err := os.Stat(configPath); os.IsNotExist(err) {
-					fmt.Println("\033[1;31mError: No PPHLX project configuration (pphlx.config.json or pphlx.json) found in current directory.\033[0m")
-					fmt.Println("👉 Run 'npx pphlx init' to initialize a new PPHLX project automatically.")
-					os.Exit(1)
+					// Only fallback to test_project if developing inside PPHLX root compiler repository
+					if _, err := os.Stat("pphlx-core"); err == nil {
+						configPath = "./test_project/pphlx.config.json"
+						isJsConfig = false
+					}
+					if _, err := os.Stat(configPath); os.IsNotExist(err) {
+						configFound = false
+					}
 				}
 			}
 		}
-	}
-
-	configData, err := os.ReadFile(configPath)
-	if err != nil {
-		fmt.Printf("Error reading config '%s': %v\n", configPath, err)
-		os.Exit(1)
 	}
 
 	var config Config
-	if isMjs {
-		// Parse .mjs configuration using regex mapping
-		configStr := string(configData)
-		config.SrcDir = parseMjsField(configStr, "srcDir")
-		config.OutDir = parseMjsField(configStr, "outDir")
-		config.CssOut = parseMjsField(configStr, "cssOut")
-		config.JsOut = parseMjsField(configStr, "jsOut")
-		config.Site = parseMjsField(configStr, "site")
-		config.Sitemap = parseMjsBool(configStr, "sitemap")
-		config.Default = parseMjsField(configStr, "default")
-	} else {
-		if err := json.Unmarshal(configData, &config); err != nil {
-			fmt.Printf("Error parsing JSON config: %v\n", err)
+	if configFound {
+		configData, err := os.ReadFile(configPath)
+		if err != nil {
+			fmt.Printf("Error reading config '%s': %v\n", configPath, err)
 			os.Exit(1)
 		}
+
+		if isJsConfig {
+			// Parse .mjs / .cjs configuration using regex mapping
+			configStr := string(configData)
+			config.SrcDir = parseMjsField(configStr, "srcDir")
+			config.OutDir = parseMjsField(configStr, "outDir")
+			config.CssOut = parseMjsField(configStr, "cssOut")
+			config.JsOut = parseMjsField(configStr, "jsOut")
+			config.Site = parseMjsField(configStr, "site")
+			config.Base = parseMjsField(configStr, "base")
+			config.Sitemap = parseMjsBool(configStr, "sitemap")
+			config.Default = parseMjsField(configStr, "default")
+			targetVal := parseMjsField(configStr, "target")
+			if targetVal != "" {
+				config.Output.Target = targetVal
+			}
+		} else {
+			if err := json.Unmarshal(configData, &config); err != nil {
+				fmt.Printf("Error parsing JSON config: %v\n", err)
+				os.Exit(1)
+			}
+		}
+	}
+
+	// Apply Zero-Config Astro Parity Defaults for omitted or empty properties
+	if config.SrcDir == "" {
+		config.SrcDir = "src"
+	}
+	if config.OutDir == "" {
+		config.OutDir = "dist"
+	}
+	if config.Base == "" {
+		config.Base = "/"
+	}
+	if config.Output.Target == "" {
+		config.Output.Target = "php"
 	}
 
 	// 2. Parse flags: --env / -e, --all, and --target / -t

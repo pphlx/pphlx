@@ -26,7 +26,7 @@ import (
 )
 
 // Single source of truth for PPHLX compiler version
-const Version = "1.1.5"
+const Version = "1.1.6"
 
 // OutputConfig holds compilation output options
 type OutputConfig struct {
@@ -49,6 +49,7 @@ type Config struct {
 	CssOut       string                   `json:"cssOut"`
 	JsOut        string                   `json:"jsOut"`
 	Site         string                   `json:"site"`
+	Base         string                   `json:"base"`
 	Sitemap      bool                     `json:"sitemap"`
 	Default      string                   `json:"default"`
 	Output       OutputConfig             `json:"output"`
@@ -208,8 +209,10 @@ func RunDiagnostics(srcDir string, projectDir string) []Diagnostic {
 				assetPath2 := filepath.Join(srcDir, strings.TrimPrefix(srcVal, "/"))
 				assetPath3 := filepath.Join(projectDir, strings.TrimPrefix(srcVal, "/"))
 				assetPath4 := filepath.Join(projectDir, "public", strings.TrimPrefix(srcVal, "/"))
+				assetPath5 := filepath.Join(srcDir, "assets", strings.TrimPrefix(srcVal, "/"))
+				assetPath6 := filepath.Join(projectDir, "public", "assets", strings.TrimPrefix(srcVal, "/"))
 
-				if !projectFileExists(assetPath1) && !projectFileExists(assetPath2) && !projectFileExists(assetPath3) && !projectFileExists(assetPath4) {
+				if !projectFileExists(assetPath1) && !projectFileExists(assetPath2) && !projectFileExists(assetPath3) && !projectFileExists(assetPath4) && !projectFileExists(assetPath5) && !projectFileExists(assetPath6) {
 					lineNo := 1
 					for i, line := range lines {
 						if strings.Contains(line, srcVal) {
@@ -225,8 +228,8 @@ func RunDiagnostics(srcDir string, projectDir string) []Diagnostic {
 						File:    relPath,
 						Line:    lineNo,
 						Column:  1,
-						Code:    "Asset Resolution Failed",
-						Message: fmt.Sprintf("Image asset not found: '%s'", srcVal),
+						Code:    "Asset Resolution Warning",
+						Message: fmt.Sprintf("Asset not found in local workspace paths: '%s'", srcVal),
 						Snippet: snippet,
 					})
 				}
@@ -575,17 +578,12 @@ func compileAll(config Config, projectDir string) {
 	}
 	jsOut := filepath.Join(projectDir, jsOutVal)
 
-	// Run AST Diagnostic & Lint Engine before wiping outDir
+	// Run AST Diagnostic & Lint Engine
 	diagnostics := RunDiagnostics(srcDir, projectDir)
 	if len(diagnostics) > 0 {
 		for _, d := range diagnostics {
-			fmt.Print(d.String())
+			fmt.Printf("\033[33m[PPHLX DIAGNOSTIC WARNING]\033[0m %s\n", d.String())
 		}
-		fmt.Printf("\n\033[1;31m[FATAL BUILD HALT] Found %d diagnostic error(s). Aborting compilation.\033[0m\n\n", len(diagnostics))
-		if activeMode != "dev" && activeMode != "watch" {
-			os.Exit(1)
-		}
-		return
 	}
 
 	targetOutDir := outDir
@@ -790,8 +788,24 @@ window.pphlx.desktop = {
 			hasCssPlaceholder := strings.Contains(compiledPage, "{{PPHLX_CSS}}")
 			hasJsPlaceholder := strings.Contains(compiledPage, "{{PPHLX_JS}}")
 
+			basePrefix := "/"
+			if strings.TrimSpace(config.Base) != "" {
+				basePrefix = "/" + strings.Trim(config.Base, "/")
+				if basePrefix != "/" {
+					basePrefix += "/"
+				}
+			}
+
 			if hasCssContent {
-				cssRelPath := getRelativePath(phpOutPath, cssOut)
+				cssOutForRel := cssOut
+				if strings.TrimSpace(config.CssOut) == "" {
+					cssOutForRel = filepath.Join(targetOutDir, "assets", "css", "styles.css")
+				}
+				relToOut, err := filepath.Rel(targetOutDir, cssOutForRel)
+				if err != nil || strings.HasPrefix(relToOut, "..") {
+					relToOut = "assets/css/styles.css"
+				}
+				cssRelPath := basePrefix + strings.TrimPrefix(filepath.ToSlash(relToOut), "/")
 				cssTag := fmt.Sprintf(`<link rel="stylesheet" href="%s">`, cssRelPath)
 				if hasCssPlaceholder {
 					compiledPage = strings.ReplaceAll(compiledPage, "{{PPHLX_CSS}}", cssTag)
@@ -805,12 +819,13 @@ window.pphlx.desktop = {
 			if hasJsContent {
 				jsTargetForRel := jsOut
 				if strings.TrimSpace(config.JsOut) == "" {
-					jsTargetForRel = filepath.Join(projectDir, config.OutDir, "assets", "js", "bundle.js")
-					if config.OutDir == "" {
-						jsTargetForRel = filepath.Join(projectDir, "dist", "assets", "js", "bundle.js")
-					}
+					jsTargetForRel = filepath.Join(targetOutDir, "assets", "js", "bundle.js")
 				}
-				jsRelPath := getRelativePath(phpOutPath, jsTargetForRel)
+				relToOut, err := filepath.Rel(targetOutDir, jsTargetForRel)
+				if err != nil || strings.HasPrefix(relToOut, "..") {
+					relToOut = "assets/js/bundle.js"
+				}
+				jsRelPath := basePrefix + strings.TrimPrefix(filepath.ToSlash(relToOut), "/")
 				if jsRelPath != "" {
 					jsTag := fmt.Sprintf(`<script src="%s"></script>`, jsRelPath)
 					if hasJsPlaceholder {
@@ -2467,7 +2482,7 @@ func CompilePageWithAssets(content string, currentDir string, srcDir string) (st
 	hasJsPlaceholder := strings.Contains(compiledPHP, "{{PPHLX_JS}}")
 
 	if hasCssContent {
-		cssTag := `<link rel="stylesheet" href="assets/css/styles.css">`
+		cssTag := `<link rel="stylesheet" href="/assets/css/styles.css">`
 		if hasCssPlaceholder {
 			compiledPHP = strings.ReplaceAll(compiledPHP, "{{PPHLX_CSS}}", cssTag)
 		} else if strings.Contains(compiledPHP, "</head>") {
@@ -2478,7 +2493,7 @@ func CompilePageWithAssets(content string, currentDir string, srcDir string) (st
 	}
 
 	if hasJsContent {
-		jsTag := `<script src="assets/js/bundle.js"></script>`
+		jsTag := `<script src="/assets/js/bundle.js"></script>`
 		if hasJsPlaceholder {
 			compiledPHP = strings.ReplaceAll(compiledPHP, "{{PPHLX_JS}}", jsTag)
 		} else if strings.Contains(compiledPHP, "</body>") {
@@ -2979,6 +2994,61 @@ func parsePphlxBrackets(content string) string {
 	return content
 }
 
+// detectVitePlugins dynamically inspects package.json dependencies to import only installed framework plugins
+func detectVitePlugins(projectDir string) (string, string) {
+	pkgPath := filepath.Join(projectDir, "package.json")
+	if !projectFileExists(pkgPath) {
+		return "", "[]"
+	}
+	data, err := os.ReadFile(pkgPath)
+	if err != nil {
+		return "", "[]"
+	}
+
+	var pkg struct {
+		Dependencies    map[string]string `json:"dependencies"`
+		DevDependencies map[string]string `json:"devDependencies"`
+	}
+	_ = json.Unmarshal(data, &pkg)
+
+	allDeps := make(map[string]bool)
+	for k := range pkg.Dependencies {
+		allDeps[k] = true
+	}
+	for k := range pkg.DevDependencies {
+		allDeps[k] = true
+	}
+
+	imports := []string{}
+	plugins := []string{}
+
+	if allDeps["@vitejs/plugin-vue"] || allDeps["vue"] {
+		imports = append(imports, "import vue from '@vitejs/plugin-vue';")
+		plugins = append(plugins, "vue()")
+	}
+	if allDeps["@sveltejs/vite-plugin-svelte"] || allDeps["svelte"] {
+		imports = append(imports, "import { svelte } from '@sveltejs/vite-plugin-svelte';")
+		plugins = append(plugins, "svelte()")
+	}
+	if allDeps["vite-plugin-solid"] || allDeps["solid-js"] {
+		imports = append(imports, "import solidPlugin from 'vite-plugin-solid';")
+		plugins = append(plugins, "solidPlugin()")
+	}
+	if allDeps["@vitejs/plugin-react"] || allDeps["react"] {
+		imports = append(imports, "import react from '@vitejs/plugin-react';")
+		plugins = append(plugins, "react()")
+	}
+	if allDeps["@preact/preset-vite"] || allDeps["preact"] {
+		imports = append(imports, "import preact from '@preact/preset-vite';")
+		plugins = append(plugins, "preact()")
+	}
+
+	importStr := strings.Join(imports, "\n")
+	pluginStr := "[" + strings.Join(plugins, ", ") + "]"
+
+	return importStr, pluginStr
+}
+
 // runViteBuild generates a temporary entry file, compiles Vue/Svelte components, and appends the result
 func runViteBuild(config Config, projectDir string) error {
 	entryDir := filepath.Join(projectDir, config.SrcDir)
@@ -3052,15 +3122,36 @@ func runViteBuild(config Config, projectDir string) error {
 
 	outJsDir := filepath.ToSlash(filepath.Join(targetViteOutDir, "assets", "js"))
 
-	viteConfigPath := filepath.Join(projectDir, "pphlx.vite.config.mjs")
-	viteConfig := fmt.Sprintf(`
+	configFile := "pphlx.vite.config.mjs"
+	mainMjs := filepath.Join(projectDir, "pphlx.config.mjs")
+	mainCjs := filepath.Join(projectDir, "pphlx.config.cjs")
+
+	useMainConfig := false
+	if projectFileExists(mainMjs) {
+		content, _ := os.ReadFile(mainMjs)
+		if strings.Contains(string(content), "plugins") || strings.Contains(string(content), "build") {
+			configFile = "pphlx.config.mjs"
+			useMainConfig = true
+		}
+	} else if projectFileExists(mainCjs) {
+		content, _ := os.ReadFile(mainCjs)
+		if strings.Contains(string(content), "plugins") || strings.Contains(string(content), "build") {
+			configFile = "pphlx.config.cjs"
+			useMainConfig = true
+		}
+	}
+
+	if !useMainConfig {
+		pphlxDir := filepath.Join(projectDir, ".pphlx")
+		_ = os.MkdirAll(pphlxDir, 0755)
+		viteConfigPath := filepath.Join(pphlxDir, "pphlx.vite.config.mjs")
+		importsStr, pluginsArrayStr := detectVitePlugins(projectDir)
+		viteConfig := fmt.Sprintf(`
 import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
-import solidPlugin from 'vite-plugin-solid';
+%s
 
 export default defineConfig({
-  plugins: [vue(), svelte(), solidPlugin()],
+  plugins: %s,
   publicDir: false,
   build: {
     lib: {
@@ -3082,16 +3173,18 @@ export default defineConfig({
     minify: true
   }
 });
-`, relEntryPath, outJsDir)
-	os.WriteFile(viteConfigPath, []byte(viteConfig), 0644)
+`, importsStr, pluginsArrayStr, relEntryPath, outJsDir)
+		os.WriteFile(viteConfigPath, []byte(viteConfig), 0644)
+		configFile = filepath.ToSlash(filepath.Join(".pphlx", "pphlx.vite.config.mjs"))
+	}
 
 	fmt.Println("Running local Vite compilation for Vue/Svelte components...")
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", "npx vite build --config pphlx.vite.config.mjs")
+		cmd = exec.Command("cmd", "/c", fmt.Sprintf("npx vite build --config %s", configFile))
 	} else {
-		cmd = exec.Command("sh", "-c", "npx vite build --config pphlx.vite.config.mjs")
+		cmd = exec.Command("sh", "-c", fmt.Sprintf("npx vite build --config %s", configFile))
 	}
 	cmd.Dir = projectDir
 	cmd.Stdout = os.Stdout
@@ -3477,7 +3570,11 @@ func handleToolCall(toolName string, args ToolCallArguments) (interface{}, error
 		dir := filepath.Dir(targetPath)
 		projectDir := ""
 		for {
-			if _, err := os.Stat(filepath.Join(dir, "pphlx.json")); err == nil {
+			if _, err1 := os.Stat(filepath.Join(dir, "pphlx.config.mjs")); err1 == nil ||
+				projectFileExists(filepath.Join(dir, "pphlx.config.cjs")) ||
+				projectFileExists(filepath.Join(dir, "pphlx.config.json")) ||
+				projectFileExists(filepath.Join(dir, "pphlx.json")) ||
+				projectFileExists(filepath.Join(dir, "package.json")) {
 				projectDir = dir
 				break
 			}
@@ -3491,18 +3588,10 @@ func handleToolCall(toolName string, args ToolCallArguments) (interface{}, error
 			projectDir = filepath.Dir(targetPath)
 		}
 
-		// Read pphlx.json to resolve srcDir, defaulting to "src"
+		// Read config to resolve srcDir, defaulting to "src"
 		srcDirName := "src"
-		manifestPath := filepath.Join(projectDir, "pphlx.json")
-		if manifestData, err := os.ReadFile(manifestPath); err == nil {
-			var manifest map[string]interface{}
-			if err := json.Unmarshal(manifestData, &manifest); err == nil {
-				if val, ok := manifest["srcDir"]; ok {
-					if srcStr, isStr := val.(string); isStr {
-						srcDirName = srcStr
-					}
-				}
-			}
+		if activeConfig.SrcDir != "" {
+			srcDirName = activeConfig.SrcDir
 		}
 
 		componentsDir := filepath.Join(projectDir, srcDirName, "components")
