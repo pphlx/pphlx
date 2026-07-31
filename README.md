@@ -58,7 +58,7 @@ Compiles directly to standard PHP control/logical syntax blocks:
 
 PPHLX uses a dual-configuration structure:
 
-### 1. Project Manifest (`pphlx.json`)
+### 1. Project Manifest (`package.json`)
 Analogous to `package.json`. Declares project meta, triggers, and third-party UI packages:
 ```json
 {

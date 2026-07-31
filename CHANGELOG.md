@@ -5,6 +5,14 @@ All notable changes to the **PPHLX Compiler Core** will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.7] - 2026-07-31
+
+### Fixed
+- **Multi-Platform Binary Packaging Sync**: Fixed release workflow cross-compilation pipeline to ensure macOS (ARM64/AMD64), Linux (ARM64/AMD64), and Windows binaries packaged inside distribution submodules are synchronized with the compiler version (`v1.1.7`).
+- **MCP ServerInfo Version & Protocol Date**: Fixed `pphlx mcp` initialization handler in `main.go` to dynamically return the central `Version` constant (`v1.1.7`) and dynamic release date format.
+
+---
+
 ## [1.1.6] - 2026-07-30
 
 ### Fixed

@@ -26,7 +26,7 @@ import (
 )
 
 // Single source of truth for PPHLX compiler version
-const Version = "1.1.6"
+const Version = "1.1.7"
 
 // OutputConfig holds compilation output options
 type OutputConfig struct {
@@ -3443,14 +3443,14 @@ func runMCPServer() {
 			res := JSONRPCResponse{
 				JSONRPC: "2.0",
 				ID:      req.ID,
-				Result: map[string]interface{}{
-					"protocolVersion": "2024-11-05",
-					"capabilities": map[string]interface{}{
-						"tools": map[string]interface{}{},
+				Result: map[string]any{
+					"protocolVersion": time.Now().Format("02-01-2006"),
+					"capabilities": map[string]any{
+						"tools": map[string]any{},
 					},
 					"serverInfo": map[string]string{
 						"name":    "pphlx-mcp",
-						"version": "1.0.0",
+						"version": Version,
 					},
 				},
 			}

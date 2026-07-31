@@ -1,11 +1,18 @@
 # PPHLX MSI Installer Auto-Builder Script
-# This script downloads WiX Toolset binaries temporarily and compiles the pphlx.msi installer.
+# This script downloads WiX Toolset binaries temporarily and compiles pphlx.msi into releases/
 
 $ProjectDir = Get-Location
+$ReleasesDir = Join-Path $ProjectDir "releases"
 $TempWixDir = Join-Path $ProjectDir ".wix-bin"
 
-# 1. Compile the Go binary first to ensure it's up to date
-Write-Host "Compiling Go binary..." -ForegroundColor Cyan
+if (!(Test-Path $ReleasesDir)) {
+    New-Item -ItemType Directory -Force -Path $ReleasesDir | Out-Null
+}
+
+# 1. Compile the Windows Go binary first
+Write-Host "Compiling Windows Go binary for MSI..." -ForegroundColor Cyan
+$env:GOOS = "windows"
+$env:GOARCH = "amd64"
 go build -o pphlx.exe .
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Go compilation failed!"
@@ -48,18 +55,20 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# 4. Link wixobj to MSI
-Write-Host "Linking MSI installer..." -ForegroundColor Cyan
-& $LightPath -nologo pphlx.wixobj -out pphlx.msi
+# 4. Link wixobj to MSI inside releases/
+$MsiOutPath = Join-Path $ReleasesDir "pphlx.msi"
+Write-Host "Linking MSI installer to $MsiOutPath..." -ForegroundColor Cyan
+& $LightPath -nologo pphlx.wixobj -out $MsiOutPath
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Linking failed!"
     exit 1
 }
 
-# Clean up build artifacts
-if (Test-Path pphlx.wixobj) { Remove-Item pphlx.wixobj }
-if (Test-Path pphlx.wixpdb) { Remove-Item pphlx.wixpdb }
+# Clean up temporary build artifacts
+if (Test-Path pphlx.wixobj) { Remove-Item pphlx.wixobj -Force }
+if (Test-Path pphlx.wixpdb) { Remove-Item pphlx.wixpdb -Force }
+if (Test-Path pphlx.exe) { Remove-Item pphlx.exe -Force }
 
 Write-Host "------------------------------------------------" -ForegroundColor Green
-Write-Host "Success! Generated installer: $ProjectDir\pphlx.msi" -ForegroundColor Green
+Write-Host "Success! Generated MSI installer: $MsiOutPath" -ForegroundColor Green
 Write-Host "------------------------------------------------" -ForegroundColor Green
