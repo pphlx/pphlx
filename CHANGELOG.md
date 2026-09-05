@@ -5,6 +5,17 @@ All notable changes to the **PPHLX Compiler Core** will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2026-09-05
+
+### Added
+- **Directives Compilation Engine (`set:html`, `set:text`, `is:raw`, `is:inline`)**:
+  - Added support for `set:html` to dynamically bind unescaped HTML content (`<div set:html="$rawHtml"></div>` ➔ `<?php echo $rawHtml; ?>`).
+  - Added support for `set:text` with automatic `htmlspecialchars` escaping to prevent XSS (`<span set:text="$escapedText"></span>` ➔ `<?php echo htmlspecialchars($escapedText); ?>`).
+  - Added support for `is:raw` tags (`<pre is:raw>`, `<code is:raw>`), preserving internal code/template tokens as literal strings.
+  - Added support for `is:inline` directives on `<style is:inline>` and `<script is:inline>` to keep them local to the component instead of bundling them into global CSS/JS bundles.
+
+---
+
 ## [1.1.7] - 2026-07-31
 
 ### Fixed

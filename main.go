@@ -26,7 +26,7 @@ import (
 )
 
 // Single source of truth for PPHLX compiler version
-const Version = "1.1.7"
+const Version = "1.1.8"
 
 // OutputConfig holds compilation output options
 type OutputConfig struct {
@@ -107,8 +107,10 @@ var mcpFS embed.FS
 
 var (
 	importRegex          = regexp.MustCompile(`(?m)^@import\s+(\w+)\s+from\s+['"]([^'"]+)['"]\s*\r?\n?`)
-	styleRegex           = regexp.MustCompile(`(?s)<style>(.*?)</style>`)
-	scriptRegex          = regexp.MustCompile(`(?s)<script>(.*?)</script>`)
+	styleRegex           = regexp.MustCompile(`(?s)<style([^>]*)>(.*?)</style>`)
+	scriptRegex          = regexp.MustCompile(`(?s)<script([^>]*)>(.*?)</script>`)
+	rawBlockRegex        = regexp.MustCompile(`(?s)<([a-zA-Z0-9:-]+)([^>]*?\bis:raw\b[^>]*?)>(.*?)</([a-zA-Z0-9:-]+)>`)
+	setHtmlTextRegex     = regexp.MustCompile(`(?s)<([a-zA-Z0-9:-]+)(\s+[^>]*?)?\s*set:(html|text)=\s*(?:"([^"]*)"|'([^']*)'|\{([^}]+)\})([^>]*?)(\/?>)(.*?)(?:</[a-zA-Z0-9:-]+>)?`)
 	templateRegex        = regexp.MustCompile(`(?s)<template[^>]*>(.*?)</template>`)
 	attrRegex            = regexp.MustCompile(`(\w+[\w:-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|\{([^}]+)\}|([^\s>]+)))?`)
 	phpShortTagRegex     = regexp.MustCompile(`\{\{\s*(\w+)(?:\s*\?\?\s*'(.*?)')?\s*\}\}`)
@@ -2510,7 +2512,27 @@ func CompilePageWithAssets(content string, currentDir string, srcDir string) (st
 
 // compilePage parses imports, layouts, and expands components
 func compilePage(content string, currentDir string, srcDir string) (string, []string, []string, error) {
-	// Pre-process custom bracket syntax to standard PHP tags first
+	// 0. Protect is:raw blocks first before bracket parsing or component expansion
+	rawBlocks := make(map[string]string)
+	rawCount := 0
+	content = rawBlockRegex.ReplaceAllStringFunc(content, func(m string) string {
+		submatches := rawBlockRegex.FindStringSubmatch(m)
+		if len(submatches) > 4 && strings.EqualFold(submatches[1], submatches[4]) {
+			tagName := submatches[1]
+			attrs := strings.TrimSpace(strings.ReplaceAll(submatches[2], "is:raw", ""))
+			if attrs != "" {
+				attrs = " " + attrs
+			}
+			rawContent := submatches[3]
+			placeholder := fmt.Sprintf("___PPHLX_RAW_BLOCK_%d___", rawCount)
+			rawCount++
+			rawBlocks[placeholder] = fmt.Sprintf("<%s%s>%s</%s>", tagName, attrs, rawContent, tagName)
+			return placeholder
+		}
+		return m
+	})
+
+	// Pre-process custom bracket syntax to standard PHP tags
 	content = parsePphlxBrackets(content)
 
 	var cssBundles []string
@@ -2631,6 +2653,53 @@ func compilePage(content string, currentDir string, srcDir string) (string, []st
 		expandedContent = expandComponent(expandedContent, name, comp)
 	}
 
+	// 3. Process directives: set:html and set:text
+	expandedContent = setHtmlTextRegex.ReplaceAllStringFunc(expandedContent, func(m string) string {
+		submatches := setHtmlTextRegex.FindStringSubmatch(m)
+		if len(submatches) < 9 {
+			return m
+		}
+		tagName := submatches[1]
+		beforeAttrs := submatches[2]
+		directive := submatches[3]
+		var val string
+		if submatches[4] != "" {
+			val = submatches[4]
+		} else if submatches[5] != "" {
+			val = submatches[5]
+		} else if submatches[6] != "" {
+			val = submatches[6]
+		}
+		afterAttrs := submatches[7]
+
+		attrs := strings.TrimSpace(beforeAttrs + " " + afterAttrs)
+		if attrs != "" {
+			attrs = " " + attrs
+		}
+
+		var phpExpr string
+		cleanVal := strings.TrimSpace(val)
+		if strings.HasPrefix(cleanVal, "$") {
+			phpExpr = cleanVal
+		} else {
+			phpExpr = fmt.Sprintf("%q", cleanVal)
+		}
+
+		var innerPHP string
+		if directive == "html" {
+			innerPHP = fmt.Sprintf("<?php echo %s; ?>", phpExpr)
+		} else {
+			innerPHP = fmt.Sprintf("<?php echo htmlspecialchars(%s); ?>", phpExpr)
+		}
+
+		return fmt.Sprintf("<%s%s>%s</%s>", tagName, attrs, innerPHP, tagName)
+	})
+
+	// 4. Restore protected is:raw blocks
+	for placeholder, originalRaw := range rawBlocks {
+		expandedContent = strings.ReplaceAll(expandedContent, placeholder, originalRaw)
+	}
+
 	return expandedContent, cssBundles, jsBundles, nil
 }
 
@@ -2688,20 +2757,38 @@ func parseComponent(name string, content string, path string) Component {
 		html = tmplMatch[1]
 		isLayout = false
 	} else {
-		// It's a layout, html is everything outside style/script
-		html = styleRegex.ReplaceAllString(content, "")
-		html = scriptRegex.ReplaceAllString(html, "")
+		// It's a layout, html is everything outside style/script (except is:inline tags)
+		html = styleRegex.ReplaceAllStringFunc(content, func(m string) string {
+			if strings.Contains(m, "is:inline") {
+				return m
+			}
+			return ""
+		})
+		html = scriptRegex.ReplaceAllStringFunc(html, func(m string) string {
+			if strings.Contains(m, "is:inline") {
+				return m
+			}
+			return ""
+		})
 		html = importRegex.ReplaceAllString(html, "")
 	}
 
-	styleMatch := styleRegex.FindStringSubmatch(content)
-	if len(styleMatch) > 1 {
-		css = styleMatch[1]
+	styleMatches := styleRegex.FindAllStringSubmatch(content, -1)
+	for _, match := range styleMatches {
+		attrs := match[1]
+		body := match[2]
+		if !strings.Contains(attrs, "is:inline") {
+			css += body + "\n"
+		}
 	}
 
-	scriptMatch := scriptRegex.FindStringSubmatch(content)
-	if len(scriptMatch) > 1 {
-		js = scriptMatch[1]
+	scriptMatches := scriptRegex.FindAllStringSubmatch(content, -1)
+	for _, match := range scriptMatches {
+		attrs := match[1]
+		body := match[2]
+		if !strings.Contains(attrs, "is:inline") {
+			js += body + "\n"
+		}
 	}
 
 	return Component{
