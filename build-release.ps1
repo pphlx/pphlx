@@ -67,7 +67,7 @@ Copy-Item $MacosArm64 $MacosBin -Force
 Write-Host "  -> Compiling js/wasm..." -ForegroundColor Gray
 $env:GOOS = "js"; $env:GOARCH = "wasm"
 $WasmBin = Join-Path $CoreDir "pphlx.wasm"
-go build -o $WasmBin main.go main_cli.go
+go build -o $WasmBin .
 
 # Reset Environment Variables
 Remove-Item env:GOOS -ErrorAction SilentlyContinue
