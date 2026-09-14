@@ -109,9 +109,13 @@ if (Test-Path $NpmBin) {
 if (Test-Path $ComposerBin) {
     Copy-Item $WinExe "$ComposerBin\pphlx-win.exe" -Force
     Copy-Item $LinuxBin "$ComposerBin\pphlx-linux" -Force
+    Copy-Item $LinuxAmd64 "$ComposerBin\pphlx-linux-amd64" -Force
+    Copy-Item $LinuxArm64 "$ComposerBin\pphlx-linux-arm64" -Force
     Copy-Item $MacosBin "$ComposerBin\pphlx-macos" -Force
+    Copy-Item $MacosAmd64 "$ComposerBin\pphlx-macos-amd64" -Force
+    Copy-Item $MacosArm64 "$ComposerBin\pphlx-macos-arm64" -Force
     Copy-Item $WasmBin "$ComposerBin\pphlx.wasm" -Force
-    Write-Host "  [OK] Synced 4 binary targets to pphlx-composer/bin/" -ForegroundColor Green
+    Write-Host "  [OK] Synced 8 binary targets to pphlx-composer/bin/" -ForegroundColor Green
 }
 
 if (Test-Path $OrgPublic) {

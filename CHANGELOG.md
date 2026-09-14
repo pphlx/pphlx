@@ -5,6 +5,18 @@ All notable changes to the **PPHLX Compiler Core** will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.9] - 2026-09-14
+
+### Added
+- **Native PHP CGI Dev Server Execution (`pphlx dev`)**:
+  - Full dynamic execution of `.php` backend scripts and API endpoints via `php-cgi` during local development, supporting HTTP redirects (`Location:` headers), sessions (`PHPSESSID`), cookie persistence, and JSON responses.
+  - Automatic cross-platform discovery of `php-cgi` across system `PATH` and standard platform installation directories.
+  - Clean extensionless routing for PHP endpoints (e.g. `/api/users` dynamically resolves and executes `src/api/users.php`).
+  - Automatic environment variable inheritance from project `.env` files into CGI child processes.
+  - Built-in source code protection, preventing raw `.php` files from being served as downloadable static assets.
+
+---
+
 ## [1.1.8] - 2026-09-05
 
 ### Added

@@ -12,6 +12,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/cgi"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,7 +27,7 @@ import (
 )
 
 // Single source of truth for PPHLX compiler version
-const Version = "1.1.8"
+const Version = "1.1.9"
 
 // OutputConfig holds compilation output options
 type OutputConfig struct {
@@ -1916,6 +1917,51 @@ func startLogWorker() {
 	})
 }
 
+// findPhpCgi attempts to locate the php-cgi executable in PATH or standard install paths.
+func findPhpCgi() (string, error) {
+	if p, err := exec.LookPath("php-cgi"); err == nil {
+		return p, nil
+	}
+	for _, fallback := range []string{
+		`C:\php\php-cgi.exe`,
+		`C:\tools\php\php-cgi.exe`,
+		`C:\xampp\php\php-cgi.exe`,
+		`C:\wamp64\bin\php\php-cgi.exe`,
+	} {
+		if _, err := os.Stat(fallback); err == nil {
+			return fallback, nil
+		}
+	}
+	return "", fmt.Errorf("php-cgi executable not found in PATH or standard directories")
+}
+
+// loadDotEnvFile parses simple KEY=VALUE definitions from a .env file if present.
+func loadDotEnvFile(envPath string) []string {
+	var envs []string
+	data, err := os.ReadFile(envPath)
+	if err != nil {
+		return envs
+	}
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		if eqIdx := strings.IndexByte(line, '='); eqIdx > 0 {
+			key := strings.TrimSpace(line[:eqIdx])
+			val := strings.TrimSpace(line[eqIdx+1:])
+			if len(val) >= 2 && ((val[0] == '"' && val[len(val)-1] == '"') || (val[0] == '\'' && val[len(val)-1] == '\'')) {
+				val = val[1 : len(val)-1]
+			}
+			if key != "" {
+				envs = append(envs, key+"="+val)
+			}
+		}
+	}
+	return envs
+}
+
 type devResponseLogger struct {
 	http.ResponseWriter
 	statusCode int
@@ -2119,17 +2165,92 @@ func startDevServerAndWatcher(config Config, projectDir string, mode string) {
 
 				reqPath := filepath.Clean(r.URL.Path)
 
-				// 1. Static asset fallback from public/ (e.g. /assets/pphlx.svg)
+				cleanReqLower := strings.ToLower(reqPath)
+
+				// 1. PHP CGI Dynamic Execution for .php scripts (e.g. /api/auth.php, /api/nodes.php)
+				var targetPhpFile string
+				if strings.HasSuffix(cleanReqLower, ".php") {
+					for _, cand := range []string{
+						filepath.Join(srcRootDir, reqPath),
+						filepath.Join(projectDir, "public", reqPath),
+						filepath.Join(projectDir, reqPath),
+					} {
+						if fi, err := os.Stat(cand); err == nil && !fi.IsDir() {
+							targetPhpFile = cand
+							break
+						}
+					}
+				} else if reqPath != "/" && reqPath != "\\" && reqPath != "." {
+					// Check extensionless PHP routes e.g. /api/auth -> src/api/auth.php
+					candPphx := filepath.Join(srcRootDir, reqPath)
+					if !strings.HasSuffix(candPphx, ".pphx") {
+						candPphx += ".pphx"
+					}
+					if _, err := os.Stat(candPphx); err != nil {
+						for _, cand := range []string{
+							filepath.Join(srcRootDir, reqPath+".php"),
+							filepath.Join(projectDir, "public", reqPath+".php"),
+							filepath.Join(projectDir, reqPath+".php"),
+							filepath.Join(srcRootDir, reqPath, "index.php"),
+							filepath.Join(projectDir, "public", reqPath, "index.php"),
+						} {
+							if fi, err := os.Stat(cand); err == nil && !fi.IsDir() {
+								targetPhpFile = cand
+								break
+							}
+						}
+					}
+				}
+
+				if targetPhpFile != "" {
+					category = "api"
+					phpCgiPath, err := findPhpCgi()
+					if err != nil {
+						rl.WriteHeader(http.StatusInternalServerError)
+						rl.Header().Set("Content-Type", "text/plain; charset=utf-8")
+						rl.Write([]byte(fmt.Sprintf("PPHLX PHP Execution Error: %v\nPlease install php-cgi or add it to PATH.", err)))
+						return
+					}
+
+					cgiEnv := []string{
+						"REDIRECT_STATUS=200",
+						"SCRIPT_FILENAME=" + targetPhpFile,
+						"DOCUMENT_ROOT=" + projectDir,
+					}
+					dotEnvs := loadDotEnvFile(filepath.Join(projectDir, ".env"))
+					cgiEnv = append(cgiEnv, dotEnvs...)
+
+					cgiHandler := &cgi.Handler{
+						Path: phpCgiPath,
+						Dir:  projectDir,
+						Env:  cgiEnv,
+						InheritEnv: []string{
+							"SystemRoot",
+							"TEMP",
+							"TMP",
+							"PATH",
+							"USERPROFILE",
+							"APPDATA",
+							"LOCALAPPDATA",
+							"HOME",
+							"SHELL",
+						},
+					}
+					cgiHandler.ServeHTTP(rl, r)
+					return
+				}
+
+				// 2. Static asset fallback from public/ (e.g. /assets/pphlx.svg)
 				pubAssetPath := filepath.Join(projectDir, "public", reqPath)
-				if fi, err := os.Stat(pubAssetPath); err == nil && !fi.IsDir() {
+				if fi, err := os.Stat(pubAssetPath); err == nil && !fi.IsDir() && !strings.HasSuffix(cleanReqLower, ".php") {
 					category = "asset"
 					http.ServeFile(rl, r, pubAssetPath)
 					return
 				}
 
-				// 2. Static asset fallback from src/ (non-.pphx files e.g. /assets/logo.png)
+				// 3. Static asset fallback from src/ (non-.pphx files e.g. /assets/logo.png)
 				srcAssetPath := filepath.Join(srcRootDir, reqPath)
-				if fi, err := os.Stat(srcAssetPath); err == nil && !fi.IsDir() && !strings.HasSuffix(reqPath, ".pphx") {
+				if fi, err := os.Stat(srcAssetPath); err == nil && !fi.IsDir() && !strings.HasSuffix(reqPath, ".pphx") && !strings.HasSuffix(cleanReqLower, ".php") {
 					category = "asset"
 					http.ServeFile(rl, r, srcAssetPath)
 					return
