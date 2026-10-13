@@ -1,0 +1,20 @@
+{
+  "name": "pphlx-tactical-hud",
+  "version": "1.0.0",
+  "description": "Zero-Allocation Real-Time Tactical HUD and Avionics Telemetry Scope",
+  "scripts": {
+    "dev": "go run .",
+    "build": "go build -ldflags \"-s -w\" -o hud.exe ."
+  },
+  "keywords": [
+    "pphlx",
+    "hud",
+    "telemetry",
+    "avionics",
+    "game",
+    "c99",
+    "go"
+  ],
+  "author": "PPHLX",
+  "license": "MIT"
+}

@@ -5,6 +5,22 @@ All notable changes to the **PPHLX Compiler Core** will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-10-13
+
+### Added
+- **Categorized Multi-Platform Starter Templates**:
+  - Introduced 2-tier categorized scaffolding architecture supporting Web (`minimal`, `spark`), Native Desktop (`desktop`), Android Mobile (`mobile`), and Real-Time Game HUD (`hud`).
+  - Native templates feature `.lx` declarative UI files, Go backends, and Android Gradle NDK build targets.
+- **PPHLX Native Core & Android NDK Integration**:
+  - Integrated zero-allocation native C99/Go runtime engine and Android HAL touch/surface pipeline.
+  - Native desktop windowing with mathematical flexbox layout and sub-millisecond hardware frame rasterization.
+- **PPHLX Studio WYSIWYG Design System Ready**:
+  - Full compatibility with `.lx` declarative syntax for visual editing and live compilation in PPHLX Studio (`studio.exe`).
+- **Unified Toolchain Version Alignment**:
+  - Bumped compiler version constant and template manifests to `v1.2.0`.
+
+---
+
 ## [1.1.9] - 2026-09-14
 
 ### Added

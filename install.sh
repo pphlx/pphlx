@@ -44,7 +44,7 @@ if [ "$VERSION" = "latest" ]; then
     # Query GitHub API to get the latest tag
     TAG=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep -o '\"tag_name\": \"[^\"]*\"' | head -n 1 | cut -d '"' -f 4)
     if [ -z "$TAG" ]; then
-        TAG="v1.1.9"
+        TAG="v1.2.0"
     fi
 else
     TAG="$VERSION"

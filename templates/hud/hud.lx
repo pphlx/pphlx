@@ -1,0 +1,37 @@
+// ==============================================================================
+// PPHLX Tactical HUD & Avionics Telemetry Artboard
+// Zero-Allocation Instrument Display [w=800, h=480, theme="dark", bg="#050B14"]
+// ==============================================================================
+
+app "Cockpit Avionics HUD" [width=800, height=480, bg="#050B14", p=16, justify="between"] {
+
+  // Top Status Bar
+  row [justify="between", align="center"] {
+    badge "SYSTEM: ARMED & READY" [bg="#131D2E", color="#34D399", size=10]
+    row [gap=12, align="center"] {
+      text "RADAR: ACTIVE" [size=11, bold=true, color="#38BDF8"]
+      text "GPS: LOCKED" [size=11, bold=true, color="#34D399"]
+    }
+  }
+
+  // Dual Telemetry Pods (Airspeed & Altitude)
+  row [gap=16, align="center", justify="between", pt=12] {
+    card [w=240, h=360, bg="#0F172A", border="#1E293D", radius=12, p=16] {
+      heading "Airspeed (IAS)" [size=14, bold=true, color="#38BDF8"]
+      text "450.0 KTS" [size=26, bold=true, color="#FFFFFF", pt=12]
+      text "Mach 0.68 • Ground 482 KTS" [size=11, color="#64748B", pt=4]
+    }
+
+    card [w=260, h=360, bg="#0A0F1A", border="#0284C7", radius=16, p=16, align="center", justify="center"] {
+      badge "PRIMARY FLIGHT DISPLAY" [bg="#0C4A6E", color="#38BDF8", size=10]
+      heading "Level Flight" [size=18, bold=true, color="#FFFFFF", pt=10]
+      text "Pitch 0.0° • Roll 0.0°" [size=12, color="#94A3B8", pt=4]
+    }
+
+    card [w=240, h=360, bg="#0F172A", border="#1E293D", radius=12, p=16] {
+      heading "Altitude (ALT)" [size=14, bold=true, color="#38BDF8"]
+      text "32,000 FT" [size=26, bold=true, color="#FFFFFF", pt=12]
+      text "Baro 29.92 InHg • V/S 0 FPM" [size=11, color="#64748B", pt=4]
+    }
+  }
+}

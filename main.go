@@ -27,7 +27,7 @@ import (
 )
 
 // Single source of truth for PPHLX compiler version
-const Version = "1.1.9"
+const Version = "1.2.0"
 
 // OutputConfig holds compilation output options
 type OutputConfig struct {

@@ -1,14 +1,37 @@
 [
   {
     "name": "minimal",
+    "category": "web",
     "title": "Minimal Starter Kit",
     "description": "A lightweight starter kit for PPHLX with zero configuration",
     "path": "templates/minimal"
   },
   {
     "name": "spark",
+    "category": "web",
     "title": "Spark Monolith Template",
     "description": "A beautifully designed, high-performance monolith template for full-stack PPHLX applications",
     "path": "templates/spark"
+  },
+  {
+    "name": "desktop",
+    "category": "desktop",
+    "title": "Desktop Window Starter",
+    "description": "Native desktop application for Windows, macOS, and Linux powered by PPHLX Native",
+    "path": "templates/desktop"
+  },
+  {
+    "name": "mobile",
+    "category": "mobile",
+    "title": "Mobile Android App",
+    "description": "Native Android mobile screen with .lx layout and Go activity backend",
+    "path": "templates/mobile"
+  },
+  {
+    "name": "hud",
+    "category": "hud",
+    "title": "Tactical Avionics HUD",
+    "description": "Zero-allocation C99/Go real-time flight telemetry & radar scope",
+    "path": "templates/hud"
   }
 ]

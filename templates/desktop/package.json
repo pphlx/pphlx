@@ -1,0 +1,18 @@
+{
+  "name": "pphlx-desktop-app",
+  "version": "1.0.0",
+  "description": "Native Desktop Application powered by PPHLX Native and Go",
+  "scripts": {
+    "dev": "go run .",
+    "build": "go build -ldflags \"-H=windowsgui -s -w\" -o app.exe ."
+  },
+  "keywords": [
+    "pphlx",
+    "native",
+    "desktop",
+    "go",
+    "gui"
+  ],
+  "author": "PPHLX",
+  "license": "MIT"
+}
