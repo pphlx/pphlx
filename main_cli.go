@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+
 	"runtime"
 	"strings"
 	"sync"
@@ -16,11 +18,48 @@ import (
 )
 
 func main() {
+	if len(os.Args) == 1 {
+		if !isProjectDir() {
+			printGlobalUsage()
+			os.Exit(0)
+		}
+	}
+
 	if len(os.Args) > 1 {
 		cmd := strings.ToLower(os.Args[1])
 		if cmd == "version" || cmd == "--version" || cmd == "-v" || cmd == "-version" {
 			fmt.Println("pphlx v" + Version)
 			os.Exit(0)
+		}
+		if cmd == "help" || cmd == "--help" || cmd == "-help" || cmd == "-h" || cmd == "/?" || cmd == "/help" {
+			printGlobalUsage()
+			os.Exit(0)
+		}
+		if cmd == "compile" {
+			if len(os.Args) > 2 && (os.Args[2] == "--help" || os.Args[2] == "-help" || os.Args[2] == "-h" || os.Args[2] == "help") {
+				printCompileUsage()
+				os.Exit(0)
+			}
+			runCompileCLI()
+			os.Exit(0)
+		}
+		if cmd == "run" {
+			if len(os.Args) > 2 && (os.Args[2] == "--help" || os.Args[2] == "-help" || os.Args[2] == "-h" || os.Args[2] == "help") {
+				printRunUsage()
+				os.Exit(0)
+			}
+			runRunCLI()
+			os.Exit(0)
+		}
+		if cmd == "dev" {
+			if len(os.Args) > 2 && (os.Args[2] == "--help" || os.Args[2] == "-help" || os.Args[2] == "-h" || os.Args[2] == "help") {
+				printDevUsage()
+				os.Exit(0)
+			}
+			if len(os.Args) > 2 && strings.HasSuffix(strings.ToLower(os.Args[2]), ".lx") {
+				runDevLXCLI(os.Args[2])
+				os.Exit(0)
+			}
 		}
 		if cmd == "init" {
 			runInitCLI()
@@ -110,6 +149,15 @@ func main() {
 			fmt.Println("✓ Asset path & image resolution: OK")
 			fmt.Println("\033[1;32mPPHLX diagnostic check: 0 errors, 0 warnings.\033[0m")
 			os.Exit(0)
+		}
+
+		switch cmd {
+		case "build", "dev", "watch", "preview", "start":
+			// Proceed to build pipeline
+		default:
+			fmt.Printf("Unknown command: %q\n\n", os.Args[1])
+			printGlobalUsage()
+			os.Exit(1)
 		}
 	}
 
@@ -549,5 +597,134 @@ $_title = !empty($title) ? $title : 'PPHLX Monolith App';
 
 	fmt.Println("\033[1;32m✓ PPHLX project initialized successfully!\033[0m")
 }
+
+// ==============================================================================
+// Native Toolchain Process Delegator (Nucleus Integration)
+// ==============================================================================
+
+// resolveToolchainBinary locates the pre-compiled native toolchain binary.
+func resolveToolchainBinary() (string, error) {
+	// 1. Check next to the running executable or in its bin/ folder
+	execPath, err := os.Executable()
+	if err == nil {
+		execDir := filepath.Dir(execPath)
+		candidates := []string{
+			filepath.Join(execDir, "pphlx-lx.exe"),
+			filepath.Join(execDir, "pphlx-lx"),
+			filepath.Join(execDir, "bin", "pphlx-lx.exe"),
+			filepath.Join(execDir, "bin", "pphlx-lx"),
+		}
+		for _, c := range candidates {
+			if _, statErr := os.Stat(c); statErr == nil {
+				return c, nil
+			}
+		}
+	}
+
+	// 2. Check current working directory bin/ or native build directory
+	cwdCandidates := []string{
+		filepath.Join(".", "bin", "pphlx-lx.exe"),
+		filepath.Join(".", "bin", "pphlx-lx"),
+		filepath.Join("..", "native", "bin", "pphlx-lx.exe"),
+		filepath.Join("..", "native", "bin", "pphlx-lx"),
+		filepath.Join("f:\\VS CODE\\GO\\PPHLX\\native\\bin\\pphlx-lx.exe"),
+	}
+	for _, c := range cwdCandidates {
+		if _, statErr := os.Stat(c); statErr == nil {
+			return c, nil
+		}
+	}
+
+	// 3. Fallback to system PATH lookup
+	if path, err := exec.LookPath("pphlx-lx"); err == nil {
+		return path, nil
+	}
+
+	return "", fmt.Errorf("pphlx-lx native toolchain binary not found (expected in bin/ or PATH)")
+}
+
+func execToolchain(subCmd string, args ...string) {
+	binPath, err := resolveToolchainBinary()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		fmt.Println("Please verify that the PPHLX Native Toolchain binary (pphlx-lx.exe) is present in bin/.")
+		os.Exit(1)
+	}
+
+	cmdArgs := append([]string{subCmd}, args...)
+	cmd := exec.Command(binPath, cmdArgs...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Forward execution to native toolchain binary
+	if err := cmd.Run(); err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			os.Exit(exitErr.ExitCode())
+		}
+		fmt.Printf("Execution error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func runCompileCLI() {
+	execToolchain("compile", os.Args[2:]...)
+}
+
+func runRunCLI() {
+	execToolchain("run", os.Args[2:]...)
+}
+
+func runDevLXCLI(file string) {
+	execToolchain("dev", file)
+}
+
+func printCompileUsage() {
+	execToolchain("compile", "--help")
+}
+
+func printRunUsage() {
+	execToolchain("run", "--help")
+}
+
+func printDevUsage() {
+	execToolchain("dev", "--help")
+}
+
+func isProjectDir() bool {
+	configs := []string{
+		"pphlx.config.mjs", "pphlx.config.cjs", "pphlx.config.json",
+		"pphlx.json", "src", "main.lx", "app.lx",
+	}
+	for _, c := range configs {
+		if _, err := os.Stat(c); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+func printGlobalUsage() {
+	fmt.Println("PPHLX — Sovereign UI & Application Compiler Toolchain (v" + Version + ")")
+	fmt.Println()
+	fmt.Println("Usage: pphlx <command> [arguments]")
+	fmt.Println()
+	fmt.Println("Native Desktop & Avionics Commands (Backed by C99 Engine):")
+	fmt.Println("  compile <file.lx> [-o out.pph]   Compile .lx declarative UI to binary bytecode or native code")
+	fmt.Println("  run <file.pph | file.lx>         Execute application window via zero-allocation C99 engine")
+	fmt.Println("  dev <file.lx>                    Start live hot-reload development session")
+	fmt.Println()
+	fmt.Println("Web & Full-Stack Commands:")
+	fmt.Println("  init                             Scaffold a new PPHLX project")
+	fmt.Println("  dev                              Start web development server")
+	fmt.Println("  build                            Compile production web application")
+	fmt.Println("  preview                          Preview production build")
+	fmt.Println("  check                            Run diagnostic health checks")
+	fmt.Println("  add <repo>                       Add a component dependency")
+	fmt.Println("  mcp                              Launch Model Context Protocol server")
+	fmt.Println("  version                          Display compiler version")
+	fmt.Println("  help                             Display this help manual")
+}
+
 
 
