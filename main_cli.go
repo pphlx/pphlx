@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
 	"runtime"
 	"strings"
 	"sync"
@@ -16,11 +17,42 @@ import (
 )
 
 func main() {
+	if len(os.Args) == 1 {
+		if !isProjectDir() {
+			printGlobalUsage()
+			os.Exit(0)
+		}
+	}
+
 	if len(os.Args) > 1 {
 		cmd := strings.ToLower(os.Args[1])
 		if cmd == "version" || cmd == "--version" || cmd == "-v" || cmd == "-version" {
 			fmt.Println("pphlx v" + Version)
 			os.Exit(0)
+		}
+		if cmd == "help" || cmd == "--help" || cmd == "-help" || cmd == "-h" || cmd == "/?" || cmd == "/help" {
+			printGlobalUsage()
+			os.Exit(0)
+		}
+		if cmd == "compile" {
+			fmt.Println("Notice: The 'compile' command for .lx declarative UI belongs to the Sovereign Native SDK ('lx').")
+			fmt.Println("To compile native specifications, use:")
+			fmt.Println("  lx compile <file.lx>")
+			fmt.Println("\nDownload the Native SDK: https://github.com/pphlx/sdk")
+			os.Exit(1)
+		}
+		if cmd == "run" {
+			fmt.Println("Notice: The 'run' command for mobile and desktop apps belongs to the Sovereign Native SDK ('lx').")
+			fmt.Println("To run native applications, use:")
+			fmt.Println("  lx run android")
+			fmt.Println("\nDownload the Native SDK: https://github.com/pphlx/sdk")
+			os.Exit(1)
+		}
+		if cmd == "dev" {
+			if len(os.Args) > 2 && (os.Args[2] == "--help" || os.Args[2] == "-help" || os.Args[2] == "-h" || os.Args[2] == "help") {
+				printDevUsage()
+				os.Exit(0)
+			}
 		}
 		if cmd == "init" {
 			runInitCLI()
@@ -110,6 +142,15 @@ func main() {
 			fmt.Println("✓ Asset path & image resolution: OK")
 			fmt.Println("\033[1;32mPPHLX diagnostic check: 0 errors, 0 warnings.\033[0m")
 			os.Exit(0)
+		}
+
+		switch cmd {
+		case "build", "dev", "watch", "preview", "start":
+			// Proceed to build pipeline
+		default:
+			fmt.Printf("Unknown command: %q\n\n", os.Args[1])
+			printGlobalUsage()
+			os.Exit(1)
 		}
 	}
 
@@ -549,5 +590,46 @@ $_title = !empty($title) ? $title : 'PPHLX Monolith App';
 
 	fmt.Println("\033[1;32m✓ PPHLX project initialized successfully!\033[0m")
 }
+
+func printDevUsage() {
+	fmt.Println("Usage: pphlx dev [options]")
+	fmt.Println("Starts the local development server with hot module reloading.")
+}
+
+func isProjectDir() bool {
+	configs := []string{
+		"pphlx.config.mjs", "pphlx.config.cjs", "pphlx.config.json",
+		"pphlx.json", "src",
+	}
+	for _, c := range configs {
+		if _, err := os.Stat(c); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+func printGlobalUsage() {
+	fmt.Println("PPHLX — Full-Stack Web & Monolith Compiler (v" + Version + ")")
+	fmt.Println()
+	fmt.Println("Usage: pphlx <command> [arguments]")
+	fmt.Println()
+	fmt.Println("Commands:")
+	fmt.Println("  init                             Scaffold a new PPHLX project")
+	fmt.Println("  dev                              Start web development server")
+	fmt.Println("  build                            Compile production web application")
+	fmt.Println("  preview                          Preview production build")
+	fmt.Println("  check                            Run diagnostic health checks")
+	fmt.Println("  add <repo>                       Add a component dependency")
+	fmt.Println("  mcp                              Launch Model Context Protocol server")
+	fmt.Println("  version                          Display compiler version")
+	fmt.Println("  help                             Display this help manual")
+	fmt.Println()
+	fmt.Println("Native Applications:")
+	fmt.Println("  For Sovereign Android and Desktop apps, use the native 'lx' toolchain:")
+	fmt.Println("  lx run android | lx build android | lx compile <file.lx>")
+	fmt.Println("  SDK Repository: https://github.com/pphlx/sdk")
+}
+
 
 

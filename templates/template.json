@@ -1,12 +1,14 @@
 [
   {
     "name": "minimal",
+    "category": "web",
     "title": "Minimal Starter Kit",
     "description": "A lightweight starter kit for PPHLX with zero configuration",
     "path": "templates/minimal"
   },
   {
     "name": "spark",
+    "category": "web",
     "title": "Spark Monolith Template",
     "description": "A beautifully designed, high-performance monolith template for full-stack PPHLX applications",
     "path": "templates/spark"
